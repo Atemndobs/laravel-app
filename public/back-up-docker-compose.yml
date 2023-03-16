@@ -1,0 +1,221 @@
+# For more information: https://laravel.com/docs/sail
+version: '3.7'
+services:
+    laravel.test:
+        build:
+            context: ./docker/8.1
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: 1000
+                WWWUSER: "sail"
+        image: sail-8.1/app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - 8899:80
+            - 6001:6001
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        volumes:
+            - './:/var/www/html'
+            - './scdl.cfg:/root/.config/scdl/scdl.cfg'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+            - meilisearch
+#    ppm:
+#        image: phppm/nginx
+#        command: --debug=1 --app-env=dev --static-directory=web/
+#        volumes:
+#            - ./:/var/www
+#        ports:
+#            - 8899:80
+#    nginx:
+#        build:
+#            context: ./docker/nginx
+#        depends_on:
+#            -   php-fpm
+#        ports:
+#            - "${NGINX_HOST_HTTP_PORT}:80"
+#            - "${NGINX_HOST_HTTPS_PORT}:443"
+#        volumes:
+#            - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
+#            - ${NGINX_SITES_PATH}:/etc/nginx/sites-available
+#            - ${NGINX_SSL_PATH}:/etc/nginx/ssl
+#            - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+#        networks:
+#            - sail
+#    php-fpm:
+##        image: cyberduck/php-fpm-laravel:8.
+#        build:
+#            context: ./docker/php-fpm
+#        volumes:
+#            - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+#        networks:
+#            - sail
+#        expose:
+#            -   9000
+    strapi:
+        container_name: strapi
+        image: atemndobs/strapi:1.0
+        environment:
+            DATABASE_CLIENT: mysql
+            DATABASE_HOST: mysql
+            DATABASE_PORT: 3306
+            DATABASE_NAME: mage
+            DATABASE_USERNAME: mage
+            DATABASE_PASSWORD: mage
+        ports:
+            - 1337:1337
+        volumes:
+            - ./../strapi:/srv/app
+        depends_on:
+            - mysql
+        networks:
+            - sail
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+#DOCKER_BUILDKIT=1 docker build -t recommenders:cpu --build-arg ENV=cpu --build-arg VIRTUAL_ENV=conda --name=recommenders "."   && docker run -p 8888:8888 -d recommenders:cpu
+
+#    recommenders:
+#        container_name: recommenders
+#        build:
+#            context: ./docker/recommenders
+#            dockerfile: Dockerfile
+#            args:
+#                ENV: cpu
+#                VIRTUAL_ENV: conda
+#        image: recommenders:cpu
+#        environment:
+#            DOCKER_BUILDKIT: 1
+#        ports:
+#            - 9999:8888
+#        volumes:
+#            - ./../recommenders:/app
+#        networks:
+#            - sail
+#        extra_hosts:
+#            - 'host.docker.internal:host-gateway'
+#    zookeeper:
+#        image: docker.io/bitnami/zookeeper:3.8
+#        ports:
+#            - "2181:2181"
+#        volumes:
+#            - "zookeeper_data:/bitnami"
+#        environment:
+#            - ALLOW_ANONYMOUS_LOGIN=yes
+#        networks:
+#            - sail
+#    kafka:
+#        image: docker.io/bitnami/kafka:3.2
+#        ports:
+#            - "9092:9092"
+#        volumes:
+#            - "kafka_data:/bitnami"
+#        environment:
+#            - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+#            - ALLOW_PLAINTEXT_LISTENER=yes
+#        depends_on:
+#            - zookeeper
+#        networks:
+#            - sail
+    mysql:
+        image: 'mysql/mysql-server:8.0'
+        #restart: always
+        command: --default-authentication-plugin=mysql_native_password
+        ports:
+            - '${FORWARD_DB_PORT:-3307}:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: 'mage'
+            MYSQL_ROOT_HOST: "mysql"
+            MYSQL_DATABASE: 'mage'
+            MYSQL_USER: 'mage'
+            MYSQL_PASSWORD: 'mage'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - sail-mysql:/var/lib/mysql
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+            retries: 3
+            timeout: 5s
+
+    meilisearch:
+        image: 'getmeili/meilisearch:latest'
+        ports:
+            - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
+        volumes:
+            - 'sail-meilisearch:/data.ms'
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--spider",  "http://localhost:7700/health"]
+            retries: 3
+            timeout: 5s
+    rabbitmq:
+        image: rabbitmq:3-management-alpine
+        container_name: 'rabbitmq'
+        ports:
+            - 5672:5672
+            - 15672:15672
+        volumes:
+            - 'sail-rabbitmq:/data.rabbitmq'
+        networks:
+            - sail
+
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6380}:6379'
+        volumes:
+            - 'sail-redis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            retries: 3
+            timeout: 5s
+
+    mailhog:
+        image: 'mailhog/mailhog:latest'
+        ports:
+            - '${FORWARD_MAILHOG_PORT:-1025}:1025'
+            - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
+        networks:
+            - sail
+
+    jenkins:
+        restart: on-failure
+        build:
+            context: ./docker/jenkins
+            dockerfile: Dockerfile
+
+        container_name: jenkins
+        ports:
+            - "8099:8080"
+        volumes:
+            - ./jenkins:/var/jenkins_home
+
+networks:
+    sail:
+        driver: bridge
+
+volumes:
+    sail-mysql:
+        driver: local
+    sail-redis:
+        driver: local
+    sail-meilisearch:
+        driver: local
+    sail-rabbitmq:
+        driver: local
+    zookeeper_data:
+        driver: local
+    kafka_data:
+        driver: local

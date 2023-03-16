@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Console\Commands\Storage;
+
+use App\Services\Storage\MinioService;
+use Illuminate\Console\Command;
+
+class MinioGetFileCommand extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'minio:get {--f|file=} {--d|dir=} {--a|all=false}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'retrieve files from Minio S3';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): void
+    {
+        $file = $this->option('file');
+        $dir = $this->option('dir');
+        $all = $this->option('all');
+        $filename = basename($file);
+        if (!$file && !$dir) {
+            $this->error('No file or directory specified');
+            return;
+        }
+
+        $minioService = new MinioService();
+        $dir = $dir ?? 'music';
+
+        if ($dir === 'music') {
+            if ($all !== false) {
+                $this->info("Retrieving all files from $dir");
+                try {
+                    $files = $minioService->getAllAudios($dir);
+                    $this->getFilesTable($files, $dir);
+                    return;
+                }catch (\Exception $e) {
+                    $this->error($e->getMessage());
+                }
+            }
+            $this->info("Retrieving files from $dir");
+            try {
+                $file = $minioService->getAudio($filename, $dir);
+                $this->info($file);
+                return;
+            }catch (\Exception $e) {
+                $this->error($e->getMessage());
+            }
+        } else {
+            if ($all !== false) {
+                $this->info("Retrieving all files from $dir");
+                try {
+                    $files = $minioService->getAllImages($dir);
+                    $this->getFilesTable($files, $dir);
+                    return;
+                }catch (\Exception $e) {
+                    $this->error($e->getMessage());
+                }
+            }
+            $this->info("Retrieving $file from $dir");
+            try {
+                $file = $minioService->getImage($filename, $dir);
+                $this->info($file);
+                return;
+            }catch (\Exception $e) {
+                $this->error($e->getMessage());
+            }
+        }
+
+
+    }
+
+    /**
+     * @param array $files
+     * @param string $dir
+     */
+    public function getFilesTable(array $files, string $dir)
+    {
+        $results = [];
+        foreach ($files as $file) {
+            $results[] = [
+                $file
+            ];
+        }
+
+        // output files in table
+        $this->table([$dir], $results);
+    }
+}
