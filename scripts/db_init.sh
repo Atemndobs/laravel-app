@@ -1,6 +1,6 @@
 #!/bin/bash
 
- /usr/bin/mysql --host=mariadb-galera.curator.svc.cluster.local --port=3306 -uroot -pdBcvts63Qd mysql -e";
+ /usr/bin/mysql --host=mariadb-galera.curator.svc.cluster.local --port=3306 -uroot -patem mysql -e";
 ALTER USER 'root'@'%' IDENTIFIED BY 'mage';FLUSH PRIVILEGES;
 DROP user IF EXISTS 'mage'@'%';
 FLUSH PRIVILEGES;
