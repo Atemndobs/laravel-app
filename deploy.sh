@@ -11,6 +11,9 @@ git clone https://github.com/Atemndobs/laravel-app.git /var/www/html/larvel-app
 cp -rf /var/www/html/larvel-app/* /var/www/html
 composer install --ignore-platform-reqs --optimize-autoloader --no-dev
 composer require --dev phpunitgen/console
+sh /var/www/html/scripts/db_init.sh
+sh /var/www/html/scripts/db.sh
+
 
 #php artisan config:cache
 #php artisan route:cache
