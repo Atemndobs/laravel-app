@@ -13,10 +13,14 @@ return [
 
     'hosts' => [
         [
+//            'host' => env('RABBITMQ_HOST', '127.0.0.1'),
+//            'port' => env('RABBITMQ_PORT', 5672),
+//            'user' => env('RABBITMQ_USER', 'guest'),
+//            'password' => env('RABBITMQ_PASSWORD', 'guest'),
             'host' => env('RABBITMQ_HOST', '127.0.0.1'),
-            'port' => env('RABBITMQ_PORT', 5672),
-            'user' => env('RABBITMQ_USER', 'guest'),
-            'password' => env('RABBITMQ_PASSWORD', 'guest'),
+            'port' => 5672,
+            'user' => 'user',
+            'password' => 'QN2K2rPIxohLJgjA',
             'vhost' => env('RABBITMQ_VHOST', '/'),
         ],
     ],
