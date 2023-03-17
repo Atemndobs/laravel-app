@@ -6,42 +6,29 @@
 .env
 .env.backup
 .phpunit.result.cache
-docker-compose.override.yml
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
-/storage/app/public/audio
-/storage/var
 /rclone
 /rclone.conf
 /.yarn
 /.scribe
-settings.sql
-songs.sql
-devspace_start.sh
-kcachegrind-0.7.4
 
-
-rabbitmq
+/storage/app/public/audio
+/storage/app/public/images
 /storage/framework/cache/data
 /storage/framework/sessions/*
 /storage/framework/views/*
 /storage/logs
-/storage/app/public/essentia_app
-/storage/app/public/essentia_streaming_musicnn_predict
+/storage/var
+/storage/app/var/
 /public/packages
 
+
 /var/
-/storage/app/var/
-/jenkins
-storage/logs
-
-
-# Ignore DevSpace cache and log folder
 .devspace/
-/storage/app/public/images/
 /public/vendor
 /stubs
