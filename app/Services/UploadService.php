@@ -119,7 +119,7 @@ class UploadService
                 $song->delete();
                 $this->deletables[] = $file_name;
                 // move file to  storage/app/public/uploads/music
-               // File::move($file, 'storage/app/public/uploads/music/'.$file_name);
+                // File::move($file, 'storage/app/public/uploads/music/'.$file_name);
                 continue;
             }
             $song->status = 'imported';
@@ -258,7 +258,7 @@ class UploadService
         $allImages = glob(public_path('storage/music/images/*'));
         foreach ($allImages as $image) {
             $image = str_replace(public_path('storage/music/images/'), '', $image);
-          //  dump(['image' => $image, 'file_name' => $file_name]);
+            //  dump(['image' => $image, 'file_name' => $file_name]);
 
             if ($image === $file_name) {
                 $song->image = $full_path;
@@ -270,18 +270,19 @@ class UploadService
     private function checkExistingSongStorage(?string $path) : bool
     {
 
+        $base_url = env('APP_ENV') == 'local' ? 'http://nginx' : env('APP_URL');
         dump("Checking Song from Storage : $path");
         $url = str_replace('mage.tech', 'host.docker.internal', $path);
 
         if (!str_contains($url, 'http')) {
-            $url = 'http://nginx/storage/audio'.$url;
+            $url = $base_url.'/storage/audio'.$url;
         }
         // $url="http://nginx/api/songs";
         $request = Http::get($url);
         $status = $request->status();
         dump("Status : $status");
         if ($status === 200) {
-           dump(['status' => $status, 'url' => $url]);
+            dump(['status' => $status, 'url' => $url]);
             return true;
         }
         return false;

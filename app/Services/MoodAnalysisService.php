@@ -15,6 +15,7 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
+        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('APP_URL');
         $existingSong = Song::query()->where('slug', '=', $slug)->first();
 
         if (!$existingSong) {
@@ -38,7 +39,6 @@ class MoodAnalysisService
                 'status' => $existingSong->status,
             ];
         }
-        $base_url = self::BASE_DOCKER;
 
         $url = $base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
