@@ -9,8 +9,3 @@
 
 composer install --ignore-platform-reqs --optimize-autoloader --no-interaction
 sh /var/www/html/scripts/db_init.sh
-
-
-#php artisan config:cache
-#php artisan route:cache
-#php artisan view:cache
