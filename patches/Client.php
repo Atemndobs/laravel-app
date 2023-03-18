@@ -128,7 +128,7 @@ class Client implements Http
     {
         $this->headers['Content-type'] = 'application/json';
         $request = $this->requestFactory->createRequest(
-            'POST',
+            'PATCH',
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($this->json->serialize($body)));
 
