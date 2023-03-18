@@ -103,22 +103,7 @@ class MeiliSearchService
             $meiliSearch->createIndex("songs");
             $meiliSearch->index("songs")->updateSearchableAttributes([
                 "title",
-                "author",
-                "bpm",
-                "key",
-                "scale",
-                "energy",
-                "happy",
-                "sad",
-                "analyzed",
-                "aggressiveness",
-                "danceability",
-                "relaxed",
-                "played",
-                "path",
-                "slug",
-                "image",
-                "related_songs",
+
             ]);
 //            $meiliSearch->index("songs")->updateFilterableAttributes([
 //                "title",
