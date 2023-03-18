@@ -36,7 +36,11 @@ class MeilisearchReindexer extends Command
             return 0;
         }
         $this->info("Resetting index $index");
-        $this->setIndex($index);
+        try {
+            $this->setIndex($index);
+        } catch (\Exception $e) {
+            $this->error($e->getMessage());
+        }
     }
 
     private function setAll()
@@ -45,7 +49,11 @@ class MeilisearchReindexer extends Command
         $indexes = $meiliSearch->stats()['indexes'];
         $reIndexes = array_keys($indexes);
         foreach ($reIndexes as $index) {
-            $this->setIndex($index);
+            try {
+                $this->setIndex($index);
+            } catch (\Exception $e) {
+                $this->error($e->getMessage());
+            }
         }
     }
 
@@ -53,6 +61,11 @@ class MeilisearchReindexer extends Command
     {
         $service = new \App\Services\Birdy\MeiliSearchService();
         $method = 'set' . ucfirst($item ) . 'Index';
+
+        dump( [
+            "Method: " => class_basename($method),
+        ]);
+
 
         /** @var Indexes $index */
         $index =  $service->$method();

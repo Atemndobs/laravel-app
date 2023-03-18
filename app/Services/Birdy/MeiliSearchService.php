@@ -72,8 +72,18 @@ class MeiliSearchService
                 'trace' => $e->getTrace(),
             ]);
         }
-        $meiliSearch->index('catalogs')->update(['primaryKey' => 'id']);
-        $meiliSearch->index('catalogs')->addDocuments(Catalog::all()->toArray());
+        try {
+            $meiliSearch->index('catalogs')->update(['primaryKey' => 'id']);
+            $meiliSearch->index('catalogs')->addDocuments(Catalog::all()->toArray());
+        }catch (\Exception $e) {
+            dump([
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTrace(),
+            ]);
+        }
         return $meiliSearch->index("catalogs");
     }
 
