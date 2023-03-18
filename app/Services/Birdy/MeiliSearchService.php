@@ -28,13 +28,7 @@ class MeiliSearchService
         $meiliSearch = $this->client;
 
         try {
-            if(!$meiliSearch->createIndex("catalogs")) {
-              dump([
-                'message' => "Index already exists",
-                'code' => 0,
-                'file' => "MeiliSearchService.php",
-              ]);
-            }
+            $meiliSearch->createIndex("catalogs");
             $meiliSearch->index("catalogs")->updateSearchableAttributes([
                 'id',
                 'item_name',
@@ -42,7 +36,7 @@ class MeiliSearchService
                 'description',
                 'features_list',
             ]);
-/*            $meiliSearch->index("catalogs")->updateFilterableAttributes([
+            $meiliSearch->index("catalogs")->updateFilterableAttributes([
                 'id',
                 'item_name',
                 'item_category',
@@ -62,30 +56,16 @@ class MeiliSearchService
                 'description',
                 'features_list',
             ]);
-            $meiliSearch->index("catalogs")->updateRankingRules([
-                'id',
-                'item_name',
-                'item_category',
-                'description',
-                'features_list',
-            ]);*/
         }catch (\Exception $e) {
             dump([
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
             ]);
+            throw new \Exception($e->getMessage());
         }
-        try {
-            $meiliSearch->index('catalogs')->update(['primaryKey' => 'id']);
-            $meiliSearch->index('catalogs')->addDocuments(Catalog::all()->toArray());
-        }catch (\Exception $e) {
-            dump([
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'file' => $e->getFile(),
-            ]);
-        }
+        $meiliSearch->index('catalogs')->update(['primaryKey' => 'id']);
+        $meiliSearch->index('catalogs')->addDocuments(Catalog::all()->toArray());
         return $meiliSearch->index("catalogs");
     }
 
@@ -96,46 +76,42 @@ class MeiliSearchService
     {
         $meiliSearch = $this->client;
 
-        dump($meiliSearch->stats());
-        dump([
-            "version" => 1.1
-        ]);
         try {
             $meiliSearch->createIndex("songs");
-//            $meiliSearch->index("songs")->updateSearchableAttributes([
-//                "title",
-//                "author",
-//                "bpm",
-//                "key",
-//                "scale",
-//                "energy",
-//                "happy",
-//                "sad",
-//                "analyzed",
-//                "aggressiveness",
-//                "danceability",
-//                "relaxed",
-//                "played",
-//                "path",
-//                "slug",
-//                "image",
-//                "related_songs",
-//            ]);
-//            $meiliSearch->index("songs")->updateFilterableAttributes([
-//                "title",
-//                "bpm",
-//                "key",
-//                "scale",
-//                "energy",
-//                "happy",
-//                "sad",
-//                "analyzed",
-//                "aggressiveness",
-//                "danceability",
-//                "relaxed",
-//                "slug",
-//                "status"
-//            ]);
+            $meiliSearch->index("songs")->updateSearchableAttributes([
+                "title",
+                "author",
+                "bpm",
+                "key",
+                "scale",
+                "energy",
+                "happy",
+                "sad",
+                "analyzed",
+                "aggressiveness",
+                "danceability",
+                "relaxed",
+                "played",
+                "path",
+                "slug",
+                "image",
+                "related_songs",
+            ]);
+            $meiliSearch->index("songs")->updateFilterableAttributes([
+                "title",
+                "bpm",
+                "key",
+                "scale",
+                "energy",
+                "happy",
+                "sad",
+                "analyzed",
+                "aggressiveness",
+                "danceability",
+                "relaxed",
+                "slug",
+                "status"
+            ]);
             $meiliSearch->index("songs")->updateSortableAttributes([
                 "title",
                 "bpm",
@@ -151,49 +127,49 @@ class MeiliSearchService
                 "slug",
                 "status",
             ]);
-//            $meiliSearch->index("songs")->updateDisplayedAttributes([
-//                'id',
-//                "title",
-//                'author',
-//                "bpm",
-//                "key",
-//                "scale",
-//                "energy",
-//                "happy",
-//                "sad",
-//                "analyzed",
-//                "aggressiveness",
-//                "danceability",
-//                "relaxed",
-//                "played",
-//                "path",
-//                "slug",
-//                "image",
-//                "related_songs",
-//                'comment',
-//                'genre',
-//                'played',
-//                'status',
-//                'classification_properties'
-//            ]);
-//            $meiliSearch->index("songs")->updateRankingRules([
-//                'typo',
-//                'sort',
-//                'exactness',
-//                'proximity',
-//            ]);
-//             Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
-//             add the following to rankin rules typo, exactness, proximity, sort
-
+            $meiliSearch->index("songs")->updateDisplayedAttributes([
+                'id',
+                "title",
+                'author',
+                "bpm",
+                "key",
+                "scale",
+                "energy",
+                "happy",
+                "sad",
+                "analyzed",
+                "aggressiveness",
+                "danceability",
+                "relaxed",
+                "played",
+                "path",
+                "slug",
+                "image",
+                "related_songs",
+                'comment',
+                'genre',
+                'played',
+                'status',
+                'classification_properties'
+            ]);
+            # Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
+            $meiliSearch->index("songs")->updateRankingRules([
+                "typo",
+                "words",
+                "attribute",
+                "sort",
+                "proximity",
+                "exactness"
+            ]);
         }catch (\Exception $e) {
-
             dump([
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
             ]);
+            throw new \Exception($e->getMessage());
         }
-       # $meiliSearch->index('songs')->update(['primaryKey' => 'id']);
+        $meiliSearch->index('songs')->update(['primaryKey' => 'id']);
         $songs = Song::all()->toArray();
 //        $songsUpdated = [];
 //        $minioService = new MinioService();
