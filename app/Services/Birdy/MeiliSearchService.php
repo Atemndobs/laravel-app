@@ -101,10 +101,25 @@ class MeiliSearchService
         ]);
         try {
             $meiliSearch->createIndex("songs");
-            $meiliSearch->index("songs")->updateSearchableAttributes([
-
-
-            ]);
+//            $meiliSearch->index("songs")->updateSearchableAttributes([
+//                "title",
+//                "author",
+//                "bpm",
+//                "key",
+//                "scale",
+//                "energy",
+//                "happy",
+//                "sad",
+//                "analyzed",
+//                "aggressiveness",
+//                "danceability",
+//                "relaxed",
+//                "played",
+//                "path",
+//                "slug",
+//                "image",
+//                "related_songs",
+//            ]);
 //            $meiliSearch->index("songs")->updateFilterableAttributes([
 //                "title",
 //                "bpm",
@@ -120,21 +135,21 @@ class MeiliSearchService
 //                "slug",
 //                "status"
 //            ]);
-//            $meiliSearch->index("songs")->updateSortableAttributes([
-//                "title",
-//                "bpm",
-//                "key",
-//                "scale",
-//                "energy",
-//                "happy",
-//                "sad",
-//                "analyzed",
-//                "aggressiveness",
-//                "danceability",
-//                "relaxed",
-//                "slug",
-//                "status",
-//            ]);
+            $meiliSearch->index("songs")->updateSortableAttributes([
+                "title",
+                "bpm",
+                "key",
+                "scale",
+                "energy",
+                "happy",
+                "sad",
+                "analyzed",
+                "aggressiveness",
+                "danceability",
+                "relaxed",
+                "slug",
+                "status",
+            ]);
 //            $meiliSearch->index("songs")->updateDisplayedAttributes([
 //                'id',
 //                "title",
