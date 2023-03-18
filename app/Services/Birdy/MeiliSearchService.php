@@ -28,7 +28,13 @@ class MeiliSearchService
         $meiliSearch = $this->client;
 
         try {
-            $meiliSearch->createIndex("catalogs");
+            if(!$meiliSearch->createIndex("catalogs")) {
+              dump([
+                'message' => "Index already exists",
+                'code' => 0,
+                'file' => "MeiliSearchService.php",
+              ]);
+            }
             $meiliSearch->index("catalogs")->updateSearchableAttributes([
                 'id',
                 'item_name',
@@ -36,7 +42,7 @@ class MeiliSearchService
                 'description',
                 'features_list',
             ]);
-            $meiliSearch->index("catalogs")->updateFilterableAttributes([
+/*            $meiliSearch->index("catalogs")->updateFilterableAttributes([
                 'id',
                 'item_name',
                 'item_category',
@@ -62,7 +68,7 @@ class MeiliSearchService
                 'item_category',
                 'description',
                 'features_list',
-            ]);
+            ]);*/
         }catch (\Exception $e) {
             dump([
                 'message' => $e->getMessage(),
@@ -90,6 +96,9 @@ class MeiliSearchService
     {
         $meiliSearch = $this->client;
 
+        dump([
+            "version" => 1.0
+        ]);
         try {
             $meiliSearch->createIndex("songs");
             $meiliSearch->index("songs")->updateSearchableAttributes([
@@ -166,9 +175,7 @@ class MeiliSearchService
                 'status',
                 'classification_properties'
             ]);
-            dump([
-                "version" => 1.0
-            ]);
+
 //             Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
 //             add the following to rankin rules typo, exactness, proximity, sort
             $meiliSearch->index("songs")->updateRankingRules([
