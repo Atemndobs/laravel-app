@@ -57,7 +57,8 @@ services:
 
     meilisearch:
         container_name: meilisearch
-        image: 'getmeili/meilisearch:v0.29.0-pagination.beta.3'
+       # image: 'getmeili/meilisearch:v0.29.0-pagination.beta.3'
+        image: 'getmeili/meilisearch'
         ports:
             - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
         volumes:
