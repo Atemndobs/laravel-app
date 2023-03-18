@@ -166,6 +166,9 @@ class MeiliSearchService
                 'status',
                 'classification_properties'
             ]);
+            dump([
+                "version" => 1.0
+            ]);
 //             Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
 //             add the following to rankin rules typo, exactness, proximity, sort
             $meiliSearch->index("songs")->updateRankingRules([
