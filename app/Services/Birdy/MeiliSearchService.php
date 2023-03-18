@@ -96,6 +96,7 @@ class MeiliSearchService
     {
         $meiliSearch = $this->client;
 
+        dump($meiliSearch->stats());
         dump([
             "version" => 1.1
         ]);
