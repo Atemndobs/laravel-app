@@ -102,7 +102,7 @@ class MeiliSearchService
         try {
             $meiliSearch->createIndex("songs");
             $meiliSearch->index("songs")->updateSearchableAttributes([
-                "title",
+
 
             ]);
 //            $meiliSearch->index("songs")->updateFilterableAttributes([
