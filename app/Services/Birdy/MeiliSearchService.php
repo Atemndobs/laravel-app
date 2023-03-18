@@ -68,8 +68,6 @@ class MeiliSearchService
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTrace(),
             ]);
         }
         try {
@@ -80,7 +78,6 @@ class MeiliSearchService
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
-             //   'line' => $e->getLine(),
             ]);
         }
         return $meiliSearch->index("catalogs");
