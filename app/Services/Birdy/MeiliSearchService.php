@@ -166,23 +166,20 @@ class MeiliSearchService
                 'status',
                 'classification_properties'
             ]);
+            // Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
+            // add the following to rankin rules typo, exactness, proximity, sort
             $meiliSearch->index("songs")->updateRankingRules([
-                "bpm",
-                "key",
-                "scale",
-                "danceability",
-                "energy",
-                "happy:asc",
-                "sad:dsc",
-                "relaxed",
+                'typo',
+                'sort',
+                'exactness',
+                'proximity',
             ]);
         }catch (\Exception $e) {
+
             dump([
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTrace(),
             ]);
         }
         $meiliSearch->index('songs')->update(['primaryKey' => 'id']);
