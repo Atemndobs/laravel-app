@@ -12,3 +12,5 @@ SET collation_server = utf8mb3_general_ci;
 "
 # /usr/bin/mysql --user=mage -pmage --host=mariadb.curator.svc.cluster.local --port=3306 -e "CREATE SCHEMA mage;"
  /usr/bin/mysql --database=mage --user=mage -pmage --host=mariadb --port=3306 <  /var/www/html/storage/app/backups/latest/db-dumps/mysql-mage.sql
+
+sh scripts/patch_meilisearch.sh

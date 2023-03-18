@@ -109,7 +109,7 @@ class Client implements Http
             $body = $this->json->serialize($body);
         }
         $request = $this->requestFactory->createRequest(
-            'PUT',
+            'POST',
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($body));
 
@@ -128,7 +128,7 @@ class Client implements Http
     {
         $this->headers['Content-type'] = 'application/json';
         $request = $this->requestFactory->createRequest(
-            'PUT',
+            'POST',
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($this->json->serialize($body)));
 
