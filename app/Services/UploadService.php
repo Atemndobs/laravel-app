@@ -277,7 +277,6 @@ class UploadService
         if (!str_contains($url, 'http')) {
             $url = $base_url.'/storage/audio'.$url;
         }
-        // $url="http://nginx/api/songs";
         $request = Http::get($url);
         $status = $request->status();
         dump("Status : $status");

@@ -2,12 +2,12 @@ version: '3.3'
 services:
     nginx:
         container_name: nginx
-        #image: atemndobs/nginx:v1
-        build:
-            context: ./docker/nginx
-            args:
-                WWWGROUP: 1000
-                WWWUSER: "sail"
+        image: atemndobs/nginx:v1.0
+#        build:
+#            context: ./docker/nginx
+#            args:
+#                WWWGROUP: 1000
+#                WWWUSER: "atem"
         depends_on:
             - php-fpm
         ports:
@@ -29,15 +29,15 @@ services:
 
     php-fpm:
         container_name: php-fpm
- #       image: atemndobs/php-fpm:8.1
-        build:
-            context: ./docker/php-fpm
-            args:
-                WWWGROUP: 1000
-                WWWUSER: "sail"
+        image: atemndobs/laravel-php-fpm:v1.8.2
+#        build:
+#            context: ./docker/php-fpm
+#            args:
+#                WWWGROUP: 1000
+#                WWWUSER: "atem"
         volumes:
             - "${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}"
-            - "./docker/php-fpm/scdl.cfg:/root/.config/scdl/scdl.cfg"
+            #- "./docker/php-fpm/scdl.cfg:/root/.config/scdl/scdl.cfg"
             - "${APP_CODE_PATH_HOST}/storage/logs:/usr/local/stackify/stackify-php-apm/log"
         networks:
             - sail
@@ -54,31 +54,6 @@ services:
             - meilisearch
         environment:
             TZ: 'Europe/Berlin'
-
-#    mysql:
-#        container_name: mysql
-#        image: 'mysql/mysql-server:8.0'
-#        #restart: always
-#        command: --default-authentication-plugin=mysql_native_password
-#        ports:
-#            - '${FORWARD_DB_PORT:-3307}:3306'
-#        environment:
-#            MYSQL_ROOT_PASSWORD: 'mage'
-#            MYSQL_ROOT_HOST: "mysql"
-#            MYSQL_DATABASE: 'mage'
-#            MYSQL_USER: 'mage'
-#            MYSQL_PASSWORD: 'mage'
-#            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-#            TZ: 'Europe/Berlin'
-#        volumes:
-#            - sail-mysql:/var/lib/mysql
-#            - "${APP_CODE_PATH_HOST}/storage/app/backups/:/backups${APP_CODE_CONTAINER_FLAG}"
-#        networks:
-#            - sail
-#        healthcheck:
-#            test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
-#            retries: 3
-#            timeout: 5s
 
     meilisearch:
         container_name: meilisearch
@@ -154,18 +129,18 @@ services:
         networks:
             - sail
 
-    essentia:
-        #image: mtgupf/essentia
-        build:
-            context: ./docker/essentia
-        container_name: essentia
-        ports:
-            - "5000:5000"
-        volumes:
-            - ./storage/app/public/data:/app/data
-            - ./storage/app/public/essentia:/essentia
-        networks:
-            - sail
+#    essentia:
+#        image: atemndobs/essentia:v1.0
+##        build:
+##            context: ./docker/essentia
+#        container_name: essentia
+#        ports:
+#            - "5000:5000"
+#        volumes:
+#            - ./storage/app/public/data:/app/data
+#            - ./storage/app/public/essentia:/essentia
+#        networks:
+#            - sail
     whoami:
         image: "traefik/whoami"
         container_name: "simple-service"
