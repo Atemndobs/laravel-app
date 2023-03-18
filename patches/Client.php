@@ -109,7 +109,7 @@ class Client implements Http
             $body = $this->json->serialize($body);
         }
         $request = $this->requestFactory->createRequest(
-            'PATCH',
+            'POST',
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($body));
 
