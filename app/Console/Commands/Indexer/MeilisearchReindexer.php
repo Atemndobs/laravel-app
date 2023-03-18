@@ -36,11 +36,7 @@ class MeilisearchReindexer extends Command
             return 0;
         }
         $this->info("Resetting index $index");
-        try {
-            $this->setIndex($index);
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
+        $this->setIndex($index);
     }
 
     private function setAll()
@@ -49,11 +45,7 @@ class MeilisearchReindexer extends Command
         $indexes = $meiliSearch->stats()['indexes'];
         $reIndexes = array_keys($indexes);
         foreach ($reIndexes as $index) {
-            try {
-                $this->setIndex($index);
-            } catch (\Exception $e) {
-                $this->error($e->getMessage());
-            }
+            $this->setIndex($index);
         }
     }
 
