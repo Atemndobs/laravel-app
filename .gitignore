@@ -17,6 +17,8 @@ yarn-error.log
 /.yarn
 /.scribe
 
+/docker
+
 /storage/app/public/audio
 /storage/app/public/images
 /storage/framework/cache/data
