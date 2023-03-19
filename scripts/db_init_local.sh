@@ -22,4 +22,4 @@ php artisan song:path -d music
 php artisan song:path -d images
 php artisan song:path -f related_songs -i mage
 
-echo "Update Paths, images and related_songs for Songs"
+#echo "Update Paths, images and related_songs for Songs"
