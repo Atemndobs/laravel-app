@@ -26,7 +26,7 @@ class Image extends Command
     public const BASE_URL = 'http://host.docker.internal:3000';
     public const BASE_DOCKER = 'http://nginx';
 
-    /**
+    /**s
      * Execute the console command.
      *
      * @return int
