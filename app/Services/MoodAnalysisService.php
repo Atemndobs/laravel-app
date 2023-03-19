@@ -6,6 +6,7 @@ use App\Jobs\ClassifySongJob;
 use App\Models\Song;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use function Psy\debug;
 
 class MoodAnalysisService
@@ -15,13 +16,14 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('APP_URL');
-
-        info(json_encode([
+        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('BASE_URL');
+        $nest_port = env('APP_ENV') == 'local' ? ':3000' : env('NEST_PORT');
+        $nest_base_url = $base_url . ":$nest_port";
+        Log::info(json_encode([
             'process' => 'MoodAnalysisService::getAnalysis',
             'args' => func_get_args(),
             'slug' => $slug,
-            'base_url' => $base_url,
+            'nest_base_url' => $nest_base_url,
         ]));
 
         $existingSong = Song::query()->where('slug', '=', $slug)->first();
@@ -40,7 +42,10 @@ class MoodAnalysisService
                 'analyzed' => $existingSong->analyzed,
                 'Existing' => $existingSong->status,
             ]);
-            // index the existing song
+            Log::info(json_encode([
+                'analyzed' => $existingSong->analyzed,
+                'Existing' => $existingSong->status,
+            ]));
             $existingSong->searchable();
 
             return [
@@ -48,17 +53,23 @@ class MoodAnalysisService
             ];
         }
 
-        $url = $base_url . "/song/$slug";
+        $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
-        ray("$notAnalyzedSongs Songs Pending Analysis ")->screenBlue();
+        Log::info("Not analyzed songs: $notAnalyzedSongs");
 
-        $req = Http::get($url);
+        $req = Http::get($nest_url);
         if ($req->json('status') == 'error') {
             dump([
                 'status' => 'error',
                 'message' => $req->json(),
-                'url' => $url,
+                'nest_url' => $nest_url,
             ]);
+
+            Log::error(json_encode([
+                'status' => 'error',
+                'message' => $req->json(),
+                'nest_url' => $nest_url,
+            ]));
             return [
                 'status' => 'error',
                 'message' => $req->json(),
