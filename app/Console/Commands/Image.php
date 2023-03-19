@@ -23,6 +23,9 @@ class Image extends Command
      */
     protected $description = 'Command description';
 
+    public const BASE_URL = 'http://host.docker.internal:3000';
+    public const BASE_DOCKER = 'http://nginx';
+
     /**
      * Execute the console command.
      *
@@ -44,18 +47,21 @@ class Image extends Command
             'songsWithImagesCount' => $songsWithImagesCount,
             'songsWithoutImagesCount' => $songsWithoutImagesCount,
         ];
-        dump($stats);
+        info(json_encode($stats));
+
+        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('APP_URL');
+
         if ($all !== null) {
             $this->info('Processing all images');
-            Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage) {
+            Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage, $base_url) {
 
                 if ($song->image !== null && $song->image !== '') {
                     //change  http://127.0.0.1:3000/music/burna_boy_bank_on_it_justnaijacommp3.jpeg
                     //to  http://mage.tech:8899/storage/images/burna_boy_bank_on_it_justnaijacom.mp3
-                    $imageUrl = str_replace('127.0.0.1:3000/music', 'mage.tech:8899/storage/images', $song->image);
+                    $imageUrl = str_replace('127.0.0.1:3000/music', "$base_url/storage/images", $song->image);
                     $song->image = $imageUrl;
                     $song->save();
-                    $imageUrl = str_replace('mage.tech:8899','nginx',$song->image);
+                    $imageUrl = str_replace('mage.tech:8899', $base_url, $song->image);
 
                     try {
                         $this->info('Processing song: ' . $song->title);
