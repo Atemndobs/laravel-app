@@ -258,7 +258,7 @@ class UploadService
         $allImages = glob(public_path('storage/music/images/*'));
         foreach ($allImages as $image) {
             $image = str_replace(public_path('storage/music/images/'), '', $image);
-            //  dump(['image' => $image, 'file_name' => $file_name]);
+            info("Checking Image : $image");
 
             if ($image === $file_name) {
                 $song->image = $full_path;
@@ -271,17 +271,26 @@ class UploadService
     {
 
         $base_url = env('APP_ENV') == 'local' ? 'http://nginx' : env('APP_URL');
-        dump("Checking Song from Storage : $path");
+        info("Checking Song from Storage : $path");
         $url = str_replace('mage.tech', 'host.docker.internal', $path);
+
+        info(json_encode([
+            'process' => 'UploadService::checkExistingSongStorage',
+            'args' => func_get_args(),
+            'path' => $path,
+            'base_url' => $base_url,
+            'url' => $url,
+        ]));
 
         if (!str_contains($url, 'http')) {
             $url = $base_url.'/storage/audio'.$url;
         }
         $request = Http::get($url);
         $status = $request->status();
-        dump("Status : $status");
+        info("Status : $status");
         if ($status === 200) {
             dump(['status' => $status, 'url' => $url]);
+            info("Song Exists in Storage : $path");
             return true;
         }
         return false;
