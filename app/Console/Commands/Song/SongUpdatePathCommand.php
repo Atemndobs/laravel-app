@@ -16,7 +16,7 @@ class SongUpdatePathCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'song:path {slug?} {--a|all=false} {--d|dir=} {--f|field=} {--i|identifier=} {--r|dry-run=}}';
+    protected $signature = 'song:path {slug?} {--a|all=false} {--d|dir=} {--f|field=} {--i|identifier=} {--r|dry-run=false}}';
 
     /**
      * The console command description.
@@ -52,8 +52,7 @@ class SongUpdatePathCommand extends Command
         $identifier = $identifier ?? 'mage.tech:8899';
         $base_url = env('APP_ENV') == 'local' ? 'http://mage.tech:8899' : env('APP_URL');
 
-
-        if ($dryRun !== false) {
+        if ($dryRun !== "false") {
             $this->info('Dry run results');
             $this->table(['field', 'identifier', 'related', 'total', 'all?', 'slug', 'dir'], [
                 [
