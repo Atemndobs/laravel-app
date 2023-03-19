@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Jobs\ClassifySongJob;
 use App\Models\Song;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -86,7 +88,6 @@ class UploadService
     public function importSongs(array $tracks): array
     {
         $response = [];
-        $rest = [];
         $this->deletables = [];
         foreach ($tracks as $file) {
             $song = new Song();
@@ -98,6 +99,7 @@ class UploadService
                     'file' => $file,
                 ];
                 dump([$error]);
+                Log::error($e->getMessage());
                 continue;
             }
             $existingSong = $this->getExistingSong($song);
@@ -110,25 +112,17 @@ class UploadService
                     'slug' => $existingSong->slug,
                     'path' => $existingSong->path,
                 ];
-                if ($this->rclone){
-                    continue;
-                }
-                if ($this->checkExistingSongStorage($song->path)) {
-                    continue;
-                }
-                $song->delete();
-                $this->deletables[] = $file_name;
-                // move file to  storage/app/public/uploads/music
-                // File::move($file, 'storage/app/public/uploads/music/'.$file_name);
+                Log::warning('Song already exists: '.$file_name);
                 continue;
             }
+
             $song->status = 'imported';
             $ext = substr($file_name, -3);
             $type = $ext;
             $source = 'imported';
             $this->getSongImage($file_name, $song);
             $this->fillSong($source, $song, $type, $file_name, $ext);
-            //$song->title = $file_name;
+
             $song->save();
             $response[] = $song;
             $this->deletables[] = $this->deletItem;
@@ -194,19 +188,6 @@ class UploadService
     {
         $name = str_replace(".$ext", '', $name);
         $fields = [
-//            'aggressiveness' => '',
-//            'author' => '',
-//            'bpm' => '',
-//            'comment' => '',
-//            'created_at' => '',
-//            'created_by_id' => '',
-//            'danceability' => '',
-//            'energy' => '',
-//            'happy' => '',
-//            'id' => '',
-//            'key' => '',
-//            'relaxed' => '',
-//            'sad' => '',
             'link' => $source,
             'path' => $song->path,
             'slug' => $song->slug,
@@ -224,21 +205,21 @@ class UploadService
      */
     protected function getFullSongPath(mixed $file, Song $song): mixed
     {
-        $path_to_store = setting('site.path_audio');
-
-        $base_url = setting('site.base_url');
+        // $path_to_store = setting('site.path_audio') ?? env('PATH_AUDIO', 'audio');
+        $path_to_store = env('PATH_AUDIO', 'uploads/audio');
         $file_name = substr($file, strrpos($file, '/') + 1);
         $ext = substr($file_name, -4);
         $file_name = str_replace($ext, '', $file_name);
         $file_name = Str::slug($file_name, '_');
         $file_name .= $ext;
-        $full_path = $base_url . "$path_to_store/$file_name";
-        $full_path = str_replace('/public/', '/storage/', $full_path);
-
+        $full_path =  "storage/app/public/$path_to_store/$file_name";     //
+        // rename file to full path and save on minio
+        rename($file, $full_path);
+        Storage::cloud()->put("music/$file_name", file_get_contents($full_path));
+        $storage_path = Storage::cloud()->url("curator/music/$file_name");
         $api_url = env('APP_URL').'/api/songs/match/';
         $slug = Str::slug($file_name, '_');
-
-        $song->path = $full_path;
+        $song->path = $storage_path;
         $song->slug = $slug;
         $song->related_songs = $api_url.$slug;
 
@@ -247,34 +228,26 @@ class UploadService
 
     private function getSongImage(mixed $file_name, Song $song): void
     {
-        $path_to_store = setting('site.path_images');
-        $base_url = setting('site.base_url');
-        $file_name = Str::slug($file_name, '_');
+        // check if image exist in minio and save it
         $image = substr($file_name, 0, -4);
-
         $image .= '.jpg';
-        $full_path = $base_url . "$path_to_store/$image";
-        $full_path = str_replace('/public/', '/storage/', $full_path);
-        $allImages = glob(public_path('storage/music/images/*'));
-        foreach ($allImages as $image) {
-            $image = str_replace(public_path('storage/music/images/'), '', $image);
-            info("Checking Image : $image");
-
-            if ($image === $file_name) {
-                $song->image = $full_path;
-                $song->save();
-            }
+        $image = "curator/images/$image";
+        // check if image exist in minio
+        if (!Storage::cloud()->exists($image)) {
+            return;
         }
+        $image =  Storage::cloud()->url($image);
+        $song->image = $image;
     }
 
     private function checkExistingSongStorage(?string $path) : bool
     {
 
         $base_url = env('APP_ENV') == 'local' ? 'http://nginx' : env('APP_URL');
-        info("Checking Song from Storage : $path");
         $url = str_replace('mage.tech', 'host.docker.internal', $path);
+        Log::info("Checking Song from Storage : $path");
 
-        info(json_encode([
+        Log::info(json_encode([
             'process' => 'UploadService::checkExistingSongStorage',
             'args' => func_get_args(),
             'path' => $path,
@@ -287,10 +260,10 @@ class UploadService
         }
         $request = Http::get($url);
         $status = $request->status();
-        info("Status : $status");
+        Log::info("Status : $status");
         if ($status === 200) {
             dump(['status' => $status, 'url' => $url]);
-            info("Song Exists in Storage : $path");
+            Log::info("Song Exists in Storage : $path");
             return true;
         }
         return false;
