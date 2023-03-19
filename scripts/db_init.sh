@@ -13,4 +13,14 @@ SET collation_server = utf8mb3_general_ci;
 # /usr/bin/mysql --user=mage -pmage --host=mariadb.curator.svc.cluster.local --port=3306 -e "CREATE SCHEMA mage;"
  /usr/bin/mysql --database=mage --user=mage -pmage --host=mariadb --port=3306 <  /var/www/html/storage/app/backups/latest/db-dumps/mysql-mage.sql
 
+echo "Patch MeiliSearch"
 sh scripts/patch_meilisearch.sh
+
+echo "Update Paths, images and related_songs for Songs"
+php artisan song:path -f related_songs -i mage --dry-run
+
+php artisan song:path -d music
+php artisan song:path -d images
+php artisan song:path -f related_songs -i mage
+
+echo "Update Paths, images and related_songs for Songs"

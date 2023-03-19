@@ -16,10 +16,10 @@ echo "DB initialized"
 echo "DB successfully initialized with backups/latest/db-dumps/mysql-mage.sql"
 
 echo "Update Paths, images and related_songs for Songs"
-php artisan song:path -f related_songs -i mage --dry-run
+a song:path -f related_songs -i mage --dry-run
 
-php artisan song:path -d music
-php artisan song:path -d images
-php artisan song:path -f related_songs -i mage
+a song:path -d music
+a song:path -d images
+a song:path -f related_songs -i mage
 
 echo "Update Paths, images and related_songs for Songs"
