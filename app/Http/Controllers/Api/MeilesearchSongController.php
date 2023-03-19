@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Redis;
 use MeiliSearch\Client;
 use MeiliSearch\Contracts\DocumentsQuery;
 use function example\int;
@@ -54,6 +55,7 @@ class MeilesearchSongController extends Controller
         $searchLast = $searchTotal / $limit;
         $search['last'] = (int)$searchLast;
 
+        Redis::set($search['offset'], json_encode($search['data']));
         return response()->json($search);
     }
 

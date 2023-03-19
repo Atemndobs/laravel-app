@@ -2,7 +2,7 @@ version: '3.3'
 services:
     nginx:
         container_name: nginx
-        image: atemndobs/nginx:v1.0
+        image: atemndobs/nginx:v1.1
 #        build:
 #            context: ./docker/nginx
 #            args:
@@ -29,7 +29,7 @@ services:
 
     php-fpm:
         container_name: php-fpm
-        image: atemndobs/laravel-php-fpm:v1.8.2
+        image: atemndobs/laravel-php-fpm:v1.8.3
 #        build:
 #            context: ./docker/php-fpm
 #            args:
@@ -130,18 +130,18 @@ services:
         networks:
             - sail
 
-#    essentia:
-#        image: atemndobs/essentia:v1.0
-##        build:
-##            context: ./docker/essentia
-#        container_name: essentia
-#        ports:
-#            - "5000:5000"
-#        volumes:
-#            - ./storage/app/public/data:/app/data
-#            - ./storage/app/public/essentia:/essentia
-#        networks:
-#            - sail
+    essentia:
+        image: atemndobs/essentia:v1.0
+#        build:
+#            context: ./docker/essentia
+        container_name: essentia
+        ports:
+            - "5000:5000"
+        volumes:
+            - ./storage/app/public/data:/app/data
+            - ./storage/app/public/essentia:/essentia
+        networks:
+            - sail
     whoami:
         image: "traefik/whoami"
         container_name: "simple-service"

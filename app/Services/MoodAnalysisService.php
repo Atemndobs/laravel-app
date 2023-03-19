@@ -16,6 +16,14 @@ class MoodAnalysisService
     public function getAnalysis(string $slug): array
     {
         $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('APP_URL');
+
+        info(json_encode([
+            'process' => 'MoodAnalysisService::getAnalysis',
+            'args' => func_get_args(),
+            'slug' => $slug,
+            'base_url' => $base_url,
+        ]));
+
         $existingSong = Song::query()->where('slug', '=', $slug)->first();
 
         if (!$existingSong) {

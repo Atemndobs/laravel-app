@@ -53,12 +53,6 @@ class MeilisearchReindexer extends Command
     {
         $service = new \App\Services\Birdy\MeiliSearchService();
         $method = 'set' . ucfirst($item ) . 'Index';
-
-        dump( [
-            "Method: " => class_basename($method),
-        ]);
-
-
         /** @var Indexes $index */
         $index =  $service->$method();
 
@@ -84,5 +78,4 @@ class MeilisearchReindexer extends Command
             ]
         );
     }
-
 }
