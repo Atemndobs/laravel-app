@@ -14,3 +14,4 @@
  /usr/bin/mysql --user=mage -pmage --host=127.0.0.1 --port=4000 -e "CREATE SCHEMA IF NOT EXISTS mage;"
  /usr/bin/mysql --database=mage --user=mage -pmage --host=127.0.0.1 --port=4000 <  ~/sites/curator/laravel/storage/app/backups/latest/db-dumps/mysql-mage.sql
 
+echo "DB successfully initialized with backups/latest/db-dumps/mysql-mage.sql"
