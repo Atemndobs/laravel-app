@@ -7,6 +7,7 @@ use App\Models\Song;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use function Psy\debug;
 
 class MoodAnalysisService
@@ -17,7 +18,8 @@ class MoodAnalysisService
     public function getAnalysis(string $slug): array
     {
         $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('BASE_URL');
-        $nest_port = env('APP_ENV') == 'local' ? ':3000' : env('NEST_PORT');
+        $base_url =  env('BASE_URL');
+        $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
         $nest_base_url = $base_url . ":$nest_port";
         Log::info(json_encode([
             'process' => 'MoodAnalysisService::getAnalysis',
@@ -27,8 +29,16 @@ class MoodAnalysisService
         ]));
 
         $existingSong = Song::query()->where('slug', '=', $slug)->first();
-
-        if (!$existingSong) {
+        // Check song from s3 storage
+        $existOnStorage = $this->checkSongOnStorage($slug);
+        if (!$existingSong && !$existOnStorage) {
+            dump([
+                'status' => "$slug does not exist",
+            ]);
+            Log::warning(json_encode([
+                'message' => "$slug does not exist",
+                'status' => 404,
+            ]));
             return [
                 'status' => "$slug does not exist",
             ];
@@ -37,12 +47,13 @@ class MoodAnalysisService
         /**
          * @var Song $existingSong
          */
-        if ($existingSong->analyzed) {
+        if ($existingSong && $existingSong->analyzed == 1) {
             dump([
                 'analyzed' => $existingSong->analyzed,
                 'Existing' => $existingSong->status,
             ]);
             Log::info(json_encode([
+                'message' => 'Song already analyzed',
                 'analyzed' => $existingSong->analyzed,
                 'Existing' => $existingSong->status,
             ]));
@@ -109,5 +120,15 @@ class MoodAnalysisService
         }
 
         return $unClassified;
+    }
+
+    private function checkSongOnStorage(string $slug) : bool
+    {
+        if (Storage::disk('s3')->exists("music/$slug")) {
+            dump("Song exists on storage");
+            return true;
+        }
+        dump("Song does not exist on storage");
+        return false;
     }
 }
