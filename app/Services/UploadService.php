@@ -9,6 +9,7 @@ use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -219,7 +220,7 @@ class UploadService
         $storage_path = Storage::cloud()->url("curator/music/$file_name");
         // delete  file from local storage
         Storage::delete($full_path);
-        
+
         $api_url = env('APP_URL').'/api/songs/match/';
         $slug = Str::slug($file_name, '_');
         $song->path = $storage_path;
