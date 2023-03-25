@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
      */
     public function getAllObjects(string $dir = ''): array
     {
+        dd($this->disk);
         return $this->disk->allFiles($dir);
     }
 
