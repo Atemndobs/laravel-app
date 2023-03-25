@@ -115,11 +115,11 @@ class SongUpdatePathCommand extends Command
         foreach ($songs as $song) {
             $fileName = basename($song->path);
             if ($dir === 'music') {
-                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
+/*                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
                     $this->error("file not found | " . $fileName);
                     $missingSongs[] = $song->title ." | " .  $fileName;
                     continue;
-                }
+                }*/
                 $songPath = Storage::cloud()->url("curator/$dir/" . $fileName);
                 $this->info("new path | " . $songPath);
                 $song->path = $songPath;
