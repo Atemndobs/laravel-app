@@ -1,7 +1,9 @@
 #!/bin/bash
+echo "Patch MeiliSearch"
+sh scripts/patch_meilisearch.sh
 
-cp patches/AwsS3V3Adapter.php vendor/laravel/framework/src/Illuminate/Filesystem/AwsS3V3Adapter.php
-cp patches/FilesystemAdapter.php  vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemAdapter.php
-
-cp patches/Filesystem.php vendor/league/flysystem/src/Filesystem.php
-
+echo "Update Paths, images and related_songs for Songs"
+php artisan song:path -f related_songs -i mage --dry-run
+rm -rf vendor
+rm -f composer.lock
+composer install

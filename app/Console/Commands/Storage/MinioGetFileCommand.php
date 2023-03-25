@@ -39,27 +39,6 @@ class MinioGetFileCommand extends Command
         $dir = $dir ?? 'music';
 
         if ($file !== null){
-            dump([
-                "GET FILE COMMAND",
-                'AWS_URL' => env('AWS_URL'),
-                'url' => config('filesystems.disks.s3.url'),
-                'path' => config('filesystems.disks.s3.path'),
-                'bucket' => config('filesystems.disks.s3.bucket'),
-                'client' =>
-                    [
-                        'key' => config('filesystems.disks.s3.client.key'),
-                        'secret' => config('filesystems.disks.s3.client.secret'),
-                        'region' => config('filesystems.disks.s3.client.region'),
-                        'version' => config('filesystems.disks.s3.client.version'),
-                    ],
-                'options' =>
-                    [
-                        'ACL' => config('filesystems.disks.s3.options.ACL'),
-                        'CacheControl' => config('filesystems.disks.s3.options.CacheControl'),
-                        'ContentType' => config('filesystems.disks.s3.options.ContentType'),
-                    ],
-            ]);
-
             $this->line("<fg=yellow>Retrieving </>" . "<fg=magenta> $file</>" . "<fg=yellow> from </>" . "<fg=magenta> $dir</>");
             $this->newLine(1 , "Retrieving $file from $dir");
             $file = $minioService->getAudio($filename, $dir);
