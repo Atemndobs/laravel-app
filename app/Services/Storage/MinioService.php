@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Storage;
      */
     public function getAllObjects(string $dir = ''): array
     {
-        dd($this->disk);
+        // loging to aws cli
         return $this->disk->allFiles($dir);
     }
 
