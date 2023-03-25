@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Redis;
-use MeiliSearch\Client;
+use MeiliSearch\Http\Client;
 use MeiliSearch\Contracts\DocumentsQuery;
 use function example\int;
 
 class MeilesearchSongController extends Controller
 {
-    public \MeiliSearch\Client $client;
+    public Client $client;
 
     public function __construct()
     {
@@ -26,23 +25,19 @@ class MeilesearchSongController extends Controller
         $query =
             [
                 'filter' => [
-                ['status != deleted'],
-                'analyzed = 1'
-            ],
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
+                    'analyzed = 1'
+                ],
+                'limit' => (int)$limit,
+                'offset' => (int)$offset,
             ];
 
-        try {
-            $search = $this->client->getIndex('songs')
-                ->search('', $query)
-                ->toArray();
-        }catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
 
-        $search['data'] = $search['hits'];
-        unset($search['hits']);
+        try {
+            $search = $this->client->post('/indexes/songs/search', '', $query);
+        }catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+        //unset($search['hits']);
         $search['total'] = $search['estimatedTotalHits'];
         unset($search['estimatedTotalHits']);
         unset($search['processingTimeMs']);
@@ -54,8 +49,6 @@ class MeilesearchSongController extends Controller
         $searchTotal = $search['total'];
         $searchLast = $searchTotal / $limit;
         $search['last'] = (int)$searchLast;
-
-        Redis::set($search['offset'], json_encode($search['data']));
         return response()->json($search);
     }
 
