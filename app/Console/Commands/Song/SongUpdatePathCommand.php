@@ -39,6 +39,8 @@ class SongUpdatePathCommand extends Command
         $dryRun = $this->option('dry-run');
         $identifier = $this->option('identifier');
 
+        $this->info("starting | " . $slug . " | " . $all . " | " . $dir . " | " . $field . " | " . $dryRun . " | " . $identifier) ;
+
         if (strlen($slug) === 0 && $all === false) {
             $this->info('No slug provided');
             return 0;
@@ -69,6 +71,10 @@ class SongUpdatePathCommand extends Command
             return 0;
         }
 
+        $url = env('APP_ENV') == 'local' ? 'http://mage.tech:8899' : env('APP_URL');
+        $storagePath = Storage::cloud()->url("curator/$dir/" );
+        $this->info("storage path | " . $storagePath);
+        $this->info("url | " . $url);
 
         if ($field !== null) {
             // start the progress bar
