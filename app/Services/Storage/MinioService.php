@@ -99,9 +99,10 @@ use Illuminate\Support\Facades\Storage;
     public function getUrl(string $file, string $dir = 'music'): string
     {
         $path = $this->bucket . '/' . $dir . '/' . $file;
-        if ($this->disk->exists($dir . '/' . $file)) {
-            return $this->disk->url($path);
-        }
+//        if ($this->disk->exists($dir . '/' . $file)) {
+//            return $this->disk->url($path);
+//        }
+        return $this->disk->url($path);
         $e = new \Exception('File not found: ' . $path);
         throw new \Exception($e->getMessage());
     }
