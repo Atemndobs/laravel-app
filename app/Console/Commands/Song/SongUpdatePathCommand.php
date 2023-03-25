@@ -123,6 +123,8 @@ class SongUpdatePathCommand extends Command
         foreach ($songs as $song) {
             $fileName = basename($song->path);
             $this->info("file name | " . $fileName);
+            $storage = Storage::disk('s3')->allDirectories();
+            $this->info("storage | " . json_encode($storage));
             $exist = Storage::cloud()->exists("$dir/" . $fileName);
             $this->info("file exist | " . $exist);
             if ($dir === 'music') {
