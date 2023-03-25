@@ -115,10 +115,16 @@ class SongUpdatePathCommand extends Command
             return 0;
         }
 
+
+        $this->info("songs count | " . $songs->count());
+
         $missingSongs = [];
         /** @var Song $song */
         foreach ($songs as $song) {
             $fileName = basename($song->path);
+            $this->info("file name | " . $fileName);
+            $exist = Storage::cloud()->exists("$dir/" . $fileName);
+            $this->info("file exist | " . $exist);
             if ($dir === 'music') {
                 if (!Storage::cloud()->exists("$dir/" . $fileName)) {
                     $this->error("file not found | " . $fileName);
