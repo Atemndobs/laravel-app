@@ -71,11 +71,6 @@ class SongUpdatePathCommand extends Command
             return 0;
         }
 
-        $url = env('APP_ENV') == 'local' ? 'http://mage.tech:8899' : env('APP_URL');
-        $storagePath = Storage::cloud()->url("curator/$dir/" );
-        $this->info("storage path | " . $storagePath);
-        $this->info("url | " . $url);
-
         if ($field !== null) {
             // start the progress bar
             $this->output->progressStart($songs->count());
@@ -115,18 +110,10 @@ class SongUpdatePathCommand extends Command
             return 0;
         }
 
-
-        $this->info("songs count | " . $songs->count());
-
         $missingSongs = [];
         /** @var Song $song */
         foreach ($songs as $song) {
             $fileName = basename($song->path);
-            $this->info("file name | " . $fileName);
-            $storage = Storage::disk('s3')->allDirectories();
-            $this->info("storage | " . json_encode($storage));
-            $exist = Storage::cloud()->exists("$dir/" . $fileName);
-            $this->info("file exist | " . $exist);
             if ($dir === 'music') {
                 if (!Storage::cloud()->exists("$dir/" . $fileName)) {
                     $this->error("file not found | " . $fileName);
