@@ -128,11 +128,11 @@ class SongUpdatePathCommand extends Command
             }
 
             if ($dir === 'images') {
-                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
-                    $this->error("No Image found for  | " . $fileName);
-                    $missingSongs[] = $song->title ." | " .  $fileName;
-                    continue;
-                }
+//                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
+//                    $this->error("No Image found for  | " . $fileName);
+//                    $missingSongs[] = $song->title ." | " .  $fileName;
+//                    continue;
+//                }
                 $songPath = Storage::cloud()->url("curator/$dir/" . $fileName);
                 $this->info("Uploading Image for | " . $songPath);
                 $song->image = $songPath;
