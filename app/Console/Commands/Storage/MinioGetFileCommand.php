@@ -38,6 +38,13 @@ class MinioGetFileCommand extends Command
         $minioService = new MinioService();
         $dir = $dir ?? 'music';
 
+        if ($file !== null){
+            $this->line("<fg=yellow>Retrieving </>" . "<fg=magenta> $file</>" . "<fg=yellow> from </>" . "<fg=magenta> $dir</>");
+            $this->newLine(1 , "Retrieving $file from $dir");
+            $file = $minioService->getAudio($filename, $dir);
+            $this->info($file);
+            return;
+        }
         if ($dir === 'music') {
             if ($all !== false) {
                 $this->info("Retrieving all files from $dir");
