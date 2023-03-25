@@ -44,10 +44,6 @@ class Filesystem implements FilesystemOperator
 
     public function has(string $location): bool
     {
-        dd([
-            "FILE SYSTEM HAS, LOCATION: " => $location,
-            'AWS_URL' => env('AWS_URL'),
-        ]);
         $path = $this->pathNormalizer->normalizePath($location);
 
         return $this->adapter->fileExists($path) || $this->adapter->directoryExists($path);
