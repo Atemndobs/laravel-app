@@ -11,5 +11,5 @@ rm -f composer.lock
 echo "composer install"
 composer install
 
-echo "Patch MeiliSearch"
-sh scripts/patch_meilisearch.sh
+#echo "Patch MeiliSearch"
+#sh scripts/patch_meilisearch.sh

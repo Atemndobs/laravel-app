@@ -47,8 +47,11 @@ class SongSearchCommand extends Command
 
         try {
             $search = $client->post('/indexes/songs/search', $query);
+
+            dd($search);
         }catch (\Exception $e) {
             $this->error($e->getMessage());
+            return 1;
         }
         //unset($search['hits']);
         $search['total'] = $search['estimatedTotalHits'];
