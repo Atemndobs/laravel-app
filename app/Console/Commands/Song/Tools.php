@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Song;
 
 use App\Models\Song;
+use Illuminate\Support\Facades\Storage;
 
 trait Tools
 {
@@ -13,11 +14,22 @@ trait Tools
     public function checkAudioFile(Song $song)
     {
         $path = $song->path;
-        $path = str_replace('http://mage.tech:8899/storage/', '', $path);
-        $path = storage_path('app/public/' .  $path) ;
-        if (file_exists($path)) {
-            return true;
+
+        // Check if song exit in cloud storage
+        try {
+            $exists = Storage::disk('public')->exists($path);
+            if ($exists) {
+                return true;
+            }
+        } catch (\Exception $e) {
+            return false;
         }
+
+//        $path = str_replace('http://mage.tech:8899/storage/', '', $path);
+//        $path = storage_path('app/public/' .  $path) ;
+//        if (file_exists($path)) {
+//            return true;
+//        }
         return false;
     }
 }

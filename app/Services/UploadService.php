@@ -19,7 +19,23 @@ class UploadService
     public string $deletItem = '';
     public array $deletables = [];
     public bool $rclone = false;
+    public array $missingImages = [];
 
+    /**
+     * @return array
+     */
+    public function getMissingImages() : array
+    {
+        return $this->missingImages;
+    }
+
+    /**
+     * @param  string  $missingImage
+     */
+    public function addMissingImages(string $missingImage) : void
+    {
+        $this->missingImages[] = $missingImage;
+    }
     /**
      * @return array
      */
@@ -236,9 +252,11 @@ class UploadService
         $image = substr($file_name, 0, -4);
         $image .= '.jpg';
         $image = "curator/images/$image";
-        // check if image exist in minio
-        if (!Storage::cloud()->exists($image)) {
-            return;
+        try {
+            $image = Storage::cloud()->url($image);
+        } catch (Exception $e) {
+            Log::error("Image not found in minio : $image");
+            $this->addMissingImages($image);
         }
         $image =  Storage::cloud()->url($image);
         $song->image = $image;
