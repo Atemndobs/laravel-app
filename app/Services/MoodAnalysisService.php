@@ -14,6 +14,17 @@ class MoodAnalysisService
 {
     public const BASE_URL = 'http://host.docker.internal:3000';
     public const BASE_DOCKER = 'http://nginx';
+    public array $missingSongs = [];
+
+    public function getMissingSongs(): array
+    {
+        return $this->missingSongs;
+    }
+
+    public function addMissingSongs(string $missingSong): void
+    {
+        $this->missingSongs[] = $missingSong;
+    }
 
     public function getAnalysis(string $slug): array
     {
@@ -67,7 +78,6 @@ class MoodAnalysisService
         $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
         Log::info("Not analyzed songs: $notAnalyzedSongs");
-
         $req = Http::get($nest_url);
         if ($req->json('status') == 'error') {
             dump([
@@ -124,11 +134,21 @@ class MoodAnalysisService
 
     private function checkSongOnStorage(string $slug) : bool
     {
-        if (Storage::disk('s3')->exists("music/$slug")) {
-            dump("Song exists on storage");
-            return true;
+        // try catch block to avaoid error when song does not exist
+        try {
+            $exists = Storage::disk('s3')->exists("music/$slug");
+            if ($exists) {
+                return true;
+            }
+        } catch (\Exception $e) {
+            Log::error(json_encode([
+                'message' => 'Error while checking song on storage',
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]));
+            $this->addMissingSongs($slug);
+            return false;
         }
-        dump("Song does not exist on storage");
         return false;
     }
 }
