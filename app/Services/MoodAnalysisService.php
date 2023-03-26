@@ -28,8 +28,7 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('BASE_URL');
-        $base_url =  env('BASE_URL');
+        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('NEST_URL');
         $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
         $nest_base_url = $base_url . ":$nest_port";
         Log::info(json_encode([
