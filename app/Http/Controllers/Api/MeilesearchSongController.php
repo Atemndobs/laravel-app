@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use MeiliSearch\Http\Client;
 use MeiliSearch\Contracts\DocumentsQuery;
@@ -31,13 +32,27 @@ class MeilesearchSongController extends Controller
                 'offset' => (int)$offset,
             ];
 
+        Log::debug(json_encode([
+            'Method' => 'MeilesearchSongController@getSongs',
+            'Position' => 'Before Try Catch',
+            'query' => $query,
+        ]));
 
         try {
             $search = $this->client->post('/indexes/songs/search', '', $query);
+            Log::debug(json_encode([
+                'location' => 'MeilesearchSongController@getSongs',
+                'response' => $search,
+            ]));
         }catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
         //unset($search['hits']);
+        Log::debug(json_encode([
+            'method' => 'MeilesearchSongController@getSongs',
+            'position' => 'After Try Catch',
+            'RaW - response' => $search,
+        ]));
         $search['total'] = $search['estimatedTotalHits'];
         unset($search['estimatedTotalHits']);
         unset($search['processingTimeMs']);

@@ -48,11 +48,12 @@ class SongSearchCommand extends Command
         try {
             $search = $client->post('/indexes/songs/search', $query);
 
-            dd($search);
+
         }catch (\Exception $e) {
             $this->error($e->getMessage());
             return 1;
         }
+
         //unset($search['hits']);
         $search['total'] = $search['estimatedTotalHits'];
         unset($search['estimatedTotalHits']);
@@ -66,11 +67,23 @@ class SongSearchCommand extends Command
         $searchLast = $searchTotal / $limit;
         $search['last'] = (int)$searchLast;
 
-        dd($search);
+
+        $hits = [];
+        foreach ($search['hits'] as $hit) {
+            $hits[] = [
+                'id' => $hit['id'],
+                'author' => $hit['author'],
+                'title' => $hit['title'],
+                'path' => $hit['path'],
+            ];
+        }
+        // return search results in a table
+        $this->table(['id', 'author', 'title', 'path'], $hits);
+
 
 
         // Search Song from Database
-        $searchService = new SongSearchService();
+/*        $searchService = new SongSearchService();
         $source = $this->argument('source');
         $site = $this->option('site');
         $artist = $this->option('artist');
@@ -82,9 +95,8 @@ class SongSearchCommand extends Command
 
         if ($source === 'web') {
             $res = $searchService->searchWebSite($site, $artist, $title);
-        }
+        }*/
 
-        dump($res);
 
         return 0;
     }

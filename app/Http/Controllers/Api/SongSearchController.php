@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Song;
 use App\Services\Birdy\MeiliSearchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SongSearchController extends Controller
 {
@@ -32,10 +33,19 @@ class SongSearchController extends Controller
      */
     public function searchSong()
     {
+        //log te request
+        Log::debug(json_encode([
+            'location' => 'SongSearchController@searchSong',
+            'request' => $this->request->all(),
+        ])) ;
         $response = Song::search($this->request->get('query'), [
             'filter' => "status != 'deleted'",
             'sort' => ['bpm:asc'],
         ]);
+        Log::debug(json_encode([
+            'location' => 'SongSearchController@searchSong',
+            'response' => $response,
+        ])) ;
 
         return response($response);
     }
