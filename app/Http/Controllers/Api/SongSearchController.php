@@ -34,7 +34,7 @@ class SongSearchController extends Controller
     public function searchSong()
     {
         //log te request
-        Log::debug(json_encode([
+        Log::info(json_encode([
             'location' => 'SongSearchController@searchSong',
             'request' => $this->request->all(),
         ])) ;
@@ -42,7 +42,7 @@ class SongSearchController extends Controller
             'filter' => "status != 'deleted'",
             'sort' => ['bpm:asc'],
         ]);
-        Log::debug(json_encode([
+        Log::info(json_encode([
             'location' => 'SongSearchController@searchSong',
             'response' => $response,
         ])) ;
