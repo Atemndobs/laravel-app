@@ -32,7 +32,7 @@ class MeilesearchSongController extends Controller
                 'offset' => (int)$offset,
             ];
 
-        Log::debug(json_encode([
+        Log::info(json_encode([
             'Method' => 'MeilesearchSongController@getSongs',
             'Position' => 'Before Try Catch',
             'query' => $query,
@@ -40,7 +40,7 @@ class MeilesearchSongController extends Controller
 
         try {
             $search = $this->client->post('/indexes/songs/search', '', $query);
-            Log::debug(json_encode([
+            Log::info(json_encode([
                 'location' => 'MeilesearchSongController@getSongs',
                 'response' => $search,
             ]));
@@ -48,7 +48,7 @@ class MeilesearchSongController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
         //unset($search['hits']);
-        Log::debug(json_encode([
+        Log::info(json_encode([
             'method' => 'MeilesearchSongController@getSongs',
             'position' => 'After Try Catch',
             'RaW - response' => $search,
