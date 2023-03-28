@@ -232,6 +232,9 @@ class UploadService
         $full_path =  "storage/app/public/$path_to_store/$file_name";     //
         // rename file to full path and save on minio
         rename($file, $full_path);
+
+        Storage::cloud()->put("/curator/music/$file_name", file_get_contents($full_path));
+        dd($full_path);
         Storage::cloud()->put("music/$file_name", file_get_contents($full_path));
         $storage_path = Storage::cloud()->url("curator/music/$file_name");
         // delete  file from local storage
@@ -254,7 +257,7 @@ class UploadService
         $image = "curator/images/$image";
         try {
             $image = Storage::cloud()->url($image);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Log::error("Image not found in minio : $image");
             $this->addMissingImages($image);
         }

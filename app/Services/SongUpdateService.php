@@ -85,6 +85,7 @@ class SongUpdateService
     public function getFilePath(Song $song): string
     {
         $path = $song->path;
+        // extract
         return str_replace('http://mage.tech:8899/storage/', '', $path);
     }
 

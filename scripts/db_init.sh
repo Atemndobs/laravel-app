@@ -13,16 +13,3 @@ composer install
 
 #echo "Patch MeiliSearch"
 #sh scripts/patch_meilisearch.sh
-
-  "query" => ""
-  "processingTimeMs" => 0
-  "limit" => 10
-  "offset" => 0
-  "estimatedTotalHits" => 1000
-
-
-  "query" => ""
-  "processingTimeMs" => 0
-  "limit" => 10
-  "offset" => 0
-  "estimatedTotalHits" => 1000

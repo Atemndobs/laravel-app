@@ -24,7 +24,6 @@ trait Tools
         } catch (\Exception $e) {
             return false;
         }
-
 //        $path = str_replace('http://mage.tech:8899/storage/', '', $path);
 //        $path = storage_path('app/public/' .  $path) ;
 //        if (file_exists($path)) {
