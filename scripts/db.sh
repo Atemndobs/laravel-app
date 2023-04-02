@@ -26,7 +26,7 @@ SET collation_server = utf8mb3_general_ci;
 "
 
 
-docker exec -it mariadb_slave_1 mysql -uroot -pmage mysql -e "
+docker exec -it mariadb_slave_1 mysql -umage -pmage mysql -e "
 use mysql;
 ALTER USER 'root'@'%' IDENTIFIED BY 'mage';FLUSH PRIVILEGES;
 DROP user IF EXISTS 'mage'@'%';

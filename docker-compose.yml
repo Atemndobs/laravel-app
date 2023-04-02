@@ -25,11 +25,6 @@ services:
     php-fpm:
         container_name: php-fpm
         image: atemndobs/laravel-php-fpm:v1.8.3
-#        build:
-#            context: ./docker/php-fpm
-#            args:
-#                WWWGROUP: 1000
-#                WWWUSER: "atem"
         volumes:
             - "${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}"
             #- "./docker/php-fpm/scdl.cfg:/root/.config/scdl/scdl.cfg"
@@ -106,25 +101,6 @@ services:
             - sail
         environment:
             TZ: 'Europe/Berlin'
-
-    traefik:
-        image: "traefik:v2.9"
-        container_name: "traefik"
-        command:
-            - "--log.level=DEBUG"
-            - "--api.insecure=true"
-            - "--providers.docker=true"
-            - "--providers.docker.exposedbydefault=false"
-            - "--entrypoints.web.address=:80"
-        ports:
-            - "81:80"
-            - "8055:8080"
-        volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock:ro"
-            - ./letsencrypt:/letsencrypt2
-        networks:
-            - sail
-
     essentia:
         image: atemndobs/essentia:v1.0
 #        build:
@@ -135,15 +111,6 @@ services:
         volumes:
             - ./storage/app/public/data:/app/data
             - ./storage/app/public/essentia:/essentia
-        networks:
-            - sail
-    whoami:
-        image: "traefik/whoami"
-        container_name: "simple-service"
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
-            - "traefik.http.routers.whoami.entrypoints=web"
         networks:
             - sail
 networks:
