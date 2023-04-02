@@ -74,7 +74,7 @@ use Illuminate\Support\Facades\Storage;
     }
 
     /**
-     * @param string $contents
+     * @param string $contents | file path
      * @param string $dir
      * @return string
      * @throws \Exception
@@ -88,7 +88,7 @@ use Illuminate\Support\Facades\Storage;
         }catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
-        return $this->disk->url($dir . '/' . $filename );
+        return $this->getUrl($filename, $dir);
     }
 
     /**
@@ -100,13 +100,6 @@ use Illuminate\Support\Facades\Storage;
     public function getUrl(string $file, string $dir = 'music'): string
     {
         $path = $this->bucket . '/' . $dir . '/' . $file;
-/*        if ($this->disk->exists($dir . '/' . $file)) {
-            return $this->disk->url($path);
-        }*/
-
-      /*  $e = new \Exception('File not found: ' . $path);
-        throw new \Exception($e->getMessage());*/
-
         return $this->disk->url($path);
     }
 

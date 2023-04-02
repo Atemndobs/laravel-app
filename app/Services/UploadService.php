@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\ClassifySongJob;
 use App\Models\Song;
+use App\Services\Storage\MinioService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\File;
@@ -216,9 +217,10 @@ class UploadService
     }
 
     /**
-     * @param  mixed  $file
-     * @param  Song  $song
+     * @param mixed $file
+     * @param Song $song
      * @return array|mixed|string|string[]
+     * @throws \Exception
      */
     protected function getFullSongPath(mixed $file, Song $song): mixed
     {
@@ -232,13 +234,19 @@ class UploadService
         $full_path =  "storage/app/public/$path_to_store/$file_name";     //
         // rename file to full path and save on minio
         rename($file, $full_path);
-
-        Storage::cloud()->put("/curator/music/$file_name", file_get_contents($full_path));
-        dd($full_path);
-        Storage::cloud()->put("music/$file_name", file_get_contents($full_path));
-        $storage_path = Storage::cloud()->url("curator/music/$file_name");
+        $storageService = new MinioService();
+        $storage_path = $storageService->putObject($full_path, );
         // delete  file from local storage
         Storage::delete($full_path);
+
+        $message = [
+            'FILE NAME' => $file_name,
+            'FULL PATH' => $full_path,
+            'FILE CLOUD EXISTS' => $storage_path,
+            'FILE LOCAL EXISTS' => Storage::exists($full_path) ?? false,
+        ];
+        Log::info(json_encode($message));
+        dump($message);
 
         $api_url = env('APP_URL').'/api/songs/match/';
         $slug = Str::slug($file_name, '_');
@@ -268,7 +276,7 @@ class UploadService
     private function checkExistingSongStorage(?string $path) : bool
     {
 
-        $base_url = env('APP_ENV') == 'local' ? 'http://nginx' : env('APP_URL');
+        $base_url = env('APP_ENV') == 'local' ? env('BASE_DOCKER_URL') : env('APP_URL');
         $url = str_replace('mage.tech', 'host.docker.internal', $path);
         Log::info("Checking Song from Storage : $path");
 

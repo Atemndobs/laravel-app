@@ -16,7 +16,7 @@ echo "DB initialized"
 echo "DB successfully initialized with backups/latest/db-dumps/mysql-mage.sql"
 
 echo "Update Paths, images and related_songs for Songs"
-a song:path -f related_songs -i mage --dry-run
+mariadb_slave_1
 
 a song:path -d music
 a song:path -d images

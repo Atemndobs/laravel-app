@@ -13,7 +13,7 @@ use function Psy\debug;
 class MoodAnalysisService
 {
     public const BASE_URL = 'http://host.docker.internal:3000';
-    public const BASE_DOCKER = 'http://nginx';
+    public const BASE_DOCKER = 'http://nestjs_api_prod';
     public array $missingSongs = [];
 
     public function getMissingSongs(): array
@@ -28,7 +28,7 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('NEST_URL');
+        $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
         $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
         $nest_base_url = $base_url . ":$nest_port";
         Log::info(json_encode([
@@ -77,7 +77,9 @@ class MoodAnalysisService
         $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
         Log::info("Not analyzed songs: $notAnalyzedSongs");
+        dump("Not analyzed songs: $notAnalyzedSongs");
         $req = Http::get($nest_url);
+
         if ($req->json('status') == 'error') {
             dump([
                 'status' => 'error',
