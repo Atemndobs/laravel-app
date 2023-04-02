@@ -10,6 +10,7 @@ use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -108,8 +109,25 @@ class UploadService
         $response = [];
         $this->deletables = [];
         foreach ($tracks as $file) {
+            $slug = Str::slug(last(explode('/', $file)), '_');
+            /** @var Song $existingSong */
+            $existingSong = Song::query()->where('slug', $slug)->first();
+            if ($existingSong) {
+                $response[] = [
+                    'file' => $file,
+                    'id' => $existingSong->id,
+                    'title' => $existingSong->title,
+                    'slug' => $existingSong->slug,
+                    'path' => $existingSong->path,
+                ];
+                Log::warning('Song already exists: '. $slug);
+                continue;
+            }
             $song = new Song();
             try {
+                dump([
+                    'file' => $file,
+                ]);
                 $file_name = $this->getFullSongPath($file, $song);
             } catch (\Exception $e) {
                 $error[] = [
@@ -118,19 +136,6 @@ class UploadService
                 ];
                 dump([$error]);
                 Log::error($e->getMessage());
-                continue;
-            }
-            $existingSong = $this->getExistingSong($song);
-            if ($existingSong) {
-                $response[] = [
-                    'file' => $file,
-                    'file_name' => $file_name,
-                    'id' => $existingSong->id,
-                    'title' => $existingSong->title,
-                    'slug' => $existingSong->slug,
-                    'path' => $existingSong->path,
-                ];
-                Log::warning('Song already exists: '.$file_name);
                 continue;
             }
 
