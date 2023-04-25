@@ -21,7 +21,7 @@ class DbBackupCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Back up the Database and delete old backups if needed | Shows list of backups and uses the backup:run --only-db command';
 
     /**
      * Execute the console command.

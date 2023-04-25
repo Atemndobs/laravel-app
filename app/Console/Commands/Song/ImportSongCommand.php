@@ -6,7 +6,6 @@ use App\Jobs\ClassifySongJob;
 use App\Models\Catalog;
 use App\Models\Song;
 use App\Services\MoodAnalysisService;
-use App\Services\Strapi\StrapiSongService;
 use App\Services\UploadService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +53,6 @@ class ImportSongCommand extends Command
             $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
         }
 
-        $uploadService->importSongs($audioFiles);
         try {
             $this->info('Purging queue classify' );
             $this->call('rabbitmq:queue-purge', ['queue' => 'classify']);

@@ -36,14 +36,11 @@ class MatchSongController extends Controller
         $this->birdyMatchService = $birdyMatchService;
     }
 
-    /**
-     * @return array|string[]
-     */
-    public function getSongMatch()
-    {
-        $title = $this->request->title;
-        $res = $this->birdyMatchService->getSongmatch($title);
 
+    public function getSongMatch(Request $request)
+    {
+        $slug = $request->input('slug');
+        $res = $this->birdyMatchService->getSongmatch($slug);
         return response($res);
     }
 
