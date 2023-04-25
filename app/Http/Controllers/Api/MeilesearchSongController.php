@@ -36,7 +36,7 @@ class MeilesearchSongController extends Controller
             'Method' => 'MeilesearchSongController@getSongs',
             'Position' => 'Before Try Catch',
             'query' => $query,
-            'response' =>  $this->client->post('/indexes/songs/search', $query)
+          //  'response' =>  $this->client->post('/indexes/songs/search', $query)
         ]));
 
         try {

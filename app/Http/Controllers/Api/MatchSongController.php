@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Song;
 use App\Services\Birdy\BirdyMatchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MatchSongController extends Controller
 {
@@ -37,11 +38,24 @@ class MatchSongController extends Controller
     }
 
 
-    public function getSongMatch(Request $request)
+    public function getSongMatch()
     {
-        $slug = $request->input('slug');
-        $res = $this->birdyMatchService->getSongmatch($slug);
-        return response($res);
+        $slug = $this->request->input('slug');
+        $limit = $this->request->limit ?? 10;
+        $search = $this->birdyMatchService->getSongmatch($slug);
+
+        Log::info(json_encode([
+            'method' => 'MatchSongController@getSongsMatch',
+            'position' => 'After Try Catch',
+            'limit' => $limit,
+            'RaW - response' => $search,
+        ]));
+        $search['limit'] = (int)$limit;
+
+        // limit results to $limit
+        $search['hits'] = array_slice($search['hits'], 0, $limit);
+        
+        return response($search);
     }
 
     /**
