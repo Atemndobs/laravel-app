@@ -56,13 +56,14 @@ class Image extends Command
             Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage, $base_url) {
 
                 if ($song->image !== null && $song->image !== '') {
-                    //change  http://127.0.0.1:3000/music/burna_boy_bank_on_it_justnaijacommp3.jpeg
-                    //to  http://mage.tech:8899/storage/images/burna_boy_bank_on_it_justnaijacom.mp3
-                    $imageUrl = str_replace('127.0.0.1:3000/music', "$base_url/storage/images", $song->image);
+//                    $imageUrl = str_replace('127.0.0.1:3000/music', "$base_url/storage/images", $song->image);
+//                    $song->image = $imageUrl;
+//                    $song->save();
+//                    $imageUrl = str_replace('mage.tech:8899', $base_url, $song->image);
+                    // get image from song and  change extension from .mp3 to .jpg
+                    $imageUrl = str_replace('.mp3', '.jpeg', $song->image);
                     $song->image = $imageUrl;
                     $song->save();
-                    $imageUrl = str_replace('mage.tech:8899', $base_url, $song->image);
-
                     try {
                         $this->info('Processing song: ' . $song->title);
                         $req = Http::get($imageUrl);
@@ -71,29 +72,24 @@ class Image extends Command
                             $this->info('Image is valid' . $req->status());
                             $songsWithImage[] = [
                                 'title' => $song->title,
-                                'image' => $song->image,
+                                'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
                             dump($songsWithImage);
                         } else {
                             $this->error($req->status());
                             $this->error('Image is not valid');
-                            $song->image = '';
-                            $song->save();
                             $songsWithoutImage[] = [
                                 'title' => $song->title,
-                                'image' => $song->image,
+                                'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
                         }
                     } catch (\Exception $e) {
-                        $songsWithoutImage[] = $song->title;
                         $this->error('Error: ' . $e->getMessage());
-                        $song->image = '';
-                        $song->save();
                         $songsWithoutImage[] = [
                             'title' => $song->title,
-                            'image' => $song->image,
+                            'image' => $imageUrl,
                             'path' => $song->path,
                         ];
                     }
@@ -103,6 +99,27 @@ class Image extends Command
                 }
             });
         }
+
+        // create a file and save all songs without image
+        if ($path !== null) {
+            $this->info('Creating file');
+            $file = fopen("$path/songs_without_image.txt", 'w');
+            foreach ($songsWithoutImage as $song) {
+                fputcsv($file, [$song['image']] );
+            }
+            fclose($file);
+        }
+
+        if ($path !== null) {
+            $this->info('Creating file');
+            $file = fopen("$path/songs_with_image.txt", 'w');
+            foreach ($songsWithImage as $song) {
+                fputcsv($file, [$song['image']] );
+            }
+            fclose($file);
+        }
+
+
 
         dump([
             'songsWithImage' => $songsWithImage,
