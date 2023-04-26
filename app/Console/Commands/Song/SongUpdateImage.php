@@ -14,10 +14,10 @@ class SongUpdateImage extends Command
      *
      * @var string
      */
-    protected $signature = 'song:image {slug?}';
+    protected $signature = 'song:image {slug?}  {--p|path=} ';
 
     /**
-     * The console command description.
+     * The console command description
      *
      * @var string
      */
@@ -31,6 +31,9 @@ class SongUpdateImage extends Command
     public function handle()
     {
         $slug = $this->argument('slug');
+        $path = $this->option('path');
+
+
         if (strlen($slug) === 0) {
             // info updating all songs without image
             $songs = Song::query()
@@ -40,8 +43,30 @@ class SongUpdateImage extends Command
 
             $service = new SongUpdateService();
             $updatedSongs = [];
-            foreach ($songs as $song) {
 
+            if ($slug !== null) {
+                $this->info("updating image for |  ".$slug);
+                $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
+                $updatedSongs['image'] = $service->getSongImage($song)->image;
+                return 0;
+            }
+
+            // read all songs without image from file path $path
+            if ($path !== null) {
+                $this->info("updating image for |  ".$path);
+                $songsWithoutImage = file_get_contents($path);
+                $songsWithoutImage = explode("\n", $songsWithoutImage);
+
+                foreach ($songsWithoutImage as $slug) {
+                    $this->info("updating image for |  ".$slug);
+                    $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
+
+                    $updatedSongs['image'] = $service->getSongImage($song)->image;
+                }
+                return 0;
+            }
+
+            foreach ($songs as $song) {
                 $this->info("updating image for |  ".$song->slug);
                 $updatedSongs['image'] = $service->getSongImage($song)->image;
             }

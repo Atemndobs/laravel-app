@@ -6,7 +6,9 @@ use App\Models\Song;
 use App\Services\Birdy\SpotifyService;
 use Illuminate\Console\Command;
 
-class SpotifySongDownloadCommand extends Command
+class
+
+SpotifySongDownloadCommand extends Command
 {
     /**
      * The name and signature of the console command.

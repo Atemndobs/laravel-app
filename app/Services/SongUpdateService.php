@@ -6,9 +6,12 @@ use App\Models\Song;
 use App\Services\Scraper\SoundcloudService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\ArrayShape;
+use Sarfraznawaz2005\ServerMonitor\Senders\Log;
 
 class SongUpdateService
 {
@@ -234,9 +237,16 @@ class SongUpdateService
      */
     public function getAnalyze(mixed $songPath): array
     {
-        $path = str_replace('http://mage.tech:8899/storage/', '', $songPath);
+        // check if path contains http://mage.tech:8899/storage/
+        $path = str_contains($songPath, 'http://mage.tech:8899/storage/') ?
+            str_replace('http://mage.tech:8899/storage/', '', $songPath) :
+            $songPath;
+
+        // if path does not start wtth http, it must be local
+        $path = str_contains($path, 'http') ? $path : "storage/app/public/$path";
+
         $getID3 = new \getID3;
-        $fileInfo = $getID3->analyze("storage/app/public/$path");
+        $fileInfo = $getID3->analyze($path);
         return $fileInfo;
     }
 
@@ -327,22 +337,41 @@ class SongUpdateService
      * @param string $file
      * @return string|null
      */
-    public function getExistingImageFromFile(string $file, string $slug = null): string | null
+    public function getExistingImageFromFile(string $file, string $slug = null): string | null| array
     {
-        $imageName = str_replace('mp3', 'jpg', $file);
-        $imageName = str_replace('audio/', 'images/', $imageName);
-        $imagePath = Storage::path("public/$imageName");
-        $altImage = str_replace('.', '', $file);
-        $altImage = str_replace('audio/', 'images/', $altImage);
-        $altImage = $altImage . '.jpeg';
-        $altImagePath = Storage::path("public/$altImage");
-
-        if (file_exists($imagePath)) {
-            return 'http://mage.tech:8899/' ."storage/" .  $imageName;
-        }elseif (file_exists($altImagePath)){
-            return 'http://mage.tech:8899/' ."storage/" .  $altImage;
+        //dd(shell_exec("ffmpeg -i $file -an -vcodec copy -f image2 -y storage/app/public/images/$slug.jpg"));
+        $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', 'storage/app/public/images/' . $slug . '.jpeg']);
+        if (!$process->successful() ){
+            dump(['error' => $process->errorOutput()]);
+            \Illuminate\Support\Facades\Log::critical("Fail to get image from file $file   |  slug : $slug");
+            return null;
         }
-        return null;
+        // ls image
+        $image = Process::run(['ls', 'storage/app/public/images/' . $slug . '.jpg']);
+        if ($image === null) {
+            return null;
+        }
+
+        // $image = Process::run(['aws', 's3', 'cp', 'storage/app/public/images/' . $slug . '.jpg', 's3://mage-music/images/' . $slug . '.jpg']);
+
+        // upload image to cloud storage
+        $storage = Storage::cloud();
+        try {
+            $storage->put('images/' . $slug . '.jpg', file_get_contents('storage/app/public/images/' . $slug . '.jpg'));
+            // get image url
+            $image = $storage->url('curator/images/' . $slug . '.jpg');
+            // check if image exists
+            $image = Http::get($image);
+            if ($image->status() !== 200) {
+                dump('image does not exist');
+            }
+          //  dump($image->status() . "SUCCESS");
+        }catch (\Exception $e){
+            \Illuminate\Support\Facades\Log::critical($e->getMessage());
+            dump($e->getMessage());
+            return null;
+        }
+        return $image;
     }
 
     /**
@@ -351,15 +380,11 @@ class SongUpdateService
      */
     public function getSongImage(Song $song): Song
     {
-        $file = $this->getFilePath($song);
-        $image = $song->image;
-        if ($image == null || (int)$image == 0) {
-            $imagePath = $this->getExistingImageFromFile($file, $song->slug);
-            if(!$imagePath) {
-                $this->getSongDetailsFromSoundCloud($song);
-            }
-            $song->image = $imagePath;
-            $song->save();
+        $file = $song->path;
+        $image = $this->getExistingImageFromFile($file, $song->slug);
+        if ($image === null) {
+            $song->image = null;
+            return $song;
         }
         return $song;
     }

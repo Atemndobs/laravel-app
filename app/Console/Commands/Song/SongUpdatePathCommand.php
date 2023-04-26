@@ -6,6 +6,7 @@ use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Psy\Util\Str;
 use function example\int;
 use function PHPUnit\Framework\isFalse;
 
@@ -133,7 +134,12 @@ class SongUpdatePathCommand extends Command
 //                    $missingSongs[] = $song->title ." | " .  $fileName;
 //                    continue;
 //                }
-                $songPath = Storage::cloud()->url("curator/$dir/" . $fileName);
+
+                $imageName = \Illuminate\Support\Str::slug($fileName , '_');
+                $imageName = $imageName. '.jpeg';
+
+
+                $songPath = Storage::cloud()->url("curator/$dir/" . $imageName);
                 $this->info("Uploading Image for | " . $songPath);
                 $song->image = $songPath;
                 $song->save();

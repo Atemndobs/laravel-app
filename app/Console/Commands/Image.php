@@ -71,7 +71,7 @@ class Image extends Command
                         if ($req->successful()) {
                             $this->info('Image is valid' . $req->status());
                             $songsWithImage[] = [
-                                'title' => $song->title,
+                                'slug' => $song->slug,
                                 'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
@@ -80,7 +80,7 @@ class Image extends Command
                             $this->error($req->status());
                             $this->error('Image is not valid');
                             $songsWithoutImage[] = [
-                                'title' => $song->title,
+                                'slug' => $song->slug,
                                 'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
@@ -88,7 +88,7 @@ class Image extends Command
                     } catch (\Exception $e) {
                         $this->error('Error: ' . $e->getMessage());
                         $songsWithoutImage[] = [
-                            'title' => $song->title,
+                            'slug' => $song->slug,
                             'image' => $imageUrl,
                             'path' => $song->path,
                         ];
@@ -105,7 +105,7 @@ class Image extends Command
             $this->info('Creating file');
             $file = fopen("$path/songs_without_image.txt", 'w');
             foreach ($songsWithoutImage as $song) {
-                fputcsv($file, [$song['image']] );
+                fputcsv($file, [$song['slug']] );
             }
             fclose($file);
         }
@@ -114,7 +114,7 @@ class Image extends Command
             $this->info('Creating file');
             $file = fopen("$path/songs_with_image.txt", 'w');
             foreach ($songsWithImage as $song) {
-                fputcsv($file, [$song['image']] );
+                fputcsv($file, [$song['slug']] );
             }
             fclose($file);
         }
