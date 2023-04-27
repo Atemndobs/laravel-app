@@ -56,19 +56,17 @@ class Image extends Command
             Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage, $base_url) {
 
                 if ($song->image !== null && $song->image !== '') {
-//                    $imageUrl = str_replace('127.0.0.1:3000/music', "$base_url/storage/images", $song->image);
-//                    $song->image = $imageUrl;
-//                    $song->save();
-//                    $imageUrl = str_replace('mage.tech:8899', $base_url, $song->image);
-                    // get image from song and  change extension from .mp3 to .jpg
                     $imageUrl = str_replace('.mp3', '.jpeg', $song->image);
-                    $song->image = $imageUrl;
-                    $song->save();
+
+                 //   dd($imageUrl);
+
                     try {
                         $this->info('Processing song: ' . $song->title);
                         $req = Http::get($imageUrl);
 
                         if ($req->successful()) {
+                            $song->image = $imageUrl;
+                            $song->save();
                             $this->info('Image is valid' . $req->status());
                             $songsWithImage[] = [
                                 'slug' => $song->slug,
@@ -79,6 +77,8 @@ class Image extends Command
                         } else {
                             $this->error($req->status());
                             $this->error('Image is not valid');
+                            $song->image = null;
+                            $song->save();
                             $songsWithoutImage[] = [
                                 'slug' => $song->slug,
                                 'image' => $imageUrl,
