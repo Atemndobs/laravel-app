@@ -117,11 +117,6 @@ class SongUpdatePathCommand extends Command
         foreach ($songs as $song) {
             $fileName = basename($song->path);
             if ($dir === 'music') {
-/*                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
-                    $this->error("file not found | " . $fileName);
-                    $missingSongs[] = $song->title ." | " .  $fileName;
-                    continue;
-                }*/
                 $songPath = Storage::cloud()->url("curator/$dir/" . $fileName);
                 $this->info("new path | " . $songPath);
                 $song->path = $songPath;
@@ -141,7 +136,6 @@ class SongUpdatePathCommand extends Command
                 $req = Http::get($songPath);
                 // check if image exists
                 if (!$req->successful()) {
-
                     $this->error("No Image found for  | " . $fileName);
                     $missingSongs[] = $song->title ." | " .  $fileName;
                     $song->image = null;
@@ -154,6 +148,10 @@ class SongUpdatePathCommand extends Command
 
         }
         dump($missingSongs);
+        dump([
+            'allSongs' => $songs->count(),
+            'missingSongs' => count($missingSongs),
+        ]);
         info(json_encode($missingSongs));
 
         return 0;
