@@ -5,6 +5,7 @@ namespace App\Console\Commands\Song;
 use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Psy\Util\Str;
 use function example\int;
@@ -129,11 +130,6 @@ class SongUpdatePathCommand extends Command
             }
 
             if ($dir === 'images') {
-//                if (!Storage::cloud()->exists("$dir/" . $fileName)) {
-//                    $this->error("No Image found for  | " . $fileName);
-//                    $missingSongs[] = $song->title ." | " .  $fileName;
-//                    continue;
-//                }
 
                 $imageName = \Illuminate\Support\Str::slug($fileName , '_');
                 $imageName = $imageName. '.jpeg';
@@ -141,11 +137,15 @@ class SongUpdatePathCommand extends Command
 
                 $songPath = Storage::cloud()->url("curator/$dir/" . $imageName);
                 $this->info("Uploading Image for | " . $songPath);
+
+                $req = Http::get($songPath);
                 // check if image exists
-                if (!Storage::cloud()->exists("curator/$dir/" . $imageName)) {
+                if (!$req->successful()) {
+
                     $this->error("No Image found for  | " . $fileName);
                     $missingSongs[] = $song->title ." | " .  $fileName;
                     $song->image = null;
+                    $song->save();
                     continue;
                 }
                 $song->image = $songPath;

@@ -10,6 +10,8 @@
 #echo "Patch MeiliSearch"
 #sh scripts/patch_meilisearch.sh
 
+rm -rf /var/www/html/storage/logs/*
+
 /usr/bin/mysql --host=mariadb-galera.curator.svc.cluster.local --port=3306 -uroot -pmage mysql -e";
 ALTER USER 'root'@'%' IDENTIFIED BY 'mage';FLUSH PRIVILEGES;
 DROP user IF EXISTS 'mage'@'%';
@@ -33,3 +35,6 @@ php artisan song:path -d images
 php artisan song:path -f related_songs -i mage
 
 echo "Update Paths, images and related_songs for Songs"
+
+# remove all log files
+rm -rf /var/www/html/storage/logs/*
