@@ -55,6 +55,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
             ->everyMinute()
             ->withoutOverlapping()
+            ->description('Indexing songs')
             ->appendOutputTo('storage/logs/indexer.log');
 
         $schedule->command(RunHealthChecksCommand::class)

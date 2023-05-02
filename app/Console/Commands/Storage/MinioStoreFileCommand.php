@@ -14,21 +14,21 @@ class MinioStoreFileCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'minio:put {--f|file=} {--d|dir=}';
+    protected $signature = 'minio:put {--f|files=} {--d|dir=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Store files from Minio S3';
+    protected $description = 'Store files from Minio S3, file content or directory can be specified with --files and dir is the destination directory';
 
     /**
      * Execute the console command.
      */
     public function handle(): void
     {
-        $content = $this->option('file');
+        $content = $this->option('files');
         $dir = $this->option('dir');
 
         if (!$content && !$dir) {
@@ -39,6 +39,7 @@ class MinioStoreFileCommand extends Command
         $minioService = new MinioService();
         if (is_dir($content)) {
             $files = glob($content . '/*');
+
             foreach ($files as $file) {
 
                 if ($file === '.' || $file === '..' || is_dir($file) || $file === '.mp3') {

@@ -38,20 +38,26 @@ class ImportSongCommand extends Command
      */
     public function handle()
     {
-        $audioDir = setting('site.path_audio');
         $source = $this->argument('source');
         $unClassified = [];
         $data = [];
         $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
 
+
         $this->info('Found ' . count($audioFiles) . ' files');
         $uploadService = new UploadService();
 
-        if ($source && $source == 'rclone' || $source == 'rc') {
-            $this->info('Importing from rclone');
-            $uploadService->setRclone(true);
-            $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
+        $this->output->progressStart(count($audioFiles));
+        foreach ($audioFiles as $file) {
+            try {
+                $this->info('Uploading ' . $file);
+                $uploadService->uploadSong($file);
+            }catch (\Exception $e){
+                $this->warn($e->getMessage());
+            }
+            $this->output->progressAdvance();
         }
+        $this->output->progressFinish();
 
         try {
             $this->info('Purging queue classify' );
@@ -59,8 +65,8 @@ class ImportSongCommand extends Command
         }catch (\Exception $e){
            $this->warn('No classify queue to purge');
         }
-       // $this->call('rabbitmq:queue-purge', ['name' => 'default']);
         $queuedSongs = $this->classifySongs();
+
 
         foreach ($queuedSongs as $title) {
             $unClassified[] = $title;
@@ -81,16 +87,12 @@ class ImportSongCommand extends Command
         $this->info('Unclassified songs:');
         $total = count($unClassified);
         $this->output->info("imported $total songs from $source");
-        info('=========================================IMPORT_DONE==========================================');
 
-        info('Updating BPMS');
-        $this->call('song:bpm');
-        info('=========================================BPMS_DONE==========================================');
-
-        $this->call('song:status', ['--analyzed' => true, '--status' => true, '--total' => true]);
-
-        $delSongs = count($this->getDeleted());
-        $this->warn("$delSongs songs have been deleted from audio folder. Remember to download them from Blogs");
+//        info('=========================================IMPORT_DONE==========================================');
+//        info('Updating BPMs');
+//        $this->call('song:bpm');
+//        info('=========================================BPMs_DONE==========================================');
+//        $this->call('song:status', ['--analyzed' => true, '--status' => true, '--total' => true]);
 
         return 0;
     }
@@ -103,29 +105,27 @@ class ImportSongCommand extends Command
             ->orWhereNull('analyzed')
             ->get();
         $unClassified = [];
-
         $bar = $this->output->createProgressBar(count($songs));
         $bar->start();
         /** @var Song $song */
         foreach ($songs as $song) {
             $bar->advance();
-            // Remember to download these songs from Blogs
-            if (!$this->checkAudioFile($song)) {
-                if ($song->status === 'deleted' || $song->status === 'skipped' || $song->status === 'spotify-not-found') {
-                    continue;
-                }
-                $song->status = 'deleted';
-                $song->save();
-            }elseif ((int)$song->analyzed == 0 || (int)$song->analyzed == null) {
+            if ($song->analyzed || $song->analyzed === 1) {
+                $song->status = 'analyzed';
+                continue;
+            }
+
+
+            if ($song->slug !== null){
                 $song->status = 'queued';
                 $song->save();
                 $unClassified[] = $song->slug;
                 ClassifySongJob::dispatch($song->slug);
             }
+
         }
 
         $bar->finish();
-
         return $unClassified;
     }
 

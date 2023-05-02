@@ -83,6 +83,7 @@ use Illuminate\Support\Facades\Storage;
     {
         $path = $dir . '/' . basename($contents);
         $filename = basename($contents);
+
         try {
             $this->disk->put($path, file_get_contents($contents), 'public');
         }catch (\Exception $e) {

@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Song;
 
 use App\Models\Song;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 trait Tools
@@ -17,7 +18,7 @@ trait Tools
 
         // Check if song exit in cloud storage
         try {
-            $exists = Storage::disk('public')->exists($path);
+            $exists = Http::get($path)->ok();
             if ($exists) {
                 return true;
             }

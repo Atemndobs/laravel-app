@@ -49,12 +49,9 @@ class Image extends Command
         ];
         info(json_encode($stats));
 
-        $base_url = env('APP_ENV') == 'local' ? self::BASE_DOCKER : env('APP_URL');
-
         if ($all !== null) {
             $this->info('Processing all images');
-            Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage, $base_url) {
-
+            Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage) {
                 if ($song->image !== null && $song->image !== '') {
                     $imageUrl = str_replace('.mp3', '.jpeg', $song->image);
 

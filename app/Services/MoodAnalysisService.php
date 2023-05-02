@@ -28,7 +28,7 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-                $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
+        $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
         $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
         $nest_base_url = $base_url . ":$nest_port";
         Log::info(json_encode([
@@ -37,6 +37,20 @@ class MoodAnalysisService
             'slug' => $slug,
             'nest_base_url' => $nest_base_url,
         ]));
+
+        if (empty($slug)) {
+            dump([
+                'status' => 'Slug is empty',
+            ]);
+            Log::warning(json_encode([
+                'message' => 'Slug is empty',
+                'status' => 404,
+            ]));
+            return [
+                'status' => 'Slug is empty',
+            ];
+        }
+
 
         $existingSong = Song::query()->where('slug', '=', $slug)->first();
         // Check song from s3 storage
@@ -110,8 +124,8 @@ class MoodAnalysisService
         $skipped = [];
         /** @var Song $song */
         foreach ($songs as $song) {
-            if ($song->analyzed == 0 && $song->duration >= 600) {
-                $song->status = 'skipped';
+            if ($song->analyzed == 0 && $song->duration >= 360) {
+                $song->status = 'skip';
                 $song->analyzed = false;
                 $song->save();
                 $skipped[] = [

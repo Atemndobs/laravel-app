@@ -4,14 +4,15 @@ namespace App\Services;
 
 use App\Models\Song;
 use App\Services\Scraper\SoundcloudService;
+use App\Services\Storage\MinioService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\ArrayShape;
-use Sarfraznawaz2005\ServerMonitor\Senders\Log;
 
 class SongUpdateService
 {
@@ -50,7 +51,6 @@ class SongUpdateService
      */
     public function updateBpm(Song $song): Song
     {
-   // dd('updateBpm');
         $file = $this->getFilePath($song);
         $exec = shell_exec(" ./storage/app/public/streaming_rhythmextractor_multifeature storage/app/public/$file 2>&1");
         $res = explode("\n", $exec)[5];
@@ -83,13 +83,14 @@ class SongUpdateService
 
     /**
      * @param Song $song
-     * @return string
+     * @return string|null
      */
-    public function getFilePath(Song $song): string
+    public function getFilePath(Song $song): string | null
     {
-        $path = $song->path;
-        // extract
-        return str_replace('http://mage.tech:8899/storage/', '', $path);
+        if ($song->path === null) {
+            return null;
+        }
+        return $song->path;
     }
 
     /**
@@ -100,8 +101,12 @@ class SongUpdateService
     {
 
         $file = $this->getFilePath($song);
+        if ($song->path === null) {
+            return [0, 0, 0, 0, 0];
+        }
         $slug = $song->slug;
-        $shell = shell_exec(" ./storage/app/public/streaming_extractor_music storage/app/public/$file storage/app/public/$slug.json 2>&1");
+        //$shell = shell_exec(" ./storage/app/public/streaming_extractor_music storage/app/public/$file storage/app/public/$slug.json 2>&1");
+        $shell = shell_exec(" ./storage/app/public/streaming_extractor_music $file storage/app/public/$slug.json 2>&1");
         $shellRes = explode(' ', $shell);
 
         $error = str_contains($shell, 'error = Operation not permitted');
@@ -109,9 +114,6 @@ class SongUpdateService
 
         if ($error || $error2) {
             dump($error);
-//            $path = str_replace('mp3', '.mp3', $slug);
-//            shell_exec("rm storage/app/public/audio/$path");
-//            $song->delete();
             return [0, 0, 0, 0, 0];
         }
         if ($shellRes[1] === '1:') {
@@ -190,13 +192,15 @@ class SongUpdateService
                 continue;
             }
 
-            try {
-                $this->setImageFromSong($fileInfo['comments']['picture'][0]['data'], $song);
-                $song->save();
-            } catch (\Exception $e) {
-                $this->getSongDetailsFromSoundCloud($song);
-                dump($e->getMessage());
-                continue;
+            if ($song->image === null) {
+                try {
+                    $this->setImageFromSong($fileInfo['comments']['picture'][0]['data'], $song);
+                    $song->save();
+                } catch (\Exception $e) {
+                    $this->getSongDetailsFromSoundCloud($song);
+                    dump($e->getMessage());
+                    continue;
+                }
             }
 
             $completed[] = [
@@ -237,25 +241,17 @@ class SongUpdateService
      */
     public function getAnalyze(mixed $songPath): array
     {
-        // check if path contains http://mage.tech:8899/storage/
-        $path = str_contains($songPath, 'http://mage.tech:8899/storage/') ?
-            str_replace('http://mage.tech:8899/storage/', '', $songPath) :
-            $songPath;
-
-        // if path does not start wtth http, it must be local
-        $path = str_contains($path, 'http') ? $path : "storage/app/public/$path";
-
+        $path = $songPath;
         $getID3 = new \getID3;
-        $fileInfo = $getID3->analyze($path);
-        return $fileInfo;
+        return $getID3->analyze($path);
     }
 
     /**
      * @param $fileInfo
      * @param Song|null $song
-     * @return void
+     * @return Song
      */
-    public function getInfoFromId3v2Tags($fileInfo, Song|null $song): void
+    public function getInfoFromId3v2Tags($fileInfo, Song|null $song): Song
     {
         $idv = $fileInfo['tags']['id3v2'] ?? null;
         if ($idv && count($idv) < 5) {
@@ -267,28 +263,32 @@ class SongUpdateService
             $title = trim($title);
             $song->title = $title;
 
-            return;
+            return $song;
         }
         $genres = $idv['genre'] ?? $song->genre;
         $artist = $idv['artist'] ?? $song->author;
         $title = $idv['title'][0] ?? $song->title;
+
         // remove everything after the | in the title
         if (str_contains($title, '|')) {
             $title = substr($title, 0, strpos($title, '|'));
         }
         $title = trim($title);
-        // replace spaces with underscores in the title
-        // $title = str_replace(' ', '_', $title);
-
         $comment = $idv['comment'][0] ?? $song->comment;
         if ($song->genre === null) {
             $song->genre = $genres;
         }
         if ($song->author === null) {
+            // if author is an array get all authors and implode seperated by &
+            if (is_array($artist)) {
+                $artist = implode(' & ', $artist);
+            }
             $song->author = $artist;
         }
+
         $song->title = $title;
         $song->comment = $comment;
+        return $song;
     }
 
     public function getSongDetailsFromSoundCloud(Song $song): void
@@ -330,48 +330,45 @@ class SongUpdateService
         if ($slug === '' ){
             return;
         }
-        $checkSong = Song::query()->where('slug', 'like', "%$slug%")->get(['id','title', 'slug', 'author', 'image'])->toArray();
-    }
+      }
 
     /**
      * @param string $file
-     * @return string|null
+     * @param string $slug
+     * @return string|array|null
      */
-    public function getExistingImageFromFile(string $file, string $slug = null): string | null| array
+    public function getExistingImageFromFile(string $file, string $slug): string|null
     {
-        //dd(shell_exec("ffmpeg -i $file -an -vcodec copy -f image2 -y storage/app/public/images/$slug.jpg"));
         $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', 'storage/app/public/images/' . $slug . '.jpeg']);
         if (!$process->successful() ){
             dump(['error' => $process->errorOutput()]);
-            \Illuminate\Support\Facades\Log::critical("Fail to get image from file $file   |  slug : $slug");
+            Log::critical("Fail to get image from file $file   |  slug : $slug");
             return null;
         }
-        // ls image
-        $image = Process::run(['ls', 'storage/app/public/images/' . $slug . '.jpg']);
-        if ($image === null) {
+        // check if image exists in image folder
+        $localImage = 'storage/app/public/images/' . $slug . '.jpeg';
+        if (!file_exists($localImage)) {
+            Log::critical("Image was not successfully extracted from file by ffmpeg");
+            dump('Image was not successfully extracted from file by ffmpeg');
             return null;
         }
 
-        // $image = Process::run(['aws', 's3', 'cp', 'storage/app/public/images/' . $slug . '.jpg', 's3://mage-music/images/' . $slug . '.jpg']);
-
-        // upload image to cloud storage
-        $storage = Storage::cloud();
         try {
-            $storage->put('images/' . $slug . '.jpg', file_get_contents('storage/app/public/images/' . $slug . '.jpg'));
-            // get image url
-            $image = $storage->url('curator/images/' . $slug . '.jpg');
-            // check if image exists
-            $image = Http::get($image);
-            if ($image->status() !== 200) {
-                dump('image does not exist');
+            $storageService = new MinioService();
+            $imagePath = $storageService->putObject($localImage, 'images');
+            // check if image has successfully uploaded
+            $imageCheck = Http::get($imagePath);
+            if ($imageCheck->status() !== 200) {
+                dump('image did not upload');
+                return null;
             }
-          //  dump($image->status() . "SUCCESS");
+
         }catch (\Exception $e){
-            \Illuminate\Support\Facades\Log::critical($e->getMessage());
+            Log::critical($e->getMessage());
             dump($e->getMessage());
             return null;
         }
-        return $image;
+        return $imagePath;
     }
 
     /**
@@ -384,8 +381,11 @@ class SongUpdateService
         $image = $this->getExistingImageFromFile($file, $song->slug);
         if ($image === null) {
             $song->image = null;
+            $song->save();
             return $song;
         }
+        $song->image = $image;
+        $song->save();
         return $song;
     }
 }

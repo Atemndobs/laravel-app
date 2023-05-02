@@ -17,10 +17,6 @@ use Illuminate\Support\Str;
 
 class UploadService
 {
-    protected Song $song;
-    public string $deletItem = '';
-    public array $deletables = [];
-    public bool $rclone = false;
     public array $missingImages = [];
 
     /**
@@ -38,62 +34,48 @@ class UploadService
     {
         $this->missingImages[] = $missingImage;
     }
-    /**
-     * @return array
-     */
-    public function getDeletables(): array
-    {
-        return $this->deletables;
-    }
 
     /**
-     * @param  array  $deletables
-     * @return UploadService
+     * @param string $track
+     * @return Song
+     * @throws \Exception
      */
-    public function setDeletables(array $deletables): UploadService
-    {
-        $this->deletables = $deletables;
-
-        return $this;
-    }
-
-    public function addDeletables($deleteItem): array
-    {
-        $this->deletables[] = $deleteItem;
-
-        return $this->deletables;
-    }
-
-    public function uploadSong(UploadedFile $track)
+    public function uploadSong(string $track): Song
     {
         $song = new Song();
-        $this->processAndSaveSong($track, $song);
-        $existingSong = $this->getExistingSong($song);
-
+        $songUpdateService = new SongUpdateService();
+        $slug = $this->getSlugFromFilePath($track);
+        $existingSong = $this->getExistingSong($slug);
         if ($existingSong) {
             return $existingSong;
         }
-        $song->status = 'uploaded';
-        $song->save();
-        ClassifySongJob::dispatch($song->title);
+        $fileInfo = $songUpdateService->getAnalyze($track);
+        $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
+        $processedSong = $this->processSong($track, $songWithInfo);
+        $songWithImage =  $this->getSongImage($track, $processedSong);
+        // save song and delete file
+        $songWithImage->save();
+        if (File::delete($track)){
+            Log::info('Deleted file: '.$track);
+            dump('Deleted file: '.$track);
+        };
 
-        return $song->getDirty();
+        return $song;
     }
 
     /**
-     * @param  array  $tracks
+     * @param array $tracks
      * @return array
+     * @throws \Exception
      */
-    public function batchUpload(array $tracks)
+    public function batchUpload(array $tracks): array
     {
         $response = [];
         foreach ($tracks as $file) {
             $song = new Song();
-            if ($file->isValid()) {
-                $filledSong = $this->processAndSaveSong($file, $song);
+            if (file_exists($file) ) {
+                $filledSong = $this->processSong($file, $song);
                 $response[] = $filledSong;
-
-                ClassifySongJob::dispatch($filledSong->title);
             }
         }
 
@@ -107,28 +89,15 @@ class UploadService
     public function importSongs(array $tracks): array
     {
         $response = [];
-        $this->deletables = [];
         foreach ($tracks as $file) {
-            $slug = Str::slug(last(explode('/', $file)), '_');
-            /** @var Song $existingSong */
-            $existingSong = Song::query()->where('slug', $slug)->first();
-            if ($existingSong) {
-                $response[] = [
-                    'file' => $file,
-                    'id' => $existingSong->id,
-                    'title' => $existingSong->title,
-                    'slug' => $existingSong->slug,
-                    'path' => $existingSong->path,
-                ];
+            $slug = $this->getSlugFromFilePath($file);
+            if ($this->getExistingSong($slug)) {
                 Log::warning('Song already exists: '. $slug);
                 continue;
             }
             $song = new Song();
             try {
-                dump([
-                    'file' => $file,
-                ]);
-                $file_name = $this->getFullSongPath($file, $song);
+                $this->getFullSongPath($file, $song);
             } catch (\Exception $e) {
                 $error[] = [
                     'error' => $e->getMessage(),
@@ -140,175 +109,96 @@ class UploadService
             }
 
             $song->status = 'imported';
-            $ext = substr($file_name, -3);
-            $type = $ext;
-            $source = 'imported';
-            $this->getSongImage($file_name, $song);
-            $this->fillSong($source, $song, $type, $file_name, $ext);
-
+            $this->getSongImage($file, $song);
             $song->save();
             $response[] = $song;
-            $this->deletables[] = $this->deletItem;
-            ClassifySongJob::dispatch($file_name);
         }
         return $response;
     }
 
     /**
-     * @param  Song  $song
-     * @return mixed
+     * @param string $slug
+     * @return Song|null
      */
-    protected function getExistingSong(Song $song)
+    protected function getExistingSong(string $slug) : Song | null
     {
-        return Song::where('path', '=', $song->path)->first();
-    }
-
-    /**
-     * @param  mixed  $file
-     * @param  Song  $song
-     * @return Song
-     */
-    protected function processAndSaveSong(mixed $file, Song $song): Song
-    {
-        $file_name = $file->getClientOriginalName();
-        $type = $file->getMimeType();
-        $source = 'uploaded';
-        $api_url = env('APP_URL').'/api/songs/match/';
-        $ext = substr($file_name, -4);
-        $new_file_name = str_replace($ext, '', $file_name);
-        $new_file_name = Str::slug($new_file_name, '_');
-        $song->slug = $new_file_name;
-        $slug = $new_file_name;
-        $new_file_name .= $ext;
-
-        $file_path = $file->storeAs('audio', $new_file_name, 'public');
-        $full_path = asset(Storage::url($file_path));
-        $song->status = 'uploaded';
-        $song->path = $full_path;
-
-        $existingSong = $this->getExistingSong($song);
-
-        if ($existingSong) {
-            return $existingSong;
-        }
-
-        $song->related_songs = $api_url.$slug;
-        $this->fillSong($source, $song, $type, $file_name, $ext);
-        $song->save();
-
-        return $song;
-    }
-
-    /**
-     * @param  string  $source
-     * @param  Song  $song
-     * @param  string|null  $type
-     * @param  string  $name
-     * @param  string  $ext
-     * @return void
-     */
-    public function fillSong(string $source, Song $song, ?string $type, string $name, string $ext): void
-    {
-        $name = str_replace(".$ext", '', $name);
-        $fields = [
-            'link' => $source,
-            'path' => $song->path,
-            'slug' => $song->slug,
-            'source' => $type,
-            'title' => $name,
-            'extension' => $ext,
-        ];
-        $song->fill($fields);
+        return Song::query()->where('slug', '=', $slug)->get()->first();
     }
 
     /**
      * @param mixed $file
      * @param Song $song
-     * @return array|mixed|string|string[]
+     * @return Song
      * @throws \Exception
      */
-    protected function getFullSongPath(mixed $file, Song $song): mixed
+    protected function processSong(mixed $file, Song $song): Song
     {
-        // $path_to_store = setting('site.path_audio') ?? env('PATH_AUDIO', 'audio');
-        $path_to_store = env('PATH_AUDIO', 'uploads/audio');
-        $file_name = substr($file, strrpos($file, '/') + 1);
-        $ext = substr($file_name, -4);
-        $file_name = str_replace($ext, '', $file_name);
-        $file_name = Str::slug($file_name, '_');
-        $file_name .= $ext;
-        $full_path =  "storage/app/public/$path_to_store/$file_name";     //
-        // rename file to full path and save on minio
-        rename($file, $full_path);
-        $storageService = new MinioService();
-        $storage_path = $storageService->putObject($full_path, );
-        // delete  file from local storage
-        Storage::delete($full_path);
+        $songWithPath = $this->getFullSongPath($file, $song);
+        $ext = substr($file, -3);
+        $link = 'uploaded';
+        $songWithPath->link = $link;
+        $songWithPath->source = $ext;
+        $songWithPath->extension = $ext;
+        return $songWithPath;
+    }
 
+    /**
+     * @param mixed $file
+     * @param Song $song
+     * @return Song
+     * @throws \Exception
+     */
+    protected function getFullSongPath(mixed $file, Song $song): Song
+    {
+        $slug = $this->getSlugFromFilePath($file);
+        $storageService = new MinioService();
+        $storage_path = $storageService->putObject($file);
         $message = [
-            'FILE NAME' => $file_name,
-            'FULL PATH' => $full_path,
-            'FILE CLOUD EXISTS' => $storage_path,
-            'FILE LOCAL EXISTS' => Storage::exists($full_path) ?? false,
+            'FILE NAME' => $file,
+            'FILE CLOUD URL' => $storage_path,
         ];
         Log::info(json_encode($message));
-        dump($message);
-
         $api_url = env('APP_URL').'/api/songs/match/';
-        $slug = Str::slug($file_name, '_');
         $song->path = $storage_path;
         $song->slug = $slug;
         $song->related_songs = $api_url.$slug;
-
-        return $file_name;
+        return $song;
     }
 
-    private function getSongImage(mixed $file_name, Song $song): void
+    /**
+     * @param mixed $file
+     * @param Song $song
+     * @return Song
+     */
+    private function getSongImage(mixed $file, Song $song): Song
     {
-        // check if image exist in minio and save it
-        $image = substr($file_name, 0, -4);
-        $image .= '.jpg';
-        $image = "curator/images/$image";
+        $songUpdateService = new SongUpdateService();
+
         try {
-            $image = Storage::cloud()->url($image);
+            $imagePath = $songUpdateService->getExistingImageFromFile($file, $song->slug);
+            $song->image = $imagePath;
+            Log::info("Image path : $imagePath");
+            return $song;
         } catch (\Exception $e) {
-            Log::error("Image not found in minio : $image");
-            $this->addMissingImages($image);
+            Log::error(json_encode([
+                'message' => "Image not found in minio : $song->slug",
+                'error' => $e->getMessage(),
+                'file' => $file,
+            ]));
+            $this->addMissingImages($file);
+            return $song;
         }
-        $image =  Storage::cloud()->url($image);
-        $song->image = $image;
     }
 
-    private function checkExistingSongStorage(?string $path) : bool
+    /**
+     * @param mixed $file
+     * @return string
+     */
+    public function getSlugFromFilePath(mixed $file): string
     {
-
-        $base_url = env('APP_ENV') == 'local' ? env('BASE_DOCKER_URL') : env('APP_URL');
-        $url = str_replace('mage.tech', 'host.docker.internal', $path);
-        Log::info("Checking Song from Storage : $path");
-
-        Log::info(json_encode([
-            'process' => 'UploadService::checkExistingSongStorage',
-            'args' => func_get_args(),
-            'path' => $path,
-            'base_url' => $base_url,
-            'url' => $url,
-        ]));
-
-        if (!str_contains($url, 'http')) {
-            $url = $base_url.'/storage/audio'.$url;
-        }
-        $request = Http::get($url);
-        $status = $request->status();
-        Log::info("Status : $status");
-        if ($status === 200) {
-            dump(['status' => $status, 'url' => $url]);
-            Log::info("Song Exists in Storage : $path");
-            return true;
-        }
-        return false;
-    }
-
-    public function setRclone(bool $true): bool
-    {
-        return $this->rclone = $true;
+        $file_name = substr($file, strrpos($file, '/') + 1);
+        $ext = substr($file_name, -4);
+        $file_name = str_replace($ext, '', $file_name);
+        return Str::slug($file_name, '_');
     }
 }

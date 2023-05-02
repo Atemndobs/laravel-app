@@ -49,16 +49,17 @@ SpotifySongDownloadCommand extends Command
 
             $bar->advance();
             try {
+                $this->info('Download directly from spotify');
                 $url = $service->getSongUlrByTitle($song->title);
                 $downloaded[] = $song->title;
                 $downloaded[] = $url;
             }catch (\Exception $e) {
-                $this->error($e->getMessage());
+                $this->error('Direct Spotify Dnload failed :' . $e->getMessage());
                 $song->status = 'spotify-not-found';
                 continue;
             }
-            $this->info($url);
-            // call spotity dowload command
+            $this->info("Download with Spotify Dnload command $url");
+            // call spotify download command
             $this->call('spotify', [
                 'url' => $url
             ]);
@@ -70,7 +71,7 @@ SpotifySongDownloadCommand extends Command
 
         // put downloaded songs to table
         $this->table(['title', 'url'], $downloaded);
-        $this->info("Doenloaded songs: " . count($downloaded));
+        $this->info("Downloaded songs: " . count($downloaded));
         return 0;
     }
 }

@@ -47,9 +47,7 @@ class MoveAudioUploadsCommand extends Command
             $fileName = str_replace('.mp3', '', $fileName);
             $fileName = Str::slug($fileName, '_');
             $fileName = $fileName . '.mp3';
-            $this->call('song:import');
-            sleep(2);
-            $destination = storage_path('app/public/music/audio/' . $fileName);
+            $destination = storage_path('app/public/uploads/audio/' . $fileName);
             if (!file_exists($destination)) {
                 rename($file, $destination);
             }
