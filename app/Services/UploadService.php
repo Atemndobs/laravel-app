@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\ClassifySongJob;
 use App\Models\Song;
+use App\Services\Birdy\SpotifyService;
 use App\Services\Storage\MinioService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Log\Logger;
@@ -52,9 +53,17 @@ class UploadService
         $fileInfo = $songUpdateService->getAnalyze($track);
         $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
         $processedSong = $this->processSong($track, $songWithInfo);
-        $songWithImage =  $this->getSongImage($track, $processedSong);
-        // save song and delete file
-        $songWithImage->save();
+        $processedSong->image = null;
+        if ($processedSong->image === null) {
+            $processedSong =  $this->getSongImage($track, $processedSong);
+        }
+//        $processedSong = $songUpdateService->getSongDuration($processedSong);
+//        $processedSong = $songUpdateService->updateSongProperties($processedSong);
+//        if ($processedSong->bpm === null) {
+//            $processedSong = $songUpdateService->updateBpm($processedSong);
+//        }
+        $processedSong->save();
+
         if (File::delete($track)){
             Log::info('Deleted file: '.$track);
             dump('Deleted file: '.$track);
@@ -173,19 +182,52 @@ class UploadService
     private function getSongImage(mixed $file, Song $song): Song
     {
         $songUpdateService = new SongUpdateService();
+        $imagePath = $songUpdateService->getExistingImageFromFile($file, $song->slug);
 
-        try {
-            $imagePath = $songUpdateService->getExistingImageFromFile($file, $song->slug);
+        if ($imagePath) {
             $song->image = $imagePath;
             Log::info("Image path : $imagePath");
             return $song;
+        }
+        try {
+            Log::error(json_encode([
+                'message' => "Image not found in minio : $song->slug",
+                'file' => $file,
+            ]));
+            return $this->getImageFromSpotify($song);
         } catch (\Exception $e) {
             Log::error(json_encode([
                 'message' => "Image not found in minio : $song->slug",
                 'error' => $e->getMessage(),
                 'file' => $file,
             ]));
-            $this->addMissingImages($file);
+            return $song;
+        }
+    }
+
+    /**
+     * @param Song $song
+     * @return Song
+     */
+    public function getImageFromSpotify(Song $song) : Song
+    {
+        Log::info('Getting image from spotify');
+        $spotifyService = new SpotifyService();
+        try {
+            if ((int)$song->title === null || $song->title === '') {
+                $image =  $spotifyService->findSong($song->slug)->album->images[0]->url;
+                $title =  $spotifyService->findSong($song->slug)->name;
+                $artist =  $spotifyService->findSong($song->slug)->artists[0]->name;
+                $song->image = $image;
+                $song->title = $title;
+                $song->author = $artist;
+                return $song;
+            }
+            $image =  $spotifyService->getImageFromTitle($song->title);
+            $song->image = $image;
+            return $song;
+        }catch (\Exception $e) {
+            Log::error($e->getMessage());
             return $song;
         }
     }

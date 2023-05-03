@@ -6,6 +6,7 @@ use App\Jobs\ClassifySongJob;
 use App\Models\Catalog;
 use App\Models\Song;
 use App\Services\MoodAnalysisService;
+use App\Services\SongUpdateService;
 use App\Services\UploadService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -42,13 +43,15 @@ class ImportSongCommand extends Command
         $unClassified = [];
         $data = [];
         $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
-
-
         $this->info('Found ' . count($audioFiles) . ' files');
-        $uploadService = new UploadService();
 
+        // call move audio command
+        $this->call('move:audio');
+
+        $uploadService = new UploadService();
         $this->output->progressStart(count($audioFiles));
         foreach ($audioFiles as $file) {
+            $this->output->write("\n");
             try {
                 $this->info('Uploading ' . $file);
                 $uploadService->uploadSong($file);
@@ -114,7 +117,6 @@ class ImportSongCommand extends Command
                 $song->status = 'analyzed';
                 continue;
             }
-
 
             if ($song->slug !== null){
                 $song->status = 'queued';

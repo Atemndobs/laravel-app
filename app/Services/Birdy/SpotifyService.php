@@ -6,6 +6,7 @@ use App\Jobs\DownloadSpotifyJob;
 use App\Models\Feed;
 use App\Models\Song;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use SpotifyWebAPI\Session;
 use SpotifyWebAPI\SpotifyWebAPI;
 
@@ -182,7 +183,7 @@ class SpotifyService
         if ($song == []){
             return [];
         }
-        $url = $this->findSong($query)->external_urls->spotify;
+        $url = $song->external_urls->spotify;
         $this->downloadSpotifySong($url);
 
         return $song;
@@ -190,9 +191,6 @@ class SpotifyService
 
     public function downloadSpotifySong(string $url)
     {
-        $feed = new Feed();
-        $feed->title = $url;
-        $feed->save();
         DownloadSpotifyJob::dispatch($url);
     }
 
@@ -236,5 +234,46 @@ class SpotifyService
             'author' => $trackArtist,
             'genre' => $genre,
         ];
+    }
+
+    public function getImageFromTitle(string $title)
+    {
+        $search = $this->spotify->search($title, 'track')->tracks->items[0];
+        return $search->album->images[0]->url;
+    }
+    public function getSongFromTitle(string $title)
+    {
+        $search = $this->spotify->search($title, 'track')->tracks->items;
+
+        foreach ($search as $song) {
+            // unset available_markets
+            if (str_contains(strtolower($song->name), trim(strtolower($title)))) {
+                $id = $song->id;
+                $track = $this->spotify->getTrack($id);
+                dump("Found song : " . $track->name);
+                dump("Downloading" . $track->external_urls->spotify);
+                // call spotify command
+                Artisan::call('spotify', [
+                    'url' => $track->external_urls->spotify,
+                ]);
+                return 0;
+            }
+        }
+        return null;
+    }
+
+    public function getSongFromArtistAndtitle(string $title)
+    {
+        $search = $this->spotify->search($title, 'track')->tracks->items;
+
+        foreach ($search as $song) {
+            dump($song->album->name);
+            if (str_contains(strtolower($song->album->name), strtolower($title))) {
+                dd($song->album);
+                return $song;
+            }
+        }
+        dd($search[0]->album->name);
+        return $search[0]->album->name;
     }
 }

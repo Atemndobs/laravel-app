@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scraper;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SpotifyDownloadCommand extends Command
 {
@@ -32,18 +33,20 @@ class SpotifyDownloadCommand extends Command
 
         $shell = shell_exec("spotdl  $url --output storage/app/public/uploads/audio/");
         $this->info($shell);
+        Log::info($shell);
         try {
             $outputs = explode("\n", $shell);
-
             // search the word "found" from output
             $result = "";
             foreach ($outputs as $output) {
-                if (strpos($output, 'Found') !== false) {
+                if (str_contains($output, 'Downloaded')) {
                     $result = $output;
                     $this->info($result);
                 }
             }
             $this->info("Download Completed ... | $result");
+            Log::info("Download Completed ... | $result");
+
         }catch (\Exception $e) {
             $this->error($e->getMessage());
         }

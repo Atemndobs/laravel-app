@@ -3,6 +3,7 @@
 namespace App\Console\Commands\FileWatcher;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MoveAudioUploadsCommand extends Command
@@ -29,9 +30,20 @@ class MoveAudioUploadsCommand extends Command
     public function handle()
     {
         $files = glob(storage_path('app/public/uploads/audio/*'));
+        if (!$files) {
+            $this->info('No files to move from uploads folder');
+            Log::info('No files to move from uploads folder');
+            return 0;
+        }
+
         $this->moveFiles($files);
 
         $audioFiles = glob(storage_path('app/public/audio/*.mp3'));
+        if (!$audioFiles) {
+            $this->info('No files to move from audio folder');
+            Log::info('No files to move from audio folder');
+            return 0;
+        }
         $this->moveFiles($audioFiles);
         return 0;
     }
@@ -50,6 +62,8 @@ class MoveAudioUploadsCommand extends Command
             $destination = storage_path('app/public/uploads/audio/' . $fileName);
             if (!file_exists($destination)) {
                 rename($file, $destination);
+                Log::info('Moved ' . $file . ' to ' . $destination);
+                $this->info('Moved ' . $file . ' to ' . $destination);
             }
         }
     }

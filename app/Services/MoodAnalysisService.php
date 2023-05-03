@@ -87,6 +87,21 @@ class MoodAnalysisService
                 'status' => $existingSong->status,
             ];
         }
+        // if duration longer tha 10 min skip
+        $uploadService = new SongUpdateService();
+        $songDuration = $uploadService->getSongDuration($existingSong);
+
+        if ($songDuration->duration > 360){
+            $existingSong->status = 'skipped - mixtape';
+            $existingSong->save();
+            Log::warning(json_encode([
+                'message' => 'Song skipped - may be a mixtape',
+                'duration' => $songDuration,
+            ]));
+            return [
+                'status' => "Song skipped - may be a mixtape, Duration :  $songDuration",
+            ];
+        }
 
         $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();

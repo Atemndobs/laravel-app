@@ -3,16 +3,20 @@
 namespace App\Services;
 
 use App\Models\Song;
+use App\Services\Birdy\SpotifyService;
 use App\Services\Scraper\SoundcloudService;
 use App\Services\Storage\MinioService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\ArrayShape;
+use const FlixTech\AvroSerializer\Serialize\readDatum;
 
 class SongUpdateService
 {
@@ -48,19 +52,45 @@ class SongUpdateService
     /**
      * @param Song $song
      * @return Song
+     * @throws \Exception
      */
     public function updateBpm(Song $song): Song
     {
-        $file = $this->getFilePath($song);
-        $exec = shell_exec(" ./storage/app/public/streaming_rhythmextractor_multifeature storage/app/public/$file 2>&1");
-        $res = explode("\n", $exec)[5];
+        try {
+            $bpm = $this->getSongBpm($song);
+            $song->bpm = $bpm;
+            return $song;
+        }catch (\Exception $e){
+            $message = [
+                'try to get BPM by rhythmextractor',
+                'method' => 'updateBpm',
+                'song' => $song->slug,
+                'error' => $e->getMessage()
+            ];
+            Log::error(json_encode($message));
+            dump($message);
 
-        $bpm = str_replace('bpm: ', '', $res);
-        $bpm = round($bpm, 1);
-        $song->bpm = $bpm;
-        $song->save();
+            $file = $this->getFilePath($song);
+            if (!$file) {
+                Log::error("Audio File not found for song $song->slug");
+                return $song;
+            }
 
-        return $song;
+            $exec = shell_exec(" ./storage/app/public/streaming_rhythmextractor_multifeature $file 2>&1");
+            $res = explode("\n", $exec)[5];
+
+            $bpm = str_replace('bpm: ', '', $res);
+            $bpm = round($bpm, 1);
+            $song->bpm = $bpm;
+            return $song;
+        }
+
+    }
+
+    public function getSongBpm(Song $song)
+    {
+        [$chords_scale, $energy, $bpm, $author, $key] = $this->extracted($song);
+        return $bpm;
     }
 
     /**
@@ -69,7 +99,7 @@ class SongUpdateService
      */
     public function updateKey(Song $song): Song
     {
-        [$chords_scale, $key] = $this->extracted($song);
+        [$chords_scale, $energy, $bpm, $author, $key]  = $this->extracted($song);
 
         $song->key = $key;
         $song->scale = $chords_scale;
@@ -87,10 +117,27 @@ class SongUpdateService
      */
     public function getFilePath(Song $song): string | null
     {
-        if ($song->path === null) {
-            return null;
+        $slug = $song->slug;
+        $localFilePath = "storage/app/public/uploads/audio/$slug.mp3";
+        // check if file exits locally
+        if (!File::exists($localFilePath)) {
+            try {
+                // download file from $song->path and save to storage/app/public/uploads/audio/
+                $file = Http::get($song->path);
+                $localFilePath = "storage/app/public/uploads/audio/$slug.mp3";
+                file_put_contents($localFilePath, $file);
+
+                if (!File::exists($localFilePath)) {
+                    Log::error("Audio File not found for song $song->slug");
+                    dump("Audio File not found for song $song->slug");
+                    return null;
+                }
+            }catch (\Exception $e){
+                Log::error($e->getMessage());
+                return null;
+            }
         }
-        return $song->path;
+        return $localFilePath;
     }
 
     /**
@@ -101,14 +148,14 @@ class SongUpdateService
     {
 
         $file = $this->getFilePath($song);
-        if ($song->path === null) {
+        if (!$file || $song->path === null) {
+            Log::error("Audio File not found for song $song->slug");
             return [0, 0, 0, 0, 0];
         }
+
         $slug = $song->slug;
-        //$shell = shell_exec(" ./storage/app/public/streaming_extractor_music storage/app/public/$file storage/app/public/$slug.json 2>&1");
         $shell = shell_exec(" ./storage/app/public/streaming_extractor_music $file storage/app/public/$slug.json 2>&1");
         $shellRes = explode(' ', $shell);
-
         $error = str_contains($shell, 'error = Operation not permitted');
         $error2 = str_contains($shell, 'File does not exist ');
 
@@ -127,33 +174,46 @@ class SongUpdateService
             dump($analysed);
         }
 
-        $key_key = $res->tonal->key_key;
-        // $key_scale = $res->tonal->key_scale;
-        // $chords_key = $res->tonal->chords_key;
-        $key = $key_key;
+        $key = $res->tonal->key_key;;
         $chords_scale = $res->tonal->chords_scale;
 
         $energy = $res->lowlevel->spectral_energy->max;
         $bpm = round($res->rhythm->bpm * 2) / 2;
-        $author = $res->metadata->tags->artist ?? '';
-        if ($author !== '') {
-            $author = $res->metadata->tags->artist[0];
-        } else {
-            $author = $song->author;
-        }
-
-//        dump([
-//            'song' => $song->slug,
-//            'bpm' => $bpm,
-//            'scale' => $chords_scale,
-//            'key' => $key,
-//            'chord' => $chord,
-//            'author' => $author,
-//            'album' => $album,
-//            'energy' => $energy,
-//        ]);
+        $author = $res->metadata->tags->artist ?? null;
 
         return [$chords_scale, $energy, $bpm, $author, $key];
+    }
+
+    /**
+     * @param Song $song
+     * @return Song
+     */
+    public function updateSongProperties(Song $song): Song
+    {
+        [$chords_scale, $energy, $bpm, $author, $key]  = $this->extracted($song);
+
+        $song->key = $key;
+        $song->scale = $chords_scale;
+        $song->energy = $energy;
+        $song->bpm = $bpm;
+        if ($author && $song->author === null) {
+            $song->author = $author;
+        }
+        $slug = $song->slug;
+        shell_exec("rm storage/app/public/$slug.json");
+
+        return $song;
+    }
+
+    /**
+     * @param Song $song
+     * @return Song
+     */
+    public function getSongEnergy(Song $song) : Song
+    {
+        [$chords_scale, $energy, $bpm, $author, $key] = $this->extracted($song);
+        $song->energy = (float)$energy;
+        return $song;
     }
 
     public function updateDuration(array|string $slug = null): array
@@ -167,42 +227,8 @@ class SongUpdateService
         $completed = [];
         /** @var Song $song */
         foreach ($songs as $song) {
-            // check if $image Already exists
-            $this->getSongImage($song);
-
-            // get song duration from path using getID3
-            $songPath = $song->path;
-            $fileInfo = $this->getAnalyze($songPath);
-            try {
-                $duration = $fileInfo['playtime_seconds'];
-                //$play_time = $fileInfo['playtime_string'];
-                $song->duration = $duration;
-                $song->save();
-            } catch (\Exception $e) {
-                dump($e->getMessage());
-                $this->getSongDetailsFromSoundCloud($song);
-                continue;
-            }
-            // get info from id3v2 tags
-            try {
-                $this->getInfoFromId3v2Tags($fileInfo, $song);
-                $song->save();
-            } catch (\Exception $e) {
-                dump($e->getMessage());
-                continue;
-            }
-
-            if ($song->image === null) {
-                try {
-                    $this->setImageFromSong($fileInfo['comments']['picture'][0]['data'], $song);
-                    $song->save();
-                } catch (\Exception $e) {
-                    $this->getSongDetailsFromSoundCloud($song);
-                    dump($e->getMessage());
-                    continue;
-                }
-            }
-
+            $updatedSong = $this->getSongDuration($song);
+            $updatedSong->save();
             $completed[] = [
                 'title' => $song->title,
                 'author' => $song->author,
@@ -219,18 +245,17 @@ class SongUpdateService
      * @param $data
      * @param Song|null $song
      * @return void
+     * @throws \Exception
      */
     public function setImageFromSong($data, Song|null $song): void
     {
-        // get image from picture data in comments tag
-        $image = $data;
-        // save image to storage/app/public/images/
-        $imageName = $song->slug . '.jpg';
-        $imagePath = "storage/app/public/images/$imageName";
-        file_put_contents($imagePath, $image);
-        $imagePath = 'http://mage.tech:8899' . "/storage/images/$imageName";
-
         if ($song->image === null) {
+            // save image to storage/app/public/images/
+            $imageName = $song->slug . '.jpeg';
+            $image = "storage/app/public/images/$imageName";
+            file_put_contents($image, $data);
+            $storageService = new MinioService();
+            $imagePath = $storageService->putObject($image, 'images');
             $song->image = $imagePath;
         }
     }
@@ -262,7 +287,6 @@ class SongUpdateService
             }
             $title = trim($title);
             $song->title = $title;
-
             return $song;
         }
         $genres = $idv['genre'] ?? $song->genre;
@@ -287,7 +311,17 @@ class SongUpdateService
         }
 
         $song->title = $title;
-        $song->comment = $comment;
+        $song->comment = json_encode($comment);
+
+        if ($song->image === null) {
+            try {
+                $this->setImageFromSong($fileInfo['comments']['picture'][0]['data'], $song);
+            } catch (\Exception $e) {
+                $song->image = null;
+                Log::warning($e->getMessage());
+                return $song;
+            }
+        }
         return $song;
     }
 
@@ -319,12 +353,9 @@ class SongUpdateService
             return;
         }
         dump("call soundcloud download command scrape:sc");
-        // call soundcloud download command scrape:sc
         Artisan::call('scrape:sc', [
             'link' => $link
         ]);
-       // Artisan::call('song:import');
-
         $slug = Str::slug($songTitle, '_');
 
         if ($slug === '' ){
@@ -335,13 +366,13 @@ class SongUpdateService
     /**
      * @param string $file
      * @param string $slug
-     * @return string|array|null
+     * @return string|null
      */
     public function getExistingImageFromFile(string $file, string $slug): string|null
     {
         $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', 'storage/app/public/images/' . $slug . '.jpeg']);
         if (!$process->successful() ){
-            dump(['error' => $process->errorOutput()]);
+            dump(['error_ffmpeg' => $process->errorOutput()]);
             Log::critical("Fail to get image from file $file   |  slug : $slug");
             return null;
         }
@@ -362,12 +393,12 @@ class SongUpdateService
                 dump('image did not upload');
                 return null;
             }
-
         }catch (\Exception $e){
             Log::critical($e->getMessage());
             dump($e->getMessage());
             return null;
         }
+        File::delete($localImage);
         return $imagePath;
     }
 
@@ -381,11 +412,32 @@ class SongUpdateService
         $image = $this->getExistingImageFromFile($file, $song->slug);
         if ($image === null) {
             $song->image = null;
-            $song->save();
             return $song;
         }
         $song->image = $image;
-        $song->save();
         return $song;
+    }
+
+    /**
+     * @param Song $song
+     * @return Song
+     */
+    public function getSongDuration(Song $song): Song
+    {
+        $songPath = $this->getFilePath($song);
+        if ($songPath === null) {
+            Log::warning("Missing Audio File. File not found locally. Could not obtain duration for $song->slug");
+            return $song;
+        }
+        $fileInfo = $this->getAnalyze($songPath);
+
+        try {
+            $duration = $fileInfo['playtime_seconds'] ?? null;
+            $song->duration = $duration;
+            return $song;
+        } catch (\Exception $e) {
+            Log::critical("Failed Update Song Duration: $songPath" . $e->getMessage());
+            dump("Failed Update Song Duration: $songPath" . $e->getMessage());
+        }
     }
 }

@@ -3,10 +3,13 @@
 namespace App\Console\Commands\Song;
 
 use App\Models\Song;
+use App\Services\SongUpdateService;
+use App\Services\UploadService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SongUpdateCommand extends Command
 {
@@ -15,14 +18,14 @@ class SongUpdateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'song:update {id?}';
+    protected $signature = 'song:update {slug?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Batch Update Song Details From AnalyseAPI';
+    protected $description = 'Batch Update Song Details after Upload or Import. {slug} is optional and will update only one song.';
 
     /**
      * Execute the console command.
@@ -31,37 +34,39 @@ class SongUpdateCommand extends Command
      */
     public function handle()
     {
-        // http://localhost:3000/song
-        $data = [];
-        $updated = [];
-        $songs = Song::all();
-        $base_url = 'http://localhost:3000/music/update?id=';
-
-        $id = $this->argument('id');
-        if ($id !== null) {
-            $song = Song::findOrFail($id);
-
-            if ($song !== null) {
-                $this->updateSong($base_url, $song, $songs, $updated);
-
+        $songUpdateService = new SongUpdateService();
+        if ($slug = $this->argument('slug')) {
+            $song = Song::query()->where('slug', $slug)->get()->first();
+            if (!$song) {
+                $this->output->error("Song $slug not found");
                 return 0;
             }
 
+            // check bpm and key and scale and energy and duration
+            $song = $this->updateBpmAndKeyAndScaleAndEnergyAndDuration($song, $songUpdateService);
+            dd($song->toArray());
             return 0;
         }
+        $songs = Song::query()->where('bpm', null)
+            ->orWhere('key', null)
+            ->orWhere('scale', null)
+            ->orWhere('energy', null)
+            ->orWhere('duration', null)
+            ->get();
 
+        $count = $songs->count();
+        if ( $count === 0) {
+            $this->output->info('All songs have been updated');
+            return 0;
+        }
+        $this->info("updating $count songs");
         /** @var Song $song */
         foreach ($songs as  $song) {
-            if ($song->image === null) {
-                $total = $this->updateSong($base_url, $song, $songs, $updated);
-                sleep(20);
-            } else {
-                $updated[] = $song->title;
-            }
-
+            $this->info("Updating $song->slug");
+            $updatedSong = $this->updateBpmAndKeyAndScaleAndEnergyAndDuration($song, $songUpdateService);
             $data[] = [
-                'id' => $song->id,
-                'title' => $song->title,
+                'id' => $updatedSong->id,
+                'title' => $updatedSong->title,
                 'status' => 'updated',
             ];
         }
@@ -96,5 +101,26 @@ class SongUpdateCommand extends Command
         $this->output->info("Updated  $song->title   | $rest songs left");
 
         return $total;
+    }
+
+    /**
+     * @param $song
+     * @param SongUpdateService $songUpdateService
+     * @return Song
+     */
+    public function updateBpmAndKeyAndScaleAndEnergyAndDuration($song, SongUpdateService $songUpdateService): Song
+    {
+        if (!$song->bpm || !$song->key || !$song->scale || !$song->energy) {
+            $this->info("Updating $song->slug");
+            $song = $songUpdateService->updateSongProperties($song);
+        }
+        if ($song->duration === null) {
+            $song = $songUpdateService->getSongDuration($song);
+        }
+        $song->save();
+        Log::info("Updated $song->slug  |  $song->bpm  |  $song->key  |  $song->scale  |  $song->energy  |  $song->duration");
+        $this->line("<fg=magenta>Updated $song->slug | BPM : $song->bpm | Key : $song->key </fg=magenta>");
+
+        return $song;
     }
 }
