@@ -145,7 +145,7 @@ class ClassifyService
         // if relaxed > 50%, relaxed is true, if relaxed < 50%, relaxed is false
         /** @var Song $song */
         $classification_properties = [
-            'emotion' => $song->happy > 0.5 ? 'happy' : 'sad',
+            'mood' => $song->happy > 0.5 ? 'happy' : 'sad',
             'energy' => $song->energy > 0.5 ? 'high' : 'low',
             'danceability' => $song->danceability > 0.5,
             'relaxed' => $song->relaxed > 0.5,

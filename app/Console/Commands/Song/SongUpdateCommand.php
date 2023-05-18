@@ -42,10 +42,28 @@ class SongUpdateCommand extends Command
                 return 0;
             }
 
-            // check bpm and key and scale and energy and duration
-            $song = $this->updateBpmAndKeyAndScaleAndEnergyAndDuration($song, $songUpdateService);
-            dd($song->toArray());
-            return 0;
+            if ( !$song->bpm || !$song->key || !$song->scale || !$song->energy || !$song->duration
+            ) {
+                $this->output->info("$song->slug is already updated");
+                $updatedSong = $song;
+            }else{
+                $this->info("updating $song->slug");
+                $updatedSong = $this->updateBpmAndKeyAndScaleAndEnergyAndDuration($song, $songUpdateService);
+            }
+
+            $data[] = [
+                'id' => $updatedSong->id,
+                'title' => $updatedSong->title,
+                'status' => 'updated',
+            ];
+        $headers = [
+            'id',
+            'title',
+            'status',
+        ];
+
+        $this->output->table($headers, $data);
+        return 0;
         }
         $songs = Song::query()->where('bpm', null)
             ->orWhere('key', null)

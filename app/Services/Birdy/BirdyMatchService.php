@@ -3,6 +3,7 @@
 namespace App\Services\Birdy;
 
 use App\Models\Song;
+use Illuminate\Support\Facades\Log;
 use MeiliSearch\Client;
 use MeiliSearch\Endpoints\Indexes;
 use MeiliSearch\Search\SearchResult;
@@ -23,11 +24,46 @@ class BirdyMatchService
 
     /**
      * @param string $slug
+     * @param float $bpm
+     * @param float $bpmMin
+     * @param float $bpmMax
+     * @param float $happy
+     * @param float $sad
+     * @param string $key
+     * @param float $energy
+     * @param string $mood
+     * @param float $danceability
      * @return array
      */
-    public function getSongmatch(string $slug): array
+    public function getSongMatch(
+        string $slug,
+        string $key,
+        string $mood,
+        float $bpm,
+        float $bpmMin,
+        float $bpmMax,
+        float $happy,
+        float $sad,
+        float $energy,
+        float $danceability
+    ): array
     {
+        Log::info((
+            [
+                'slug' => $slug,
+                'key' => $key,
+                'mood' => $mood,
+                'bpm' => $bpm,
+                'bpmMin' => $bpmMin,
+                'bpmMax' => $bpmMax,
+                'happy' => $happy,
+                'sad' => $sad,
+                'energy' => $energy,
+                'danceability' => $danceability,
+            ]
+        ));
         try {
+
             $song = $this->getExistingSong($slug);
         }catch (\Exception $e){
             return [
@@ -40,6 +76,8 @@ class BirdyMatchService
         }
 
         $vibe = $this->getSimmilarSong($song);
+
+        Log::info($vibe->getHits());
 
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song);
@@ -220,6 +258,8 @@ class BirdyMatchService
             $attributes = $this->songIndex->getFilterableAttributes();
         }
 
+
+
         foreach ($attributes as $attribute) {
             $value = $song->{$attribute};
 
@@ -256,6 +296,10 @@ class BirdyMatchService
         if ((int)$attribute === 0){
             $attribute = 'bpm';
         }
+
+        Log::info(($filter));
+
+        die();
         return $this->songIndex->search('', [
             'filter' => $filter,
             'sort' => ["$attribute:$direction"],

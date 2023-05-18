@@ -41,8 +41,37 @@ class MatchSongController extends Controller
     public function getSongMatch()
     {
         $slug = $this->request->input('slug');
+        $bpm = $this->request->input('bpm');
+        $bpmMin = null;
+        $bpmMax = null;
+        $bpmRange = $this->request->input('bpmRange');
+        $happy = $this->request->input('happy');
+        $sad = $this->request->input('sad');
+        $key = $this->request->input('key');
+        $energy = $this->request->input('energy');
+        $mood = $this->request->input('mood');
+        $danceability = $this->request->input('danceability');
+        // get pbm range if bpm has more than 1 value
+        if (str_contains($bpmRange, '-')) {
+            $bpmRange = explode('-', $bpmRange);
+            $bpmMin = $bpmRange[0];
+            $bpmMax = $bpmRange[count($bpmRange) - 1];
+        }
+
+
         $limit = $this->request->limit ?? 10;
-        $search = $this->birdyMatchService->getSongmatch($slug);
+        $search = $this->birdyMatchService->getSongMatch(
+            $slug,
+            $key,
+            $mood,
+            $bpm,
+            $bpmMin,
+            $bpmMax,
+            $happy,
+            $sad,
+            $energy,
+            $danceability
+        );
 
         Log::info(json_encode([
             'method' => 'MatchSongController@getSongsMatch',

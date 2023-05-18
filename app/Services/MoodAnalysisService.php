@@ -39,9 +39,6 @@ class MoodAnalysisService
         ]));
 
         if (empty($slug)) {
-            dump([
-                'status' => 'Slug is empty',
-            ]);
             Log::warning(json_encode([
                 'message' => 'Slug is empty',
                 'status' => 404,
@@ -56,26 +53,25 @@ class MoodAnalysisService
         // Check song from s3 storage
         $existOnStorage = $this->checkSongOnStorage($slug);
         if (!$existingSong && !$existOnStorage) {
-            dump([
-                'status' => "$slug does not exist",
-            ]);
             Log::warning(json_encode([
                 'message' => "$slug does not exist",
                 'status' => 404,
             ]));
-            return [
-                'status' => "$slug does not exist",
-            ];
+//            return [
+//                'status' => "$slug does not exist",
+//            ];
+
+            throw new \Exception("$slug does not exist");
         }
 
         /**
          * @var Song $existingSong
          */
         if ($existingSong && $existingSong->analyzed == 1) {
-            dump([
-                'analyzed' => $existingSong->analyzed,
-                'Existing' => $existingSong->status,
-            ]);
+//            dump([
+//                'analyzed' => $existingSong->analyzed,
+//                'Existing' => $existingSong->status,
+//            ]);
             Log::info(json_encode([
                 'message' => 'Song already analyzed',
                 'analyzed' => $existingSong->analyzed,
@@ -106,15 +102,15 @@ class MoodAnalysisService
         $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
         Log::info("Not analyzed songs: $notAnalyzedSongs");
-        dump("Not analyzed songs: $notAnalyzedSongs");
+        // dump("Not analyzed songs: $notAnalyzedSongs");
         $req = Http::get($nest_url);
 
         if ($req->json('status') == 'error') {
-            dump([
-                'status' => 'error',
-                'message' => $req->json(),
-                'nest_url' => $nest_url,
-            ]);
+//            dump([
+//                'status' => 'error',
+//                'message' => $req->json(),
+//                'nest_url' => $nest_url,
+//            ]);
 
             Log::error(json_encode([
                 'status' => 'error',

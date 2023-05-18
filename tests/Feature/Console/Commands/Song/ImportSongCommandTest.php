@@ -2,17 +2,17 @@
 
 namespace Tests\Feature\Console\Commands\Song;
 
-use App\Console\Commands\Song\ImportSongCommand;
+use App\Console\Commands\Song\SongImportCommand;
 use Tests\TestCase;
 
 /**
  * Class ImportSongCommandTest.
  *
- * @covers \App\Console\Commands\Song\ImportSongCommand
+ * @covers \App\Console\Commands\Song\SongImportCommand
  */
 final class ImportSongCommandTest extends TestCase
 {
-    private ImportSongCommand $importSongCommand;
+    private SongImportCommand $importSongCommand;
 
     /**
      * {@inheritdoc}
@@ -22,8 +22,8 @@ final class ImportSongCommandTest extends TestCase
         parent::setUp();
 
         /** @todo Correctly instantiate tested object to use it. */
-        $this->importSongCommand = new ImportSongCommand();
-        $this->app->instance(ImportSongCommand::class, $this->importSongCommand);
+        $this->importSongCommand = new SongImportCommand();
+        $this->app->instance(SongImportCommand::class, $this->importSongCommand);
     }
 
     /**

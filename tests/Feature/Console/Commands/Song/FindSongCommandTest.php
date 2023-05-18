@@ -2,17 +2,17 @@
 
 namespace Tests\Feature\Console\Commands\Song;
 
-use App\Console\Commands\Song\FindSongCommand;
+use App\Console\Commands\Song\SongFindCommand;
 use Tests\TestCase;
 
 /**
  * Class FindSongCommandTest.
  *
- * @covers \App\Console\Commands\Song\FindSongCommand
+ * @covers \App\Console\Commands\Song\SongFindCommand
  */
 final class FindSongCommandTest extends TestCase
 {
-    private FindSongCommand $findSongCommand;
+    private SongFindCommand $findSongCommand;
 
     /**
      * {@inheritdoc}
@@ -22,8 +22,8 @@ final class FindSongCommandTest extends TestCase
         parent::setUp();
 
         /** @todo Correctly instantiate tested object to use it. */
-        $this->findSongCommand = new FindSongCommand();
-        $this->app->instance(FindSongCommand::class, $this->findSongCommand);
+        $this->findSongCommand = new SongFindCommand();
+        $this->app->instance(SongFindCommand::class, $this->findSongCommand);
     }
 
     /**

@@ -37,7 +37,10 @@ class ReClassifyCommand extends Command
 
         // start progress bar
 
-        $songs = Song::query()->where(['analyzed' => null])->orWhere('status', '!=', 're-classified')->get();
+        $songs = Song::query()->where(['analyzed' => null])->
+        orWhere('status', 'like', '%re-classify%')
+            ->orWhereNull('status')
+                ->get();
 
         $results = [];
         if (empty($slug) || $slug == null || $slug == 'null') {

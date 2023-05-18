@@ -33,13 +33,21 @@ Route::get('/analyze/{track}', [\App\Http\Controllers\Api\ClassificationControll
 
 Route::get('classify/{slug}', [\App\Http\Controllers\Api\ClassificationController::class, 'findByTitle']);
 Route::post('upload', [\App\Http\Controllers\Api\UploadController::class, 'upload']);
+Route::post('songs/upload', [\App\Http\Controllers\Api\SongUploadController::class, 'uploadSong']);
 
 Route::post('songs/match', [\App\Http\Controllers\Api\MatchSongController::class, 'getSongMatch']);
+Route::get('songs/match/criteria/get', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'getCriteria']);
+Route::post('songs/match/criteria/set', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'setCriteria']);
 Route::get('search/songs', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'getSongs']);
 Route::post('ping', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'ping']);
 //Route::get('songs/match/{title}/{$attribute}', [\App\Http\Controllers\Api\MatchSongController::class, 'matchByAttribute']);
 Route::get('songs/search/{term}', [\App\Http\Controllers\Api\SongSearchController::class, 'searchSong']);
 Route::get('songs/genre/{artist}', [\App\Http\Controllers\Api\SpotifyController::class, 'getArtistGenre']);
 Route::get('spotify/search/{artist}', [\App\Http\Controllers\Api\SpotifyController::class, 'getSpotifySearch']);
+
+// command controller routes
+Route::post('commands/song/import', [\App\Http\Controllers\Api\Commands\SongImportCommandController::class, 'execute']);
+Route::post('commands/song/analyze', [\App\Http\Controllers\Api\Commands\SongAnalyzeCommandController::class, 'execute']);
+Route::post('commands/song/update', [\App\Http\Controllers\Api\Commands\SongUpdateCommandController::class, 'execute']);
 
 WebSocketsRouter::webSocket('/socket/song', UpdateSongSocketHandler::class);

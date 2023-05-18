@@ -194,7 +194,11 @@ class SpotifyService
         DownloadSpotifyJob::dispatch($url);
     }
 
-    public function findSong(string $query)
+    /**
+     * @param string $query
+     * @return array|mixed
+     */
+    public function findSong(string $query): mixed
     {
         // artist = first part of query
         $author = explode(' ', $query)[0] ?? $query;
@@ -267,13 +271,10 @@ class SpotifyService
         $search = $this->spotify->search($title, 'track')->tracks->items;
 
         foreach ($search as $song) {
-            dump($song->album->name);
             if (str_contains(strtolower($song->album->name), strtolower($title))) {
-                dd($song->album);
                 return $song;
             }
         }
-        dd($search[0]->album->name);
         return $search[0]->album->name;
     }
 }
