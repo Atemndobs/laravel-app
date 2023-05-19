@@ -41,4 +41,24 @@ class User extends \TCG\Voyager\Models\User
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * The roles that belong to the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<int, Role>
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * Get the admin user associated with the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<MatchCriterion>
+     */
+    public function matchCriterion()
+    {
+        return $this->hasMany(MatchCriterion::class);
+    }
 }

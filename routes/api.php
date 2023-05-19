@@ -18,9 +18,23 @@ use Spatie\Health\Http\Controllers\HealthCheckJsonResultsController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+//Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//    // if no user is logged in, $request->user() should return the first admin user or user with admin role
+//
+//    return $request->user();
+//});
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Protected routes that require authentication
+
+    // Example route
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });    // Example route
+
 });
+
+
 Route::get('health', HealthCheckJsonResultsController::class);
 
 Orion::resource('songs', \App\Http\Controllers\Api\SongController::class);

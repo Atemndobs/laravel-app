@@ -298,8 +298,6 @@ class BirdyMatchService
         }
 
         Log::info(($filter));
-
-        die();
         return $this->songIndex->search('', [
             'filter' => $filter,
             'sort' => ["$attribute:$direction"],

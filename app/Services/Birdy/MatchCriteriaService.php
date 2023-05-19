@@ -4,27 +4,41 @@ namespace App\Services\Birdy;
 
 use AllowDynamicProperties;
 use App\Models\MatchCriterion;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 #[AllowDynamicProperties] class MatchCriteriaService
 {
     // set default values
-    protected float $bpm = 0;
-    protected float $bpmMin = 0;
-    protected float $bpmMax = 0;
-    protected float $happy = 0;
-    protected float $sad = 0;
-    protected string $key = '';
-    protected string $scale = '';
-    protected float $energy = 0;
-    protected string $mood = "";
-    protected float $danceability = 0;
-    protected float $aggressiveness = 0;
+    protected float $bpm = 100;
+    protected float $bpmMin = 50;
+    protected float $bpmMax = 200;
+    protected float $happy = 60;
+    protected float $sad = 40;
+    protected string $key = 'A';
+    protected string $scale = 'minor';
+    protected float $energy = 80;
+    protected string $mood = "happy";
+    protected float $danceability = 80;
+    protected float $aggressiveness = 50;
     protected string $ip = '';
     protected string $sessionToken = '';
-    
+    protected ?\Illuminate\Contracts\Auth\Authenticatable $user;
+
+    // set Ipp and session token in constructor
+    public function __construct()
+    {
+        $this->ip = request()->ip();
+        $this->sessionToken = session()->getId();
+        $this->user = auth()->user();
+        if (is_null($this->user)) {
+            $this->user = User::query()->where('role_id', 1)->get()->first();
+        }
+    }
+
     public function setCriteria(array $criteria): void
     {
+
         $this->bpm = $criteria['bpm'];
         $this->bpmMin = $criteria['bpmMin'];
         $this->bpmMax = $criteria['bpmMax'];
@@ -49,7 +63,16 @@ use Illuminate\Support\Facades\Log;
         if (empty($this->sessionToken)) {
             $this->sessionToken = session()->getId();
         }
-        $matchCriteria = new MatchCriterion();
+
+
+        $matchCriteriaExist = MatchCriterion::query()->where('session_token', $this->sessionToken)
+            ->orWhere('ip', $this->ip)
+            ->get()->first();
+        if (is_null($matchCriteriaExist)) {
+            $matchCriteria = new MatchCriterion();
+        }else{
+            $matchCriteria = $matchCriteriaExist;
+        }
         $matchCriteria->bpm = $this->bpm;
         $matchCriteria->bpm_min = $this->bpmMin;
         $matchCriteria->bpm_max = $this->bpmMax;
@@ -64,14 +87,13 @@ use Illuminate\Support\Facades\Log;
         $matchCriteria->ip = $this->ip;
         $matchCriteria->session_token = $this->sessionToken;
 
-        $matchCriteriaExist = MatchCriterion::query()->where('session_token', $this->sessionToken)
-            ->orWhere('ip', $this->ip)
-            ->first();
-
-        // if session exists, update it
         if ($matchCriteriaExist) {
+            $matchCriteria->date_updated = now();
             $matchCriteria->update();
+
         } else {
+            $matchCriteria->date_created = now();
+            $matchCriteria->date_updated = now();
             $matchCriteria->save();
         }
 
@@ -88,9 +110,41 @@ use Illuminate\Support\Facades\Log;
             ->orWhere('session_token', $sessionToken)
             ->first();
 
+        if (!$matchCriteria) {
+            $this->setDefaultCriteria();
+            $matchCriteria = MatchCriterion::query()->where('ip', $ip)
+                ->orWhere('session_token', $sessionToken)
+                ->first();
+        }
+
         Log::info($matchCriteria->toArray());
 
         return $matchCriteria->toArray();
+    }
+
+    /**
+     * @return void
+     */
+    public function setDefaultCriteria(): void
+    {
+        $criteria = [
+            'bpm' => $this->bpm,
+            'bpmMin' => $this->bpmMin,
+            'bpmMax' => $this->bpmMax,
+            'happy' => $this->happy,
+            'sad' => $this->sad,
+            'key' => $this->key,
+            'scale' => $this->scale,
+            'energy' => $this->energy,
+            'mood' => $this->mood,
+            'danceability' => $this->danceability,
+            'aggressiveness' => $this->aggressiveness,
+            'ip' => $this->ip,
+            'sessionToken' => $this->sessionToken,
+            'status' => 'active',
+            'sort' => 0
+        ];
+        $this->setCriteria($criteria);
     }
 
 }

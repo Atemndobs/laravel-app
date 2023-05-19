@@ -36,7 +36,16 @@ class SongFindCommand extends Command
         $findService = new FindSongService();
         $output = $this->option('output');
         $max = $this->option('max');
-        $output = $output === null ? 'small' : 'full';
+        // 4 possible values for output : null, small, slim, full
+        if ($output === null || $output === false || $output === 'small') {
+            $output = 'small';
+        }elseif ($output === 'slim') {
+            $output = 'slim';
+        }elseif ($output === 'full') {
+            $output = 'full';
+        }else {
+            $output = 'small';
+        }
         $max = $max === null ? 5 : $max;
 
 
@@ -76,9 +85,7 @@ class SongFindCommand extends Command
                 $songs = array_slice($songs, 0, $max);
             }
         } else {
-
-
-
+            // find by single attribute
             foreach ($allArgs as $key => $value) {
                 $this->info("$key: $value");
                 $songs = $findService->{'findBy'.ucfirst($key)}($value);
@@ -91,7 +98,7 @@ class SongFindCommand extends Command
 
                 if (count($songs) === 1) {
                     $this->info('1 song found');
-                    $this->table($header, $songs);
+                    $this->prepareTable($songs, $header, $output);
                     return 0;
                 }
 
@@ -120,8 +127,30 @@ class SongFindCommand extends Command
                 }
             }
         }
-
-        $this->table($header, $songs);
+        $this->prepareTable($songs, $header, $output);
         return 0;
+    }
+
+    public function prepareTable($songs, $header, $output)
+    {
+        if ($output === 'full') {
+            $this->table($header, $songs);
+            return 0;
+        }
+        $reducedHeader = ['id','title', 'slug', 'bpm', 'scale', 'key', 'genre'];
+
+        foreach ($songs as $key => $value) {
+            $songs[$key] = Arr::only($value, $reducedHeader );
+        }
+
+        if ($output === 'slim') {
+            $reducedHeader = ['id','slug'];
+
+            foreach ($songs as $key => $value) {
+                $songs[$key] = Arr::only($value, $reducedHeader );
+            }
+        }
+
+        $this->table($reducedHeader, $songs);
     }
 }

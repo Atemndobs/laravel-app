@@ -7,6 +7,7 @@
 namespace App\Models\Base;
 
 use App\Models\DirectusUser;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -62,4 +63,26 @@ class MatchCriterion extends Model
 //	{
 //		return $this->belongsTo(DirectusUser::class, 'user_updated');
 //	}
+
+// add user_created and user updated relater to directus_users table
+    public function user_created()
+    {
+        return $this->belongsTo(User::class, 'user_created');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user_updated()
+    {
+        return $this->belongsTo(User::class, 'user_updated');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user() : \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_created');
+    }
 }

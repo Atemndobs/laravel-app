@@ -102,4 +102,5 @@ class AdminUserCrudController extends CrudController
     {
         $this->setupCreateOperation();
     }
+
 }
