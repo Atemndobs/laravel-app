@@ -24,7 +24,7 @@ SET collation_server = utf8mb3_general_ci;
 "
 
 
-/usr/bin/mysql --database=mage --user=mage -pmage --host=mariadb-galera --port=3306 <  /var/www/html/storage/app/backups/latest/db-dumps/mysql-mage.sql
+/usr/bin/mysql --database=mage --user=mage -pmage --host=maxscale-masteronly.curator.svc.cluster.local --port=3306 <  /var/www/html/storage/app/backups/latest/db-dumps/mysql-mage.sql
 
 
 echo "Update Paths, images and related_songs for Songs"
