@@ -56,7 +56,7 @@ class MatchCriteriaController extends Controller
         $this->matchCriteriaService->setCriteria($criteria);
         return response()->json([
             'message' => 'Criteria set successfully',
-            'criteria' => $this->matchCriteriaService->getCriteria($ip, $sessionToken),
+            'criteria' => $this->matchCriteriaService->getCriteria(),
         ], 200);
     }
 }

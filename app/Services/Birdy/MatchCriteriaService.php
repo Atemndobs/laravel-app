@@ -17,8 +17,9 @@ use Illuminate\Support\Facades\Log;
     protected float $sad = 40;
     protected string $key = 'A';
     protected string $scale = 'minor';
-    protected float $energy = 80;
     protected string $mood = "happy";
+    protected string $genre = "Afrobeat";
+    protected float $energy = 80;
     protected float $danceability = 80;
     protected float $aggressiveness = 50;
     protected string $ip = '';
@@ -52,6 +53,7 @@ use Illuminate\Support\Facades\Log;
             $this->scale = $keyArray[1];
         }
 
+        $this->genre = $criteria['genre'];
         $this->energy = $criteria['energy'];
         $this->mood = $criteria['mood'];
         $this->danceability = $criteria['danceability'];
@@ -80,6 +82,7 @@ use Illuminate\Support\Facades\Log;
         $matchCriteria->sad = $this->sad;
         $matchCriteria->key = $this->key;
         $matchCriteria->scale = $this->scale;
+        $matchCriteria->genre = $this->genre;
         $matchCriteria->energy = $this->energy;
         $matchCriteria->mood = $this->mood;
         $matchCriteria->danceability = $this->danceability;
@@ -137,6 +140,7 @@ use Illuminate\Support\Facades\Log;
             'scale' => $this->scale,
             'energy' => $this->energy,
             'mood' => $this->mood,
+            'genre' => $this->genre,
             'danceability' => $this->danceability,
             'aggressiveness' => $this->aggressiveness,
             'ip' => $this->ip,
