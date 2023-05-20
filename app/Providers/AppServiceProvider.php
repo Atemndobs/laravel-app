@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use SingleStore\Laravel\Connect\Connection;
 use SingleStore\Laravel\Connect\Connector;
-use Studio\Totem\Totem;
+// Studio\Totem\Totem;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,14 +29,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->bind('database.connector.singlestore', Connector::class);
+
     }
 
 }
-Totem::auth(function($request) {
-    // return true / false . For e.g.
-    return \auth()->guest();
-});
+//Totem::auth(function($request) {
+//    // return true / false . For e.g.
+//    return \auth()->guest();
+//});
 
 
 //     public function register(): void

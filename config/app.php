@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Facade;
 use PhpUnitGen\Console\Adapters\Laravel\PhpUnitGenServiceProvider;
 use Sarfraznawaz2005\ServerMonitor\ServiceProvider;
-use Studio\Totem\Providers\TotemServiceProvider;
+// use Studio\Totem\Providers\TotemServiceProvider;
 
 return [
 
@@ -169,8 +169,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         App\Providers\TenancyServiceProvider::class, // <-- here
         PhpUnitGenServiceProvider::class,
-        Studio\Totem\Providers\TotemServiceProvider::class,
-        TotemServiceProvider::class,
+        //Studio\Totem\Providers\TotemServiceProvider::class,
         ServiceProvider::class,
         /*
          * Package Service Providers...
