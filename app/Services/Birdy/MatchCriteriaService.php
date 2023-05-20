@@ -100,12 +100,12 @@ use Illuminate\Support\Facades\Log;
     }
 
     /**
-     * @param string $ip
-     * @param string $sessionToken
      * @return array
      */
-    public function getCriteria(string $ip, string $sessionToken): array
+    public function getCriteria(): array
     {
+        $ip = $this->ip;
+        $sessionToken = $this->sessionToken;
         $matchCriteria = MatchCriterion::query()->where('ip', $ip)
             ->orWhere('session_token', $sessionToken)
             ->first();

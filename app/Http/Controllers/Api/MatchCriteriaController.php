@@ -29,9 +29,7 @@ class MatchCriteriaController extends Controller
 
     public function getCriteria(): array
     {
-        $ip = $this->request->ip();
-        $sessionToken = $this->request->session()->token();
-        return $this->matchCriteriaService->getCriteria($ip, $sessionToken);
+        return $this->matchCriteriaService->getCriteria();
     }
 
     public function setCriteria(): JsonResponse

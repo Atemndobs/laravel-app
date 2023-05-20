@@ -77,6 +77,13 @@ class BirdyMatchService
 
         $vibe = $this->getSimmilarSong($song);
 
+        $songMatchCriteria = new MatchCriteriaService();
+
+        Log::info([
+            'Song Criteria',
+            $songMatchCriteria->getCriteria(),
+        ]);
+
         Log::info($vibe->getHits());
 
         if ($vibe->getHitsCount() < 3) {
