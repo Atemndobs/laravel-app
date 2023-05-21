@@ -122,7 +122,7 @@ class CreateMageTable extends Migration
             $table->unsignedInteger('updated_by_id')->nullable()->index('comments_comment_updated_by_id_fk');
         });
 
-        Schema::create('comments_comment-report', function (Blueprint $table) {
+        Schema::create('comments_comment_report', function (Blueprint $table) {
             $table->increments('id');
             $table->longText('content')->nullable();
             $table->string('reason')->nullable();
@@ -674,7 +674,7 @@ class CreateMageTable extends Migration
             $table->foreign(['updated_by_id'], 'comments_comment_updated_by_id_fk')->references(['id'])->on('admin_users')->onUpdate('NO ACTION')->onDelete('SET NULL');
         });
 
-        Schema::table('comments_comment-report', function (Blueprint $table) {
+        Schema::table('comments_comment_report', function (Blueprint $table) {
             $table->foreign(['created_by_id'], 'comments_comment-report_created_by_id_fk')->references(['id'])->on('admin_users')->onUpdate('NO ACTION')->onDelete('SET NULL');
             $table->foreign(['updated_by_id'], 'comments_comment-report_updated_by_id_fk')->references(['id'])->on('admin_users')->onUpdate('NO ACTION')->onDelete('SET NULL');
         });
@@ -995,7 +995,7 @@ class CreateMageTable extends Migration
             $table->dropForeign('comments_comment_author_user_links_inv_fk');
         });
 
-        Schema::table('comments_comment-report', function (Blueprint $table) {
+        Schema::table('comments_comment_report', function (Blueprint $table) {
             $table->dropForeign('comments_comment-report_created_by_id_fk');
             $table->dropForeign('comments_comment-report_updated_by_id_fk');
         });
@@ -1146,7 +1146,7 @@ class CreateMageTable extends Migration
 
         Schema::dropIfExists('comments_comment_author_user_links');
 
-        Schema::dropIfExists('comments_comment-report');
+        Schema::dropIfExists('comments_comment_report');
 
         Schema::dropIfExists('comments_comment');
 

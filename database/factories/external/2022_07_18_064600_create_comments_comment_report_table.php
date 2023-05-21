@@ -13,7 +13,7 @@ class CreateCommentsCommentReportTable extends Migration
      */
     public function up()
     {
-        Schema::create('comments_comment-report', function (Blueprint $table) {
+        Schema::create('comments_comment_report', function (Blueprint $table) {
             $table->increments('id');
             $table->longText('content')->nullable();
             $table->string('reason')->nullable();
@@ -32,6 +32,6 @@ class CreateCommentsCommentReportTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('comments_comment-report');
+        Schema::dropIfExists('comments_comment_report');
     }
 }

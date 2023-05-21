@@ -63,5 +63,7 @@ Route::get('spotify/search/{artist}', [\App\Http\Controllers\Api\SpotifyControll
 Route::post('commands/song/import', [\App\Http\Controllers\Api\Commands\SongImportCommandController::class, 'execute']);
 Route::post('commands/song/analyze', [\App\Http\Controllers\Api\Commands\SongAnalyzeCommandController::class, 'execute']);
 Route::post('commands/song/update', [\App\Http\Controllers\Api\Commands\SongUpdateCommandController::class, 'execute']);
+Route::post('commands/song/download/spotify', [\App\Http\Controllers\Api\Commands\SpotifyDownloadCommandController::class, 'execute']);
+Route::post('commands/song/download/sc', [\App\Http\Controllers\Api\Commands\SoundcloudDownloadCommandController::class, 'execute']);
 
 WebSocketsRouter::webSocket('/socket/song', UpdateSongSocketHandler::class);
