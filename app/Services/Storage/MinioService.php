@@ -129,6 +129,8 @@ use Illuminate\Support\Facades\Storage;
     public function checkMusicExists(string $url): string
     {
         $fileName = basename($url);
+
+        $this->disk->get('music/' . $fileName);
         if ($this->disk->exists("music/$fileName")) {
             return $url;
         }

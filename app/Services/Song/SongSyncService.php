@@ -3,10 +3,10 @@
 namespace App\Services\Song;
 
 use App\Models\Song;
+use App\Services\Storage\MinioService;
 use App\Services\UploadService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class SongSyncService
 {
@@ -70,7 +70,8 @@ class SongSyncService
 
     public function getSongDiffs() : void
     {
-        $storageSongs = $this->uploadedFiles;
+        $miniService = new MinioService();
+        $storageSongs = $miniService->getAllAudios();
 
         $storageSongs = array_map(function ($song) {
             return Storage::cloud()->url('curator/' . $song);
