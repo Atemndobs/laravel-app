@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ClassifySongJob implements ShouldQueue
 {
@@ -29,10 +30,11 @@ class ClassifySongJob implements ShouldQueue
      * Execute the job.
      *
      * @return void
+     * @throws \Exception
      */
     public function handle()
     {
-        dump('Pushing : ' . $this->track . 'to queue' . $this->queue);
+        Log::info('Pushing : ' . $this->track . 'to queue' . $this->queue);
         $slug = $this->track;
         (new MoodAnalysisService())->getAnalysis($slug);
     }

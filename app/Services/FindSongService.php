@@ -35,7 +35,6 @@ class FindSongService
 
         while ($songs->count() === 0) {
             $bpm = $bpm + 1;
-            //  ray(['BPM' => $bpm])->green();
             $songs = $this->getAttribute('bpm', $bpm);
         }
 

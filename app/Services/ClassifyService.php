@@ -7,6 +7,7 @@ use App\Jobs\ClassifySongJob;
 use App\Models\Song;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use JetBrains\PhpStorm\ArrayShape;
 
 class ClassifyService
@@ -101,7 +102,7 @@ class ClassifyService
             /** @var Song $song */
             if ($song->status == 're-classified' || $song->classification_properties != null) {
                 $message = "Song $slug is already classified";
-
+                Log::info($message);
                 return [$this->buildResponse($song->toArray(), $song)];
             }
         }

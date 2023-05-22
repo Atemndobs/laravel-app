@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Commands;
 
-use App\Console\Commands\Scraper\SpotifyDownloadCommand;
+use App\Console\Commands\Scraper\SoundcloudDownloadCommand;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,18 +14,18 @@ use Illuminate\Support\Facades\Artisan;
 class SoundcloudDownloadCommandController extends Controller
 {
     public Request $request;
-    public SpotifyDownloadCommand $spotifyDownloadCommand;
+    public SoundcloudDownloadCommand $soundcloudDownloadCommand;
 
     /**
      * @param Request $request
-     * @param SpotifyDownloadCommand $spotifyDownloadCommand
+     * @param SoundcloudDownloadCommand $soundcloudDownloadCommand
      */
     public function __construct(
         Request $request,
-        SpotifyDownloadCommand $spotifyDownloadCommand
+        SoundcloudDownloadCommand $soundcloudDownloadCommand
     ) {
         $this->request = $request;
-        $this->spotifyDownloadCommand = $spotifyDownloadCommand;
+        $this->soundcloudDownloadCommand = $soundcloudDownloadCommand;
     }
 
     /**
@@ -35,8 +35,8 @@ class SoundcloudDownloadCommandController extends Controller
     public function execute(Request $request): JsonResponse
     {
         // call song import command
-        Artisan::call($this->spotifyDownloadCommand->getName() , [
-            'url' => $request->get('url')
+        Artisan::call($this->soundcloudDownloadCommand->getName() , [
+            'link' => $request->get('url')
         ]);
 
 

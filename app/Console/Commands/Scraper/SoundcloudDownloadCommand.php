@@ -4,6 +4,7 @@ namespace App\Console\Commands\Scraper;
 
 use App\Services\Scraper\SoundcloudService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SoundcloudDownloadCommand extends Command
 {
@@ -34,8 +35,10 @@ class SoundcloudDownloadCommand extends Command
         }
         $link = $this->argument('link');
         try {
-            shell_exec("scdl  -l $link ");
+            $shell = shell_exec("scdl  -l $link 2>&1");
+            Log::info($shell);
             $this->info("Downloaded is complete");
+            $this->info($shell);
         }catch (\Exception $e) {
             $this->error($e->getMessage());
         }

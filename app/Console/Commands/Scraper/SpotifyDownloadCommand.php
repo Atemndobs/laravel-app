@@ -4,7 +4,6 @@ namespace App\Console\Commands\Scraper;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Process;
 
 class SpotifyDownloadCommand extends Command
 {
@@ -32,15 +31,9 @@ class SpotifyDownloadCommand extends Command
         $this->info('Downloading Playlists...');
         $url = $this->argument('url');
 
-        Log::warning("Received RRL => | $url");
-      //  $shell = shell_exec("spotdl  $url --output storage/app/public/uploads/audio/");
-        dd(shell_exec("sudo spotdl --help"));
-        // run shell command as root user
-       $shell = shell_exec("sudo spotdl $url --output storage/app/public/uploads/audio/");
-       Log::alert($shell) ;
-        $result = Process::path(__DIR__)->run('whoami');
-        dd($result->output());
-
+        $shell = shell_exec("spotdl  $url --output storage/app/public/uploads/audio/");
+        $this->info($shell);
+        Log::info($shell);
         try {
             $outputs = explode("\n", $shell);
             // search the word "found" from output

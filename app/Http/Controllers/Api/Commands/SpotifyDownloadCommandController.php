@@ -36,8 +36,6 @@ class SpotifyDownloadCommandController extends Controller
     public function execute(Request $request): JsonResponse
     {
         // call song import command
-
-        dd(shell_exec("spotdl --help 2>&1"));
         $commandName = $this->spotifyDownloadCommand->getName();
         Artisan::call("$commandName" , [
             'url' => $request->get('url')

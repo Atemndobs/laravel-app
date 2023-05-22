@@ -67,7 +67,7 @@ class SongUpdateService
                 'song' => $song->slug,
                 'error' => $e->getMessage()
             ];
-            Log::error(json_encode($message));
+            Log::error(json_encode($message, JSON_PRETTY_PRINT));
             dump($message);
 
             $file = $this->getFilePath($song);

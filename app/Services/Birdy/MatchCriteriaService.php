@@ -120,7 +120,7 @@ use Illuminate\Support\Facades\Log;
                 ->first();
         }
 
-        Log::info($matchCriteria->toArray());
+        Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         return $matchCriteria->toArray();
     }

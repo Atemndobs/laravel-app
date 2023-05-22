@@ -36,13 +36,13 @@ class MoodAnalysisService
             'args' => func_get_args(),
             'slug' => $slug,
             'nest_base_url' => $nest_base_url,
-        ]));
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 
         if (empty($slug)) {
             Log::warning(json_encode([
                 'message' => 'Slug is empty',
                 'status' => 404,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             return [
                 'status' => 'Slug is empty',
             ];
@@ -56,7 +56,7 @@ class MoodAnalysisService
             Log::warning(json_encode([
                 'message' => "$slug does not exist",
                 'status' => 404,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 //            return [
 //                'status' => "$slug does not exist",
 //            ];
@@ -68,15 +68,11 @@ class MoodAnalysisService
          * @var Song $existingSong
          */
         if ($existingSong && $existingSong->analyzed == 1) {
-//            dump([
-//                'analyzed' => $existingSong->analyzed,
-//                'Existing' => $existingSong->status,
-//            ]);
             Log::info(json_encode([
                 'message' => 'Song already analyzed',
                 'analyzed' => $existingSong->analyzed,
                 'Existing' => $existingSong->status,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             $existingSong->searchable();
 
             return [
@@ -93,7 +89,7 @@ class MoodAnalysisService
             Log::warning(json_encode([
                 'message' => 'Song skipped - may be a mixtape',
                 'duration' => $songDuration,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             return [
                 'status' => "Song skipped - may be a mixtape, Duration :  $songDuration",
             ];
@@ -102,27 +98,20 @@ class MoodAnalysisService
         $nest_url = $nest_base_url . "/song/$slug";
         $notAnalyzedSongs = Song::query()->where('analyzed', '=', null)->count();
         Log::info("Not analyzed songs: $notAnalyzedSongs");
-        // dump("Not analyzed songs: $notAnalyzedSongs");
         $req = Http::get($nest_url);
 
         if ($req->json('status') == 'error') {
-//            dump([
-//                'status' => 'error',
-//                'message' => $req->json(),
-//                'nest_url' => $nest_url,
-//            ]);
-
             Log::error(json_encode([
                 'status' => 'error',
                 'message' => $req->json(),
                 'nest_url' => $nest_url,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             return [
                 'status' => 'error',
                 'message' => $req->json(),
             ];
         }
-        info("Job in progress for $slug");
+        Log::info("Job in progress for $slug");
         return [
             'status' => 'Job sent for analysis ,Hang on!!',
         ];
@@ -171,7 +160,7 @@ class MoodAnalysisService
                 'message' => 'Error while checking song on storage',
                 'slug' => $slug,
                 'error' => $e->getMessage(),
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             $this->addMissingSongs($slug);
             return false;
         }

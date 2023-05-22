@@ -79,12 +79,13 @@ class BirdyMatchService
 
         $songMatchCriteria = new MatchCriteriaService();
 
-        Log::info([
-            'Song Criteria',
+        $message = [
+        'Song Criteria',
             $songMatchCriteria->getCriteria(),
-        ]);
+        ];
+        Log::info(json_encode($message, JSON_PRETTY_PRINT));
 
-        Log::info($vibe->getHits());
+        Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song);
@@ -149,9 +150,10 @@ class BirdyMatchService
     }
 
     /**
-     * @param  string  $attribute
-     * @param  float|string  $value
-     * @return void
+     * @param string $attribute
+     * @param float|string $value
+     * @param float $range
+     * @return array|array[]|SearchResult|\mixed[][]
      */
     public function searchByAttribute(string $attribute, float|string $value, float $range = 1)
     {
@@ -170,33 +172,30 @@ class BirdyMatchService
      * @param  string  $attribute
      * @return array[]|\mixed[][]
      */
-    protected function getByBpm(float|string $value, int $range, string $attribute): array
+    protected function getByBpm(float|string $value, float $range, string $attribute): array
     {
         $dirrection = 'asc';
-
         return $this->filterAndSort($value, $range, $attribute, $dirrection);
     }
 
     /**
      * @param  float|string  $value
      * @param  float|int  $range
-     * @param  Indexes  $songIndex
      * @param  string  $attribute
-     * @param  string  $dirrection
-     * @return array[]|\mixed[][]
+     * @param  string  $direction
      */
     protected function filterAndSort(
         float|string $value,
         float|int $range,
         string $attribute,
-        string $dirrection
+        string $direction
     ): array | SearchResult {
         $min = $value - $range;
         $max = $value + $range;
 
         return $this->songIndex->search('', [
             'filter' => ["$attribute >= $min AND $attribute <= $max"],
-            'sort' => ["$attribute:$dirrection"],
+            'sort' => ["$attribute:$direction"],
         ]);
     }
 
@@ -206,7 +205,7 @@ class BirdyMatchService
      * @param  string  $attribute
      * @return array[]|\mixed[][]
      */
-    protected function getBySingleMood(int $range, float|string $value, string $attribute): array
+    protected function getBySingleMood(float $range, float|string $value, string $attribute): array
     {
         $possitives = [
             'energy',
@@ -234,9 +233,10 @@ class BirdyMatchService
     }
 
     /**
-     * @param  string  $attribute
-     * @param  string  $value
-     * @return array
+     * @param string $attribute
+     * @param string $keyValue
+     * @param string $scaleValue
+     * @return array|SearchResult
      */
     protected function getByKey(string $attribute, string $keyValue, string $scaleValue = 'major'): array | SearchResult
     {
@@ -304,7 +304,7 @@ class BirdyMatchService
             $attribute = 'bpm';
         }
 
-        Log::info(($filter));
+        Log::info((json_encode($filter, JSON_PRETTY_PRINT)));
         return $this->songIndex->search('', [
             'filter' => $filter,
             'sort' => ["$attribute:$direction"],

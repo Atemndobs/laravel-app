@@ -13,7 +13,7 @@ class AnalyzeSongCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'song:analyze {slug}';
+    protected $signature = 'song:analyze {slug} {source?} {--p|path=}';
 
     /**
      * The console command description.
@@ -31,6 +31,9 @@ class AnalyzeSongCommand extends Command
     public function handle()
     {
         $slug = $this->argument('slug');
+        $source = $this->argument('source');
+        $path = $this->option('path');
+
         (new MoodAnalysisService())->getAnalysis($slug);
 
         $this->output->info("$slug : analysis is in progress");

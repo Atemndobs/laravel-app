@@ -33,11 +33,8 @@ class SongUploadCommand extends Command
     public function handle()
     {
         $file = $this->option('file');
-
         $songUploadService = new SongUploadService();
-
-        dd($songUploadService->uploadSong($file));
-
+        $songUploadService->uploadSong($file);
         return 0;
     }
 }

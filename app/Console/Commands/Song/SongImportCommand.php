@@ -23,14 +23,14 @@ class SongImportCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'song:import {source?}';
+    protected $signature = 'song:import {source?} {--p|path=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Import Songs from storage/audio directory --source=local|rclone|other audio directory';
+    protected $description = 'Import Songs from storage/audio directory --source=local|cloud|other audio directory';
 
     /**
      * Execute the console command.
@@ -40,6 +40,8 @@ class SongImportCommand extends Command
     public function handle()
     {
         $source = $this->argument('source');
+        $path = $this->option('path');
+
         $unClassified = [];
         $data = [];
         $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');

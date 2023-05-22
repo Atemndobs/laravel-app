@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use function Amp\ByteStream\buffer;
 
 class UploadService
 {
@@ -43,30 +44,16 @@ class UploadService
      */
     public function uploadSong(string $track): Song
     {
-        $song = new Song();
-        $songUpdateService = new SongUpdateService();
         $slug = $this->getSlugFromFilePath($track);
         $existingSong = $this->getExistingSong($slug);
         if ($existingSong) {
             return $existingSong;
         }
-        $fileInfo = $songUpdateService->getAnalyze($track);
-        $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
-        $processedSong = $this->processSong($track, $songWithInfo);
-        $processedSong->image = null;
-        if ($processedSong->image === null) {
-            $processedSong =  $this->getSongImage($track, $processedSong);
-        }
-//        $processedSong = $songUpdateService->getSongDuration($processedSong);
-//        $processedSong = $songUpdateService->updateSongProperties($processedSong);
-//        if ($processedSong->bpm === null) {
-//            $processedSong = $songUpdateService->updateBpm($processedSong);
-//        }
-        $processedSong->save();
+
+        $song = $this->loadAndSaveSongToDb($track);
 
         if (File::delete($track)){
             Log::info('Deleted file: '.$track);
-            dump('Deleted file: '.$track);
         };
 
         return $song;
@@ -112,8 +99,7 @@ class UploadService
                     'error' => $e->getMessage(),
                     'file' => $file,
                 ];
-                dump([$error]);
-                Log::error($e->getMessage());
+                Log::error(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 continue;
             }
 
@@ -166,7 +152,7 @@ class UploadService
             'FILE NAME' => $file,
             'FILE CLOUD URL' => $storage_path,
         ];
-        Log::info(json_encode($message));
+        Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $api_url = env('APP_URL').'/api/songs/match/';
         $song->path = $storage_path;
         $song->slug = $slug;
@@ -186,21 +172,25 @@ class UploadService
 
         if ($imagePath) {
             $song->image = $imagePath;
-            Log::info("Image path : $imagePath");
+            Log::info(json_encode([
+                'message' => "Image found in minio : $song->slug",
+                'file' => $file,
+                'image' => $imagePath,
+            ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             return $song;
         }
         try {
             Log::error(json_encode([
                 'message' => "Image not found in minio : $song->slug",
                 'file' => $file,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             return $this->getImageFromSpotify($song);
         } catch (\Exception $e) {
             Log::error(json_encode([
                 'message' => "Image not found in minio : $song->slug",
                 'error' => $e->getMessage(),
                 'file' => $file,
-            ]));
+            ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             return $song;
         }
     }
@@ -227,7 +217,7 @@ class UploadService
             $song->image = $image;
             return $song;
         }catch (\Exception $e) {
-            Log::error($e->getMessage());
+            Log::error(json_encode($e->getMessage(), JSON_PRETTY_PRINT));
             return $song;
         }
     }
@@ -242,5 +232,40 @@ class UploadService
         $ext = substr($file_name, -4);
         $file_name = str_replace($ext, '', $file_name);
         return Str::slug($file_name, '_');
+    }
+
+    /**
+     * @param string $track
+     * @return Song
+     * @throws \Exception
+     */
+    public function loadAndSaveSongToDb(string $track): Song
+    {
+        $song = new Song();
+        $songUpdateService = new SongUpdateService();
+        $fileInfo = $songUpdateService->getAnalyze($track);
+        $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
+        $processedSong = $this->processSong($track, $songWithInfo);
+        if ($processedSong->image === null) {
+            $processedSong = $this->getSongImage($track, $processedSong);
+        }
+        $processedSong->save();
+        return $song;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function loadAndSaveSongToDbFull(string $track): Song
+    {
+        $processedSong = $this->loadAndSaveSongToDb($track);
+        $songUpdateService = new SongUpdateService();
+        $processedSong = $songUpdateService->getSongDuration($processedSong);
+        $processedSong = $songUpdateService->updateSongProperties($processedSong);
+        if ($processedSong->bpm === null) {
+            $processedSong = $songUpdateService->updateBpm($processedSong);
+        }
+        $processedSong->save();
+        return $processedSong;
     }
 }
