@@ -148,6 +148,7 @@ class UploadService
         $slug = $this->getSlugFromFilePath($file);
         $storageService = new MinioService();
         $storage_path = $storageService->putObject($file);
+
         $message = [
             'FILE NAME' => $file,
             'FILE CLOUD URL' => $storage_path,
@@ -228,37 +229,77 @@ class UploadService
      */
     public function getSlugFromFilePath(mixed $file): string
     {
-        $file_name = substr($file, strrpos($file, '/') + 1);
+        $file_name = substr($file, strrpos($file, '/'));
         $ext = substr($file_name, -4);
         $file_name = str_replace($ext, '', $file_name);
         return Str::slug($file_name, '_');
     }
 
     /**
-     * @param string $track
+     * @param $file
      * @return Song
      * @throws \Exception
      */
-    public function loadAndSaveSongToDb(string $track): Song
+    public function loadAndSaveSongToDb($file): Song
     {
         $song = new Song();
         $songUpdateService = new SongUpdateService();
-        $fileInfo = $songUpdateService->getAnalyze($track);
+        $fileInfo = $songUpdateService->getAnalyze($file);
         $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
-        $processedSong = $this->processSong($track, $songWithInfo);
+        $processedSong = $this->processSong($file, $songWithInfo);
         if ($processedSong->image === null) {
-            $processedSong = $this->getSongImage($track, $processedSong);
+            $processedSong = $this->getSongImage($file, $processedSong);
         }
         $processedSong->save();
         return $song;
     }
 
     /**
+     * @param string $path
+     * @return Song
      * @throws \Exception
      */
-    public function loadAndSaveSongToDbFull(string $track): Song
+    public function loadFromUrlAndSaveSongToDb(string $path): Song
     {
-        $processedSong = $this->loadAndSaveSongToDb($track);
+        $name = basename($path);
+        if (str_contains($name, ' ')) {
+            $storageService = new MinioService();
+            $storageService->deleteMusic($name);
+            $errorMassage = [
+                'message' => 'File name contains spaces',
+                'file' => $name,
+            ];
+            Log::error(json_encode($errorMassage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            throw new \Exception('File name contains spaces');
+        }
+
+        $song = new Song();
+        $song->path = $path;
+        $songUpdateService = new SongUpdateService();
+        file_put_contents($name, fopen($path, 'r'));
+        $ext = substr($name, -3);
+        $song->source = $ext;
+        $song->extension = $ext;
+        $song->slug = $this->getSlugFromFilePath($name);
+        $fileInfo = $songUpdateService->getAnalyze($name);
+        $processedSong = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
+        if ($processedSong->image === null) {
+            $processedSong = $this->getSongImage($name, $processedSong);
+        }
+        $processedSong->author = Str::ascii($processedSong->author);
+        $processedSong->title = Str::ascii($processedSong->title);
+
+        $processedSong->save();
+        unlink($name);
+        return $song;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function loadAndSaveSongToDbFull($file): Song
+    {
+        $processedSong = $this->loadAndSaveSongToDb($file);
         $songUpdateService = new SongUpdateService();
         $processedSong = $songUpdateService->getSongDuration($processedSong);
         $processedSong = $songUpdateService->updateSongProperties($processedSong);

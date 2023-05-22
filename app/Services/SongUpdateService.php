@@ -372,7 +372,9 @@ class SongUpdateService
     {
         $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', 'storage/app/public/images/' . $slug . '.jpeg']);
         if (!$process->successful() ){
-            dump(['error_ffmpeg' => $process->errorOutput()]);
+            // last line of error output is the error
+            $errorOutput = explode("\n", $process->errorOutput());
+            dump(['error_ffmpeg' => $errorOutput[count($errorOutput) - 2]]);
             Log::critical("Fail to get image from file $file   |  slug : $slug");
             return null;
         }

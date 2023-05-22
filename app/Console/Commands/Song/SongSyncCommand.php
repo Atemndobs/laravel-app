@@ -37,7 +37,12 @@ class SongSyncCommand extends Command
         Log::info(json_encode($message, JSON_PRETTY_PRINT));
         $bar = $this->output->createProgressBar(count($songSyncService->getSongsNotinDatabase()));
         foreach ($songSyncService->getSongsNotinDatabase() as $track) {
-            $songSyncService->syncDbSingleSong($track);
+            try {
+                $songSyncService->syncDbSingleSong($track);
+            } catch (\Exception $e) {
+                $this->error($e->getMessage());
+                die();
+            }
             $bar->advance();
         }
         $bar->finish();

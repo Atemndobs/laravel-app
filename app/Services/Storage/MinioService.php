@@ -104,6 +104,11 @@ use Illuminate\Support\Facades\Storage;
         return $this->disk->url($path);
     }
 
+    public function deleteMusic(string $basePath): bool
+    {
+        return $this->disk->delete('music/' . $basePath);
+    }
+
     /**
      * @param string $path
      * @param int $expires
@@ -119,5 +124,14 @@ use Illuminate\Support\Facades\Storage;
                 'ResponseContentType' => 'audio/mpeg', // Set the content type for the response
             ]
         );
+    }
+
+    public function checkMusicExists(string $url): string
+    {
+        $fileName = basename($url);
+        if ($this->disk->exists("music/$fileName")) {
+            return $url;
+        }
+        throw new \Exception("File does not exist");
     }
 }

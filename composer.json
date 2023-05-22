@@ -41,6 +41,7 @@
         "php-decimal/php-decimal": "^1.1",
         "prettus/l5-repository": "^2.8",
         "psr/simple-cache": "^1.0",
+        "rezaamini-ir/migrator": "^1.5",
         "sarfraznawaz2005/servermonitor": "@dev",
         "singlestoredb/singlestoredb-laravel": "^1.4",
         "spatie/cpu-load-health-check": "^1.0",
@@ -62,6 +63,7 @@
         "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
     },
     "require-dev": {
+        "bennett-treptow/laravel-migration-generator": "^4.3",
         "fakerphp/faker": "^1.9.1",
         "jasonmccreary/laravel-test-assertions": "^2.0",
         "kitloong/laravel-migrations-generator": ">=6.3",

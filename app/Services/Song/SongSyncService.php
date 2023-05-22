@@ -119,7 +119,7 @@ class SongSyncService
         $tracks = $this->songsNotinDatabase;
         $songs = [];
         foreach ($tracks as $track) {
-            $song = $uploadService->loadAndSaveSongToDb($track);
+            $song = $uploadService->loadFromUrlAndSaveSongToDb($track);
             $songs[] = $song;
         }
         $message = "Imported " . count($songs) . " songs to database";
@@ -127,10 +127,13 @@ class SongSyncService
         return $songs;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function syncDbSingleSong(string $track): Song
     {
         $uploadService = new UploadService();
-        $song = $uploadService->loadAndSaveSongToDb($track);
+        $song = $uploadService->loadFromUrlAndSaveSongToDb($track);
         $path = $song->path;
         $message = ["Imported " => [
            'title' =>  $song->title,
