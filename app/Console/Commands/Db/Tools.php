@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands\Db;
 
+use Illuminate\Support\Facades\DB;
+use ZipArchive;
+
 trait Tools
 {
     /**
@@ -38,5 +41,49 @@ trait Tools
         $this->table(['file', 'name', 'date', 'time'], $data);
 
         return $file;
+    }
+
+    /**
+     * @param  string  $filepath
+     * @param  string  $destination
+     * @return bool|string
+     */
+    public function unzipFile(string $filepath, string $destination): bool|string
+    {
+        // unzip file from filepath and return the unzipped file path
+        $zip = new ZipArchive;
+        $res = $zip->open($filepath);
+        if ($res === true) {
+            $zip->extractTo($destination);
+            $unzippedFile = $zip->getNameIndex(0);
+            $zip->close();
+
+            return $destination.$unzippedFile;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @param  string  $latestFile
+     * @return void
+     */
+    public function downloadFileFromBackupFolder(string $latestFile): void
+    {
+        // download latest file from backup folder
+        $this->info('Downloading file: '.$latestFile);
+        $file = storage_path('app/backups/'.$latestFile);
+        $this->info('File downloaded');
+        // unzip file
+        $this->info('Unzipping file');
+        $destination = storage_path('app/');
+        $unzippedFile = $this->unzipFile($file, $destination);
+        // import dump
+        DB::unprepared(file_get_contents($unzippedFile));
+        $this->info('Dump imported');
+        // delete file
+        $this->info('Deleting file');
+        unlink($unzippedFile);
+        $this->info('File deleted');
     }
 }

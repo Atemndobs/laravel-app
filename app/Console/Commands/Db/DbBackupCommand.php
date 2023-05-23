@@ -4,6 +4,7 @@ namespace App\Console\Commands\Db;
 
 use Illuminate\Console\Command;
 use Illuminate\Http\File;
+use Illuminate\Support\Carbon;
 
 class DbBackupCommand extends Command
 {
@@ -98,6 +99,61 @@ class DbBackupCommand extends Command
             \Illuminate\Support\Facades\File::chmod($file, 0777);
         }
 
+        $this->getLatestFile();
+        dd(shell_exec('ls -l '.storage_path('app/backups')));
+
         return 0;
+    }
+
+    public function getLatestFile()
+    {
+        $files = glob(storage_path('app/backups/*'));
+        // exclud directories from $files array
+        $files = array_filter($files, function ($file) {
+            return !is_dir($file);
+        });
+        $count = count($files);
+        if ($count === 0) {
+            $this->info('No files found');
+            return 0;
+        }
+        $latestDate = 0;
+        $latestFile = '';
+        $data = [];
+        if ($count > 1) {
+            $dates = [];
+            foreach ($files as $file) {
+                $dates[] = Carbon::createFromTimestamp(filemtime($file));
+                if (count($dates) > 1) {
+                    $latestDate = max($dates);
+                    $fileName = basename($file);
+                    $latestFile = $fileName;
+                }
+            }
+            $this->extractBackupFile($latestFile);
+        } else {
+            $latestFile = basename($files[0]);
+            $this->info("only one file in backup folder | $latestFile)");
+            $answer = $this->ask('Do you want to continue? (y/n)');
+            if ($answer == 'y') {
+                $this->extractBackupFile($latestFile);
+                return 0;
+            }
+            $this->line('<fg=red> Backup Restore Aborted !!!</>');
+            return 0;
+        }
+    }
+
+    /**
+     * @param string $latestFile
+     * @return void
+     */
+    public function extractBackupFile(string $latestFile): void
+    {
+        $this->info('Downloading file: ' . $latestFile);
+        $file = storage_path('app/backups/' . $latestFile);
+        $destination = storage_path('app/backups/latest/');
+        $unzippedFile = $this->unzipFile($file, $destination);
+        $this->line("<fg=blue>Prepared Dump Backup from :   $unzippedFile  </>");
     }
 }

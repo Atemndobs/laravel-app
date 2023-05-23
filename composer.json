@@ -60,7 +60,8 @@
         "symfony/process": "^6.1",
         "tailflow/laravel-orion": "^2.11",
         "tcg/voyager": "@dev",
-        "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "^13",
+      "ext-zip": "*"
     },
     "require-dev": {
         "bennett-treptow/laravel-migration-generator": "^4.3",
