@@ -3,6 +3,7 @@
 namespace App\Services\Storage;
 
 use AllowDynamicProperties;
+use App\Services\UploadService;
 use Aws\S3\S3Client as Client;
 use Illuminate\Support\Facades\Storage;
 
@@ -135,5 +136,24 @@ use Illuminate\Support\Facades\Storage;
             return $url;
         }
         throw new \Exception("File does not exist");
+    }
+
+    public function getUnsortedSongs(): array
+    {
+        return $this->getAllAudios('unsorted');
+    }
+
+    public function downloadSong(string $file): string
+    {
+        $uploadService = new UploadService();
+        $name = $uploadService->getSlugFromFilePath($file);
+        $filepath = $name . '.mp3';
+        $audioPath = $uploadService->getTempAudioPath($filepath);
+        if (file_exists($audioPath)) {
+            return $audioPath;
+        }
+        $fileContent = $this->disk->get($file);
+        file_put_contents($audioPath,  $fileContent);
+        return $audioPath;
     }
 }

@@ -2,16 +2,16 @@
 
 namespace App\Services\Birdy;
 
+use Aerni\Spotify\Spotify;
 use App\Jobs\DownloadSpotifyJob;
-use App\Models\Feed;
 use App\Models\Song;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Http;
 use SpotifyWebAPI\Session;
 use SpotifyWebAPI\SpotifyWebAPI;
 
 class SpotifyService
 {
+
     public Song $song;
 
     public SpotifyWebAPI $spotify;
@@ -277,4 +277,6 @@ class SpotifyService
         }
         return $search[0]->album->name;
     }
+
+
 }

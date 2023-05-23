@@ -135,11 +135,10 @@ class SongSyncService
     {
         $uploadService = new UploadService();
         $song = $uploadService->loadFromUrlAndSaveSongToDb($track);
-        $path = $song->path;
         $message = ["Imported " => [
            'title' =>  $song->title,
             'slug' => $song->slug,
-            'path' => $path,
+            'path' => $song->path,
         ]];
         Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         return $song;

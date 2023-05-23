@@ -370,18 +370,27 @@ class SongUpdateService
      */
     public function getExistingImageFromFile(string $file, string $slug): string|null
     {
-        $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', 'storage/app/public/images/' . $slug . '.jpeg']);
+        $imageFolder = env('IMAGE_PATH', 'storage/app/public/uploads/images');
+        $process = Process::run(['ffmpeg', '-i', $file, '-an', '-vcodec', 'copy', '-f', 'image2', '-y', $imageFolder . '/' . $slug . '.jpeg']);
         if (!$process->successful() ){
             // last line of error output is the error
             $errorOutput = explode("\n", $process->errorOutput());
-            dump(['error_ffmpeg' => $errorOutput[count($errorOutput) - 2]]);
-            Log::critical("Fail to get image from file $file   |  slug : $slug");
+            $ffmpegMessage = [
+                'message' => "Fail to get image from file $slug",
+                'file' => __FILE__ . ' | ' . __LINE__,
+                'service' => __CLASS__,
+                'method' => __METHOD__,
+                'song' => $file,
+                'error_ffmpeg' => $errorOutput[count($errorOutput) - 2]
+            ];
+            dump($ffmpegMessage);
+            Log::critical(json_encode($ffmpegMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             return null;
         }
         // check if image exists in image folder
-        $localImage = 'storage/app/public/images/' . $slug . '.jpeg';
+        $localImage = $imageFolder . '/' . $slug . '.jpeg';
         if (!file_exists($localImage)) {
-            Log::critical("Image was not successfully extracted from file by ffmpeg");
+            Log::info("Image was not successfully extracted from file by ffmpeg");
             dump('Image was not successfully extracted from file by ffmpeg');
             return null;
         }
@@ -392,15 +401,23 @@ class SongUpdateService
             // check if image has successfully uploaded
             $imageCheck = Http::get($imagePath);
             if ($imageCheck->status() !== 200) {
+                Log::error(json_encode(
+                    [
+                        'error' => "image did not upload to minio $imagePath$localImage",
+                        'file' => __FILE__ . ' | ' . __LINE__,
+                    ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+                ));
                 dump('image did not upload');
                 return null;
             }
         }catch (\Exception $e){
-            Log::critical($e->getMessage());
+            Log::critical(json_encode([
+                'error' => $e->getMessage(),
+                'file' => __FILE__ . ' | ' . __LINE__,
+            ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             dump($e->getMessage());
             return null;
         }
-        File::delete($localImage);
         return $imagePath;
     }
 

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use function Amp\ByteStream\buffer;
+use function Clue\StreamFilter\remove;
 
 class UploadService
 {
@@ -251,6 +252,10 @@ class UploadService
             $processedSong = $this->getSongImage($file, $processedSong);
         }
         $processedSong->save();
+        $tempImage = $this->getTempImagePath($processedSong->image);
+        if (file_exists($tempImage)) {
+            unlink($tempImage);
+        }
         return $song;
     }
 
@@ -262,6 +267,8 @@ class UploadService
     public function loadFromUrlAndSaveSongToDb(string $path): Song
     {
         $name = basename($path);
+
+        $audioPath = $this->getTempAudioPath($path);
         if (str_contains($name, ' ')) {
             $storageService = new MinioService();
             $storageService->deleteMusic($name);
@@ -276,21 +283,30 @@ class UploadService
         $song = new Song();
         $song->path = $path;
         $songUpdateService = new SongUpdateService();
-        file_put_contents($name, fopen($path, 'r'));
+
+
+        if (!file_exists($audioPath)) {
+            file_put_contents($audioPath, fopen($path, 'r'));
+        }
+
         $ext = substr($name, -3);
         $song->source = $ext;
         $song->extension = $ext;
         $song->slug = $this->getSlugFromFilePath($name);
-        $fileInfo = $songUpdateService->getAnalyze($name);
+        $fileInfo = $songUpdateService->getAnalyze($audioPath);
         $processedSong = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
         if ($processedSong->image === null) {
-            $processedSong = $this->getSongImage($name, $processedSong);
+            $processedSong = $this->getSongImage($audioPath, $processedSong);
         }
         $processedSong->author = Str::ascii($processedSong->author);
         $processedSong->title = Str::ascii($processedSong->title);
-
         $processedSong->save();
-        unlink($name);
+
+        $tempImage = $this->getTempImagePath($processedSong->image);
+        if (file_exists($tempImage)) {
+            unlink($tempImage);
+        }
+        unlink($audioPath);
         return $song;
     }
 
@@ -308,5 +324,27 @@ class UploadService
         }
         $processedSong->save();
         return $processedSong;
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    public function getTempAudioPath(string $path): string
+    {
+        $baseName = basename($path);
+        $audioDir = env('AUDIO_PATH') ?? '/var/www/html/storage/app/public/uploads/audio';
+        return $audioDir . '/' . $baseName;
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    public function getTempImagePath(string $path): string
+    {
+        $baseName = basename($path);
+        $imageDir = env('IMAGE_PATH') ?? '/var/www/html/storage/app/public/uploads/images';
+        return $imageDir . '/' . $baseName;
     }
 }

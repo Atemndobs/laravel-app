@@ -12,7 +12,7 @@
         "ext-dom": "*",
         "ext-libxml": "*",
         "ext-pdo": "*",
-        "aerni/laravel-spotify": "^2.0",
+        "aerni/laravel-spotify": "^2.1",
         "backpack/crud": "^5.5",
         "beyondcode/laravel-websockets": "^1.13",
         "cesargb/laravel-logs-rotate": "^2.2",
