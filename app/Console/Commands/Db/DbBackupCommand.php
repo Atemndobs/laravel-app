@@ -98,10 +98,7 @@ class DbBackupCommand extends Command
         foreach ($files as $file) {
             \Illuminate\Support\Facades\File::chmod($file, 0777);
         }
-
         $this->getLatestFile();
-        dd(shell_exec('ls -l '.storage_path('app/backups')));
-
         return 0;
     }
 
