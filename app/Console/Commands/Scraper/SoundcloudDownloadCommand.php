@@ -5,6 +5,7 @@ namespace App\Console\Commands\Scraper;
 use App\Services\Scraper\SoundcloudService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Statamic\Support\Str;
 
 class SoundcloudDownloadCommand extends Command
 {
@@ -35,10 +36,24 @@ class SoundcloudDownloadCommand extends Command
         }
         $link = $this->argument('link');
         try {
-            $shell = shell_exec("scdl  -l $link 2>&1");
+            // pass output to dev/null to prevent command from hanging
+            $shell = shell_exec("scdl  -l $link -c 2>&1");
             Log::info($shell);
-            $this->info("Downloaded is complete");
-            $this->info($shell);
+            $dl = explode("\n", trim($shell));
+            $dl = array_filter($dl, function ($line) {
+                return str_contains($line, 'Downloading');
+            });
+            // remove "Downloading" from the line
+            $dl = str_replace('Downloading', '', $dl);
+            $dl = implode("\n", $dl);
+            $dl = trim($dl);
+            $dl = Str::slug($dl, '_');
+
+            $this->info(json_encode(["slug" =>  $dl], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            Log::info(json_encode(["slug" =>  $dl], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
+            //$this->call('song:import');
+
         }catch (\Exception $e) {
             $this->error($e->getMessage());
         }

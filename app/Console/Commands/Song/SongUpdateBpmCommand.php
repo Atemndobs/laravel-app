@@ -100,11 +100,11 @@ class SongUpdateBpmCommand extends Command
             $this->info("updating | $song->slug | $number song out of ".count($songs)."| <fg=red;bg=cyan>$left songs left</>");
             $updatedSong = $this->getUpdatedSong($bpm, $key, $updateService, $song);
             $updatedSongs[] = $updatedSong;
-            $this->output->progressAdvance(1);
+            $this->output->progressAdvance();
             $this->newLine();
             // end time in seconds
             $end = time() - $start;
-            // progress in seconds
+            // progress in seconds  - 1
             $this->warn("Time taken: ".($end)." seconds");
         }
 

@@ -32,7 +32,6 @@ use Illuminate\Support\Facades\Storage;
      */
     public function getAllObjects(string $dir = ''): array
     {
-        // loging to aws cli
         return $this->disk->allFiles($dir);
     }
 

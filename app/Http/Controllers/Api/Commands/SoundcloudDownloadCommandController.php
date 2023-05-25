@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class SongController
@@ -35,8 +36,13 @@ class SoundcloudDownloadCommandController extends Controller
     public function execute(Request $request): JsonResponse
     {
         // call song import command
+        $logMesaage = [
+            'location' => 'SoundcloudDownloadCommandController:execute',
+            'request' => $request->all()
+        ];
+        Log::info(json_encode($logMesaage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         Artisan::call($this->soundcloudDownloadCommand->getName() , [
-            'link' => $request->get('url')
+           'link' => $request->get('url')
         ]);
 
 
@@ -46,7 +52,7 @@ class SoundcloudDownloadCommandController extends Controller
         });
 
         return new JsonResponse([
-            'message' => 'Song import command executed successfully',
+            'message' => 'Song Downloaded Successfully',
             'data' => array_values($output)
         ], 200);
 

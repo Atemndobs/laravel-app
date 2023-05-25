@@ -51,6 +51,11 @@ class MatchCriteriaController extends Controller
         $sessionToken = $this->request->session()->token();
         $criteria['sessionToken'] = $sessionToken;
 
+        // if genre is null, set default genre as Afrobeat
+        if (is_null($criteria['genre'])) {
+            $criteria['genre'] = 'Afrobeat';
+        }
+
         Log::info($criteria);
 
         $this->matchCriteriaService->setCriteria($criteria);
