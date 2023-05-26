@@ -160,7 +160,13 @@ class SongUpdateService
         $error2 = str_contains($shell, 'File does not exist ');
 
         if ($error || $error2) {
-            dump($error);
+            $errorMessage = [
+                'error' => $shell,
+                'song' => $song->slug,
+                'method' => 'extracted',
+                'service' => 'SongUpdateService'
+            ];
+            Log::error(json_encode($errorMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             return [0, 0, 0, 0, 0];
         }
         if ($shellRes[1] === '1:') {
