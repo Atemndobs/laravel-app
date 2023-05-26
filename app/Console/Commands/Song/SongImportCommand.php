@@ -46,11 +46,16 @@ class SongImportCommand extends Command
         $data = [];
         $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
         $this->info('Found ' . count($audioFiles) . ' files');
-
         // call move audio command
-        $this->call('move:audio');
+       $this->call('move:audio');
 
         $uploadService = new UploadService();
+
+        if ($path) {
+            $songPath = "/var/www/html/$path";
+            $uploadService->uploadSong($songPath);
+            return 0;
+        }
         $this->output->progressStart(count($audioFiles));
         foreach ($audioFiles as $file) {
             $this->output->write("\n");
@@ -93,12 +98,6 @@ class SongImportCommand extends Command
         $this->info('Unclassified songs:');
         $total = count($unClassified);
         $this->output->info("imported $total songs from $source");
-
-//        info('=========================================IMPORT_DONE==========================================');
-//        info('Updating BPMs');
-//        $this->call('song:bpm');
-//        info('=========================================BPMs_DONE==========================================');
-//        $this->call('song:status', ['--analyzed' => true, '--status' => true, '--total' => true]);
 
         return 0;
     }

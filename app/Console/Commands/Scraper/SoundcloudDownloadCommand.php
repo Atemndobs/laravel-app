@@ -2,10 +2,13 @@
 
 namespace App\Console\Commands\Scraper;
 
+use App\Models\Song;
 use App\Services\Scraper\SoundcloudService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Statamic\Support\Str;
+use function Amp\call;
+use function Clue\StreamFilter\remove;
 
 class SoundcloudDownloadCommand extends Command
 {
@@ -50,12 +53,29 @@ class SoundcloudDownloadCommand extends Command
             $dl = str_replace('Downloading', '', $dl);
             $dl = implode("\n", $dl);
             $dl = trim($dl);
-            $dl = Str::slug($dl, '_');
+            $slug = Str::slug($dl, '_');
+            $this->call('move:audio');
 
-            $this->info(json_encode(["slug" =>  $dl], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-            Log::info(json_encode(["slug" =>  $dl], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            $songPath = $path . '/' . $slug . '.mp3';
+            $this->call('song:import', [
+                '--path' => $songPath,
+            ]);
 
-            //$this->call('song:import');
+            // remove song from path
+            unlink('/var/www/html/' . $songPath);
+
+            $song = Song::query()->where('slug', $slug)->first();
+            $message = [
+                'slug' => $slug,
+                'song_path' => $songPath,
+                'webPath' => $webPath,
+                'link' => $link,
+                'artist' => $song->artist,
+                'title' => $song->title,
+                'path' => $song->path,
+            ];
+            $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            Log::info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         }catch (\Exception $e) {
             $this->error($e->getMessage());
