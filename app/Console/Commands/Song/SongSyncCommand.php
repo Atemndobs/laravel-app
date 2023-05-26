@@ -27,7 +27,6 @@ class SongSyncCommand extends Command
      */
     public function handle()
     {
-
         $songSyncService = new SongSyncService();
         $songSyncService->getSongDiffs();
         $message = [

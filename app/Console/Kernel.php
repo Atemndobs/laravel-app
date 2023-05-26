@@ -33,7 +33,7 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo('storage/logs/downloads.log');
 
         $schedule->command("song:bpm --batch 10")
-            ->daily()
+            ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground()
             ->description('Update BPM for the next 10 songs')
@@ -53,7 +53,7 @@ class Kernel extends ConsoleKernel
             ->description('Moves upload Dir to audio and images')
             ->appendOutputTo('storage/logs/downloads.log');
 
-        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=1 --stop-when-empty')
+        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=2 --stop-when-empty')
             ->everyMinute()
             ->withoutOverlapping()
             ->description('Classify songs')
