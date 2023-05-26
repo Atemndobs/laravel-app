@@ -24,11 +24,12 @@ services:
 
     php-fpm:
         container_name: php-fpm
-        image: atemndobs/laravel-php-fpm:v1.8.7
+        image: atemndobs/laravel-php-fpm:v1.8.8
         volumes:
             - "${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}"
             - "../docker/php-fpm/scdl.cfg:/var/www/.config/scdl/scdl.cfg"
             - "${APP_CODE_PATH_HOST}/storage/logs:/usr/local/stackify/stackify-php-apm/log"
+            - "${APP_CODE_PATH_HOST}/storage/logs:/var/www/storage/logs"
         networks:
             - sail
         privileged: true

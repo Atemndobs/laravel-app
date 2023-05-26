@@ -45,15 +45,20 @@ class SoundcloudDownloadCommandController extends Controller
            'link' => $request->get('url')
         ]);
 
-
         $output = explode("\n", trim(Artisan::output()));
+        // check if the output contiins "already exists!"
+        $aleadExist = array_filter($output, function ($line) {
+            return !str_contains($line, 'already exists!');
+        });
+
         $output = array_filter($output, function ($line) {
             return !empty($line);
         });
 
+
         return new JsonResponse([
             'message' => 'Song Downloaded Successfully',
-            'data' => array_values($output)
+            'data' => $output
         ], 200);
 
     }

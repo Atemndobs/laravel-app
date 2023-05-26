@@ -61,25 +61,36 @@ class SoundcloudDownloadCommand extends Command
                 '--path' => $songPath,
             ]);
 
-            // remove song from path
             unlink('/var/www/html/' . $songPath);
 
-            $song = Song::query()->where('slug', $slug)->first();
-            $message = [
-                'slug' => $slug,
-                'song_path' => $songPath,
-                'webPath' => $webPath,
-                'link' => $link,
-                'artist' => $song->artist,
-                'title' => $song->title,
-                'path' => $song->path,
-            ];
-            $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-            Log::info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            $this->prepareOutputMessage($slug, $songPath, $webPath, $link);
 
         }catch (\Exception $e) {
             $this->error($e->getMessage());
         }
         return 0;
+    }
+
+    /**
+     * @param array|string $slug
+     * @param string $songPath
+     * @param string $webPath
+     * @param bool|array|string|null $link
+     * @return void
+     */
+    public function prepareOutputMessage(array|string $slug, string $songPath, string $webPath, bool|array|string|null $link): void
+    {
+        $song = Song::query()->where('slug', $slug)->first();
+        $message = [
+            'slug' => $slug,
+            'song_path' => $songPath,
+            'webPath' => $webPath,
+            'link' => $link,
+            'artist' => $song->artist,
+            'title' => $song->title,
+            'path' => $song->path,
+        ];
+        $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        Log::info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
 }
