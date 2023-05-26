@@ -6,6 +6,7 @@ use App\Models\Catalog;
 use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use League\CommonMark\Extension\CommonMark\Parser\Block\ThematicBreakParser;
 use function Amp\call;
 use function example\ask;
@@ -17,7 +18,7 @@ class SongUpdateBpmCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'song:bpm {slug?} {--f|field=null}';
+    protected $signature = 'song:bpm {slug?} {--f|field=null} {--b|batch=10}';
 
     /**
      * The console command description.
@@ -37,6 +38,7 @@ class SongUpdateBpmCommand extends Command
         $slug = $this->argument('slug');
         $bpm = $this->option('field') === 'bpm';
         $key = $this->option('field') === 'key';
+        $batch = $this->option('batch');
 
         if ($slug !== null) {
             $song = Song::where('slug', '=', $slug)->first();
@@ -73,32 +75,47 @@ class SongUpdateBpmCommand extends Command
 
             return 0;
         }
+
         $songs = Song::where('bpm', '=', 0)
             ->orWhereNull('bpm')
             ->get();
-        $this->info(count($songs).' songs found');
-        if (count($songs) === 0) {
+        $songCount = count($songs);
+        $this->info($songCount.' songs found');
+        if ($songCount === 0) {
             $this->info('No song found');
             return 0;
         }
         $updatedSongs = [];
-        $this->output->progressStart(count($songs));
+        $this->output->progressStart($songCount);
         $this->newLine();
         // start time in seconds
         $start = time();
         /** @var Song $song */
         foreach ($songs as $position => $song) {
-            // output with magenta color and gray bg
-            $this->output->text("<fg=magenta;bg=gray>Current BPM : $song->bpm</>");
             if ((float)$song->bpm != 0) {
+                $this->info('Song bpm already set | '. $song->bpm ."| ".$song->slug);
+                Log::info('Song bpm already set | '. $song->bpm ."| ".$song->slug);
                 $this->output->progressAdvance();
                 continue;
             }
 
             $number = $position + 1;
-            $left = count($songs) - $position;
-            $this->info("updating | $song->slug | $number song out of ".count($songs)."| <fg=red;bg=cyan>$left songs left</>");
+            $left = $songCount - $position;
+            // if the batch amt is reached exit
+            if ($number > $batch) {
+                $this->info("<fg=blue> Batch of $batch songs have been updated out of $songCount songs </>");
+                $this->info("<fg=red;bg=cyan>$left songs left</>");
+                Log::info("Batch of $batch songs have been updated out of $songCount songs");
+                Log::warning("$left songs left");
+                return 0;
+            }
+            $this->info("updating | $song->slug | $number song out of ".$songCount."| <fg=red;bg=cyan>$left songs left</>");
+            Log::info("updating | $song->slug | $number song out of ".$songCount."| $left songs left");
             $updatedSong = $this->getUpdatedSong($bpm, $key, $updateService, $song);
+            $this->table(['slug', 'title', 'bpm', 'key', 'energy', 'scale'], [
+                $updatedSong,
+            ]);
+            Log::info("New BPM for $song->slug :" . $updatedSong['bpm']);
             $updatedSongs[] = $updatedSong;
             $this->output->progressAdvance();
             $this->newLine();
@@ -106,6 +123,7 @@ class SongUpdateBpmCommand extends Command
             $end = time() - $start;
             // progress in seconds  - 1
             $this->warn("Time taken: ".($end)." seconds");
+
         }
 
         $this->output->progressFinish();
@@ -135,7 +153,7 @@ class SongUpdateBpmCommand extends Command
      */
     public function getUpdatedSong(bool $bpm, bool $key, SongUpdateService $updateService, $song): array
     {
-        $updatedSong = new Song();
+        $updatedSong = $song;
         if (! $bpm && ! $key) {
             $updatedSong = $updateService->updateBpmAndKey($song);
         }
