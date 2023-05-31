@@ -50,7 +50,13 @@ class SoundcloudDownloadCommandController extends Controller
         $aleadExist = array_filter($output, function ($line) {
             return !str_contains($line, 'already exists!');
         });
-
+        if (count($aleadExist) > 0) {
+            $slug = $output[''];
+            return new JsonResponse([
+                'message' => 'Song Already Exists',
+                'data' => $output
+            ], 200);
+        }
         $output = array_filter($output, function ($line) {
             return !empty($line);
         });
