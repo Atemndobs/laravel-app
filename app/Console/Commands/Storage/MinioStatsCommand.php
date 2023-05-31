@@ -5,7 +5,8 @@ namespace App\Console\Commands\Storage;
 use App\Services\Storage\MinioService;
 use Illuminate\Console\Command;
 
-class MinioStatsCommand extends Command
+class
+MinioStatsCommand extends Command
 {
     /**
      * The name and signature of the console command.
