@@ -53,6 +53,7 @@
         "spatie/laravel-health": "^1.12",
         "spatie/laravel-permission": "^5.5",
         "spatie/laravel-route-discovery": "^1.0",
+        "spatie/ray": "^1.37",
         "spekulatius/phpscraper": "^1.0",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-http": "^3.0",
@@ -62,7 +63,7 @@
         "symfony/polyfill-php82": "^1.27",
         "symfony/process": "^6.1",
         "tailflow/laravel-orion": "^2.11",
-        "tcg/voyager": "@dev",
+        "tcg/voyager": "dev-1.6-l10",
         "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
     },
     "require-dev": {
@@ -72,7 +73,6 @@
         "kitloong/laravel-migrations-generator": ">=6.3",
         "knuckleswtf/scribe": "^4.16.0",
         "laracraft-tech/laravel-xhprof": "^1.0",
-        "laradumps/laradumps": "^1.2",
         "laravel-shift/blueprint": "^2.3|^2.4",
         "laravel-shift/factory-generator": "dev-master",
         "laravel/pint": "^0.2.3",
@@ -168,13 +168,6 @@
         "0": {
             "type": "path",
             "url": "packages/sarfraznawaz2005/server-monitor",
-            "options": {
-                "symlink": true
-            }
-        },
-        "1": {
-            "type": "path",
-            "url": "packages/tcg/voyager",
             "options": {
                 "symlink": true
             }
