@@ -15,7 +15,7 @@ class DbBackupCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'db:bk';
+    protected $signature = 'db:bk {--p|prompt=yes : Ask questions before deleting files}';
 
     /**
      * The console command description.
@@ -34,14 +34,19 @@ class DbBackupCommand extends Command
         $this->info('Backup database');
         $this->call('backup:list');
 
-        // count files in backup folder
+        $quest = $this->option('prompt');
         $files = glob(storage_path('app/backups/*'));
         $count = count($files);
         if ($count > 4) {
             $this->backupTable($files, $count);
 
             $this->info('Backup folder contains '.$count.' files');
-            $answer = $this->askWithCompletion('Do you want to delete all files? (y/n)', ['y', 'n'], 'n');
+            if ($quest === 'y'){
+                $answer = 'y';
+            }else{
+                $answer = $this->askWithCompletion('Do you want to delete all files? (y/n)', ['y', 'n'], 'n');
+            }
+
             if ($answer == 'y') {
                 // delete all files from backup folder
                 $this->info('Deleting all files from backup folder');
@@ -131,6 +136,10 @@ class DbBackupCommand extends Command
         } else {
             $latestFile = basename($files[0]);
             $this->info("only one file in backup folder | $latestFile)");
+            if ($this->option('prompt') === 'y') {
+                $this->extractBackupFile($latestFile);
+                return 0;
+            }
             $answer = $this->ask('Do you want to continue? (y/n)');
             if ($answer == 'y') {
                 $this->extractBackupFile($latestFile);
@@ -139,6 +148,7 @@ class DbBackupCommand extends Command
             $this->line('<fg=red> Backup Restore Aborted !!!</>');
             return 0;
         }
+        return 0;
     }
 
     /**
@@ -151,6 +161,12 @@ class DbBackupCommand extends Command
         $file = storage_path('app/backups/' . $latestFile);
         $destination = storage_path('app/backups/latest/');
         $unzippedFile = $this->unzipFile($file, $destination);
+        // save file details to Files table in DB
+        $fileDB = new \App\Models\File();
+        $fileDB->name = $latestFile;
+        $fileDB->url = $destination;
+        $fileDB->save();
+
         $this->line("<fg=blue>Prepared Dump Backup from :   $unzippedFile  </>");
     }
 }

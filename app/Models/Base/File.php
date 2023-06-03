@@ -43,24 +43,24 @@ use Illuminate\Database\Eloquent\Model;
  */
 class File extends Model
 {
-	protected $table = 'files';
+    protected $table = 'files';
 
-	protected $casts = [
-		'width' => 'int',
-		'height' => 'int',
-		'size' => 'float',
-		'created_by_id' => 'int',
-		'updated_by_id' => 'int'
-	];
+    protected $casts = [
+        'width' => 'int',
+        'height' => 'int',
+        'size' => 'float',
+        'created_by_id' => 'int',
+        'updated_by_id' => 'int'
+    ];
 
-	public function admin_user()
-	{
-		return $this->belongsTo(AdminUser::class, 'updated_by_id');
-	}
+    public function admin_user()
+    {
+        return $this->belongsTo(AdminUser::class, 'updated_by_id');
+    }
 
-	public function files_folder_link()
-	{
-		return $this->hasOne(FilesFolderLink::class);
-	}
+    public function files_folder_link()
+    {
+        return $this->hasOne(FilesFolderLink::class);
+    }
 
-	public function files_re
+}
