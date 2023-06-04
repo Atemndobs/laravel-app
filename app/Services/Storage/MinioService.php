@@ -92,6 +92,18 @@ use Illuminate\Support\Facades\Storage;
         return $this->getUrl($filename, $dir);
     }
 
+    public function putObjectWithFileName(string $contents, string $dir, string $filename): string
+    {
+        $path = $dir . '/' . $filename;
+
+        try {
+            $this->disk->put($path, file_get_contents($contents), 'public');
+        }catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+        return $this->getUrl($filename, $dir);
+    }
+
     /**
      * @param string $file
      * @param string $dir

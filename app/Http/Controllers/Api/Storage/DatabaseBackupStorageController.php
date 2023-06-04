@@ -24,12 +24,21 @@ class DatabaseBackupStorageController extends Controller
         return response()->download($file, $filename, $headers);
     }
 
-    public function storeBackup()
+    /**
+     * @throws \Exception
+     */
+    public function storeBackup(): JsonResponse
     {
         // store file to minio storage
+        // use Date and time as filename
+        $date = date('Y-m-d');
+        $time = date('H:i:s');
+        $filename = "backup-$date-$time.sql";
         $file = storage_path('app/backups/latest/db-dumps/mysql-mage.sql');
+
+
         $minioService = new MinioService();
-        $fileLink = $minioService->putObject($file, 'backups');
+        $fileLink = $minioService->putObjectWithFileName($file, "backups", $filename);
         return response()->json([
             'message' => 'SUCCESS',
             'file_link' => $fileLink
