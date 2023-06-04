@@ -51,6 +51,10 @@ class MeilisearchReindexer extends Command
 
     private function setIndex(string $item)
     {
+        if (in_array($item, ['files'])) {
+            $this->error("Skipping index $item");
+            return;
+        }
         $service = new \App\Services\Birdy\MeiliSearchService();
         $method = 'set' . ucfirst($item ) . 'Index';
         /** @var Indexes $index */
