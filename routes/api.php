@@ -63,12 +63,16 @@ Route::get('spotify/search/{artist}', [\App\Http\Controllers\Api\SpotifyControll
 Route::post('commands/song/import', [\App\Http\Controllers\Api\Commands\SongImportCommandController::class, 'execute']);
 Route::post('commands/song/analyze', [\App\Http\Controllers\Api\Commands\SongAnalyzeCommandController::class, 'execute']);
 Route::post('commands/song/classify', [\App\Http\Controllers\Api\Commands\SongClassifyCommandController::class, 'execute']);
+Route::post('commands/index', [\App\Http\Controllers\Api\Commands\IndexerController::class, 'execute']);
+
 Route::post('commands/song/update', [\App\Http\Controllers\Api\Commands\SongUpdateCommandController::class, 'execute']);
 Route::post('commands/song/download/spotify', [\App\Http\Controllers\Api\Commands\SpotifyDownloadCommandController::class, 'execute']);
 Route::post('commands/song/download/sc', [\App\Http\Controllers\Api\Commands\SoundcloudDownloadCommandController::class, 'execute']);
 Route::get('commands/backup/run', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'runBackup']);
+
 // download backup
 Route::get('storage/backup/download', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'downloadBackup']);
+Route::get('storage/access', [\App\Http\Controllers\Api\Storage\FileAccessRefreshController::class, 'execute']);
 
 // upload backup
 Route::post('storage/backup/upload', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'uploadBackup']);
