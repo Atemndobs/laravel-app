@@ -31,7 +31,7 @@ class SpotifyDownloadCommand extends Command
         $this->info('Downloading Playlists...');
         $url = $this->argument('url');
 
-        $shell = shell_exec("spotdl  $url --output storage/app/public/uploads/audio/");
+        $shell = shell_exec("spotdl  $url --output /var/www/html/storage/app/public/uploads/audio/");
         $this->info($shell);
         Log::info($shell);
         try {

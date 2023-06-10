@@ -6,9 +6,7 @@ use App\Models\Song;
 use App\Services\Scraper\SoundcloudService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Statamic\Support\Str;
-use function Amp\call;
-use function Clue\StreamFilter\remove;
+use Illuminate\Support\Str;
 
 class SoundcloudDownloadCommand extends Command
 {
@@ -49,6 +47,8 @@ class SoundcloudDownloadCommand extends Command
             $dl = array_filter($dl, function ($line) {
                 return str_contains($line, 'Downloading');
             });
+
+            Log::info(json_encode($dl, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             // remove "Downloading" from the line
             $dl = str_replace('Downloading', '', $dl);
             $dl = implode("\n", $dl);

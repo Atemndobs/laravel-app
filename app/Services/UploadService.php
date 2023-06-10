@@ -153,6 +153,7 @@ class UploadService
         $message = [
             'FILE NAME' => $file,
             'FILE CLOUD URL' => $storage_path,
+            'FILE SLUG' => $slug,
         ];
         Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $api_url = env('APP_URL').'/api/songs/match/';

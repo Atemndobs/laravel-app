@@ -44,7 +44,7 @@ class SongImportCommand extends Command
 
         $unClassified = [];
         $data = [];
-        $audioFiles = glob('storage/app/public/uploads/audio/*.mp3');
+        $audioFiles = glob('/var/www/html/storage/app/public/uploads/audio/*.mp3');
         $this->info('Found ' . count($audioFiles) . ' files');
         // call move audio command
        $this->call('move:audio');
