@@ -358,7 +358,15 @@ class SongUpdateService
             dump(['id' => $song->id, 'title' => $songTitle, 'artist' => $artists, 'path' => $song->path]);
             return;
         }
-        dump("call soundcloud download command scrape:sc");
+        $message = [
+            "message" => "call soundcloud download command scrape:sc",
+            "url" => $link,
+            "file" => __FILE__,
+            "method" => __METHOD__,
+            "class" => __CLASS__,
+        ];
+        dump($message);
+        Log::warning(json_encode($message, JSON_PRETTY_PRINT));
         Artisan::call('scrape:sc', [
             'link' => $link
         ]);
