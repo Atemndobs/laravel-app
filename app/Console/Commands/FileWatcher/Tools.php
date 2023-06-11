@@ -24,9 +24,9 @@ trait Tools
                         $fileName = substr($fileName, 0, -4);
                         $fileName = Str::slug($fileName, '_');
                         $fileName = $fileName . '.' . $ext;
-                        $this->call('song:import');
-                        sleep(2);
-                        $audioPath = storage_path("app/public/music/$destination/".$fileName);
+//                        $this->call('song:import');
+//                        sleep(2);
+                        $audioPath = "/var/www/html/storage/app/public/audio/$destination/".$fileName;
                         rename($path, $audioPath);
                         $this->line("<fg=magenta>Song Imported | $path</>");
                     }

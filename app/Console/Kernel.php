@@ -39,6 +39,12 @@ class Kernel extends ConsoleKernel
             ->description('Update BPM for the next 10 songs')
             ->appendOutputTo("storage/logs/bpm_$logFile");
 
+        $schedule->command("song:import")
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo("storage/logs/song_import_$logFile");
+
 //        $schedule->command('watch:audio')
 //            ->everyMinute()
 //            ->withoutOverlapping()
