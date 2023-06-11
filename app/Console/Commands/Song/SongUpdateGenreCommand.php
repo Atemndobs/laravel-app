@@ -108,8 +108,8 @@ class SongUpdateGenreCommand extends Command
     private function getSongGenreFromId3(): void
     {
         $songs = Song::query()->whereNull('genre')
-          //  ->orWhere('genre', '=', 0)
-           // ->orWhere('genre', '=', '[]')
+            ->orWhere('genre', '=', 0)
+            ->orWhere('genre', '=', '[]')
             ->orWhere('genre', '=', null)
             ->get();
 
