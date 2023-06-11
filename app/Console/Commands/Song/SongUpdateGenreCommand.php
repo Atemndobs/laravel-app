@@ -90,36 +90,34 @@ class SongUpdateGenreCommand extends Command
             Song::query()->whereNull('genre')
                 ->orWhere('genre', '=', 0)
                 ->orWhere('genre', '=', '[]')
-                ->orWhere('genre', '=', null)
-                ->where('author', '!=', null)
                 ->get();
 
         if (count($songs) === 0) {
             $this->output->info('song:genre | No more songs to update');
-            ray('song:genre | No songs to update')->green();
+            Log::info('song:genre | No more songs to update');
             return 0;
         }
-      // $this->info('Found '.count($songs).' songs to update from Spotify');
-
-
         return 0;
     }
 
     private function getSongGenreFromId3(): void
     {
         $songs = Song::query()->whereNull('genre')
-            ->orWhere('genre', '=', 0)
-            ->orWhere('genre', '=', '[]')
-            ->orWhere('genre', '=', null)
+          //  ->orWhere('genre', '=', 0)
+          //  ->orWhere('genre', '=', '[]')
             ->get();
 
-        Log::warning("Found ".count($songs)." songs to update from ID3");
+
+        $all_songs = Song::query()->get();
 
         if (count($songs) === 0) {
             $this->output->info('song:genre | No songs to update from ID3');
             ray('song:genre | No songs to update')->green();
         }
-        $this->info('Found '.count($songs).' songs to update For ID3');
+
+        Log::warning("Found ".count($songs)." songs to update from ID3");
+        $this->info('Found '.count($songs).' songs to update For ID3 of '.count($all_songs).' songs');
+
         $genreService = new GenreUpdateService();
         /** @var Song $song */
         foreach ($songs as $song) {
