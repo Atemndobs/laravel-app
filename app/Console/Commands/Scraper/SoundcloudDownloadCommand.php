@@ -38,8 +38,9 @@ class SoundcloudDownloadCommand extends Command
         $link = $this->argument('link');
         try {
             // pass output to dev/null to prevent command from hanging
-            $path = env('AUDIO_PATH', '/var/www/html/storage/app/public/uploads/audio');
-            $webPath = "public/uploads/audio";
+            // $path = env('AUDIO_PATH', '/var/www/html/storage/app/public/uploads/audio');
+            $path = "/var/www/html/storage/app/public/uploads/audio";
+            $webPath = $path;
             $shell = shell_exec("scdl  -l $link  2>&1");
             Log::info($shell);
             Log::info(shell_exec("ls -la $webPath"));
