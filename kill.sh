@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# cehck processes
+ps aux | grep "php /var/www/html/artisan schedule:work" | grep -v grep
+
 # Run the command and extract the PID
 pid=$(ps aux | grep "php /var/www/html/artisan schedule:work" | grep -v grep | awk '{print $2}')
 
