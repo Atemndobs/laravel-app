@@ -6,12 +6,24 @@ use App\Models\Song;
 use App\Services\Birdy\SpotifyService;
 use App\Services\Scraper\SoundcloudService;
 use App\Services\SongUpdateService;
+use Illuminate\Support\Facades\Log;
 
 class GenreUpdateService
 {
     public function getGenreFromId3(Song $song) : Song
     {
-        $this->updateRemixedSongs($song);
+        try {
+            $this->updateRemixedSongs($song);
+        }catch (\Exception $e) {
+            $message = [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'trace' => $e->getTraceAsString()
+            ];
+           Log::error(json_encode($message, JSON_PRETTY_PRINT));
+           dump($message);
+        }
         $id3Service = new SongUpdateService();
         $spotify = new SpotifyService();
         if ($song->genre != null) {
@@ -79,9 +91,13 @@ class GenreUpdateService
         return $song;
     }
 
-    private function updateRemixedSongs(\Illuminate\Database\Eloquent\Builder|Song $song)
+    private function updateRemixedSongs(\Illuminate\Database\Eloquent\Builder|Song $song): void
     {
         $existingGenre = $song->genre;
+        // if genre is string exit
+        if (is_string($existingGenre)) {
+            return;
+        }
         if ($existingGenre === null || $existingGenre === '[]' || $existingGenre === '0' || $existingGenre === 0 || count($existingGenre) < 1)  {
             if (str_contains($song->title, 'amapiano')){
                 $existingGenre[] = 'amapiano';
@@ -101,7 +117,5 @@ class GenreUpdateService
             $song->genre = $existingGenre;
             $song->save();
         }
-
-        return 0;
     }
 }

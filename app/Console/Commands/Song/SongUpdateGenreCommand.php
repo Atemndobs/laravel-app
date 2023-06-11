@@ -99,31 +99,7 @@ class SongUpdateGenreCommand extends Command
             return 0;
         }
       // $this->info('Found '.count($songs).' songs to update from Spotify');
-        /** @var Song $song */
-/*        foreach ($songs as $song) {
-            $author = $song->author;
-            if ($author === 'unknown') {
-                $genres = ['remix'];
-            } else {
-                $genres = $spotifyService->getGenreByArtist($author, $song);
-                sleep(5);
-            }
 
-            if ($song->genre !== null) {
-                $gen = json_encode($song->genre);
-                $this->info("$author : $gen");
-                continue;
-            }
-            $song->genre = $genres;
-            $song->save();
-            $genre = json_encode($genres);
-            $this->output->info("$author : $genre");
-            $left = count(Song::where('genre', '=', null)
-                ->where('author', '!=', null)
-                ->get());
-            $this->line("<fg=red;bg=cyan>$left songs left</>");
-            ray("Artist => $author  |  genres => $genre | $left songs pending genres")->blue();
-        }*/
 
         return 0;
     }
@@ -205,13 +181,12 @@ class SongUpdateGenreCommand extends Command
            // $song->save();
         }
 
-        $songs = Song::query()->where('title', 'like', "%$genre%")->get([
+        return Song::query()->where('title', 'like', "%$genre%")->get([
             'id',
             'title',
             'author',
             'genre',
         ]);
-        dd($songs->toArray());
     }
 
 }
