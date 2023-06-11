@@ -98,6 +98,9 @@ class GenreUpdateService
         if (is_string($existingGenre)) {
             return;
         }
+        if (!is_array($existingGenre)) {
+            return;
+        }
         if ($existingGenre === null || $existingGenre === '[]' || $existingGenre === '0' || $existingGenre === 0 || count($existingGenre) < 1)  {
             if (str_contains($song->title, 'amapiano')){
                 $existingGenre[] = 'amapiano';
