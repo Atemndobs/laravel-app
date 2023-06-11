@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run the command and extract the PID
-pid=$(ps aux | grep "php artisan schedule:work" | grep -v grep | awk '{print $2}')
+pid=$(ps aux | grep "schedule:work" | grep -v grep | awk '{print $2}')
 
 # Check if the PID is empty
 if [ -z "$pid" ]; then
