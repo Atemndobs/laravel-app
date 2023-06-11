@@ -8,6 +8,7 @@ use App\Services\Scraper\SoundcloudService;
 use App\Services\Song\GenreUpdateService;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SongUpdateGenreCommand extends Command
 {
@@ -107,10 +108,12 @@ class SongUpdateGenreCommand extends Command
     private function getSongGenreFromId3(): void
     {
         $songs = Song::query()->whereNull('genre')
-            ->orWhere('genre', '=', 0)
-            ->orWhere('genre', '=', '[]')
+          //  ->orWhere('genre', '=', 0)
+           // ->orWhere('genre', '=', '[]')
             ->orWhere('genre', '=', null)
             ->get();
+
+        Log::warning("Found ".count($songs)." songs to update from ID3");
 
         if (count($songs) === 0) {
             $this->output->info('song:genre | No songs to update from ID3');
