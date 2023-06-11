@@ -39,19 +39,19 @@ class Kernel extends ConsoleKernel
             ->description('Update BPM for the next 10 songs')
             ->appendOutputTo("storage/logs/bpm_$logFile");
 
-        $schedule->command('watch:audio')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->description('Watch Audio Dir for New Files')
-            ->appendOutputTo("storage/logs/audio_$logFile");
-
-        $schedule->command('watch:upload')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->description('Moves upload Dir to audio and images')
-            ->appendOutputTo("'storage/logs/upload_$logFile'");
+//        $schedule->command('watch:audio')
+//            ->everyMinute()
+//            ->withoutOverlapping()
+//            ->runInBackground()
+//            ->description('Watch Audio Dir for New Files')
+//            ->appendOutputTo("storage/logs/audio_$logFile");
+//
+//        $schedule->command('watch:upload')
+//            ->everyMinute()
+//            ->withoutOverlapping()
+//            ->runInBackground()
+//            ->description('Moves upload Dir to audio and images')
+//            ->appendOutputTo("'storage/logs/upload_$logFile'");
 
         $schedule->command('rabbitmq:consume --queue=classify --max-jobs=3 --stop-when-empty')
             ->everyMinute()
@@ -65,8 +65,6 @@ class Kernel extends ConsoleKernel
             ->description('Indexing songs')
             ->appendOutputTo("storage/logs/indexer_$logFile");
 
-//        $schedule->command(RunHealthChecksCommand::class)
-//            ->everyMinute();
     }
 
     /**
