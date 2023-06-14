@@ -77,7 +77,7 @@ class MatchSongController extends Controller
             'method' => 'MatchSongController@getSongsMatch',
             'position' => 'After Try Catch',
             'limit' => $limit,
-            'RaW - response' => $search,
+            //'RaW - response' => $search,
         ]));
         $search['limit'] = (int)$limit;
 
