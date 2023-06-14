@@ -78,6 +78,9 @@ Route::get('storage/access', [\App\Http\Controllers\Api\Storage\FileAccessRefres
 Route::post('storage/backup/upload', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'uploadBackup']);
 Route::get('storage/backup/store', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'storeBackup']);
 
+// webhooks
+Route::webhooks('/webhooks/songs');
+
 
 
 
