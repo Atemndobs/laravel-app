@@ -10,6 +10,8 @@ use App\Services\SongUpdateService;
 use App\Services\UploadService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -54,6 +56,7 @@ class SongImportCommand extends Command
         if ($path) {
             $songPath = "/var/www/html/$path";
             $uploadService->uploadSong($songPath);
+
             return 0;
         }
         $this->output->progressStart(count($audioFiles));
@@ -62,6 +65,14 @@ class SongImportCommand extends Command
             try {
                 $this->info('Uploading ' . $file);
                 $uploadService->uploadSong($file);
+                if (File::delete($file)){
+                    $message = [
+                        'message' => 'File deleted',
+                        'file' => $file,
+                        'Command' => 'song:import, line: ' . __LINE__,
+                    ];
+                    Log::info(json_encode($message, JSON_PRETTY_PRINT));
+                };
             }catch (\Exception $e){
                 $this->warn($e->getMessage());
                 continue;

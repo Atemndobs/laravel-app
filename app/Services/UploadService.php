@@ -54,7 +54,12 @@ class UploadService
         $song = $this->loadAndSaveSongToDb($track);
 
         if (File::delete($track)){
-            Log::info('Deleted file: '.$track);
+            $message = [
+                'message' => 'File deleted',
+                'file' => $track,
+                'Command' => 'song:import, line: ' . __LINE__,
+            ];
+            Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         };
 
         return $song;
