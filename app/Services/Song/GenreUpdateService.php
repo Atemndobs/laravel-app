@@ -42,7 +42,7 @@ class GenreUpdateService
 
             $track = $spotify->getGenreFromSong($slug);;
             $song->title = $track['title'];
-            $song->author = $track['author'];
+           // $song->author = $track['author'];
             $song->genre = $track['genre'];
             $song->save();
             return $song;
