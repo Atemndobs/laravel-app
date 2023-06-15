@@ -42,7 +42,15 @@ class GenreUpdateService
 
             $track = $spotify->getGenreFromSong($slug);;
             $song->title = $track['title'];
-           // $song->author = $track['author'];
+           $artist= $track['author'];
+            if ($song->author == "" || $song->author == null) {
+                // if $artist is array, get all values and implode
+                if (is_array($artist)) {
+                    $artist = implode(',', $artist);
+                }
+                $song->author = $artist;
+                $song->save();
+            }
             $song->genre = $track['genre'];
             $song->save();
             return $song;
@@ -52,7 +60,14 @@ class GenreUpdateService
             if (strlen($artist) < 1) {
                 try {
                     $artist = $fileInfo['tags']['id3v2'] ['artist'][0];
-                    $song->author = $artist;
+                    if ($song->author == "" || $song->author == null) {
+                        // if $artist is array, get all values and implode
+                        if (is_array($artist)) {
+                            $artist = implode(',', $artist);
+                        }
+                        $song->author = $artist;
+                        $song->save();
+                    }
                     $song->save();
                 }catch (\Exception $e) {
                     $slug = str_replace('mp3', '', $song->slug);
