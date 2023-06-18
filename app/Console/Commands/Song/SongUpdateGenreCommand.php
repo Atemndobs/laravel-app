@@ -60,7 +60,6 @@ class SongUpdateGenreCommand extends Command
             $genres = $spotifyService->getGenreByArtist($author, $song);
             if (count($genres) === 0) {
                 $this->info('No genres found');
-
                 return 0;
             }
 
@@ -86,11 +85,7 @@ class SongUpdateGenreCommand extends Command
 
         // get genres from getId
         $this->getSongGenreFromId3();
-        $songs =
-            Song::query()->whereNull('genre')
-                ->orWhere('genre', '=', 0)
-                ->orWhere('genre', '=', '[]')
-                ->get();
+        $songs = $this->getSongsWithougGenre();
 
         if (count($songs) === 0) {
             $this->output->info('song:genre | No more songs to update');
@@ -102,25 +97,22 @@ class SongUpdateGenreCommand extends Command
 
     private function getSongGenreFromId3(): void
     {
-        $songs = Song::query()->whereNull('genre')
-          //  ->orWhere('genre', '=', 0)
-          //  ->orWhere('genre', '=', '[]')
-            ->get();
-
-
+        $songs = $this->getSongsWithougGenre();
         $all_songs = Song::query()->get();
 
         if (count($songs) === 0) {
             $this->output->info('song:genre | No songs to update from ID3');
-            ray('song:genre | No songs to update')->green();
+           // ray('song:genre | No songs to update')->green();
         }
 
         Log::warning("Found ".count($songs)." songs to update from ID3");
         $this->info('Found '.count($songs).' songs to update For ID3 of '.count($all_songs).' songs');
 
+        $counter = 0;
         $genreService = new GenreUpdateService();
         /** @var Song $song */
         foreach ($songs as $song) {
+            $counter++;
                 try {
                      $songGenre = $genreService->getGenreFromId3($song)->genre;
                      $genre = json_encode($songGenre);
@@ -128,23 +120,11 @@ class SongUpdateGenreCommand extends Command
                  }catch (\Exception $e) {
                      $this->warn($e->getMessage());
                  }
-                 $left = count(
-                     Song::query()->whereNull('genre')
-                     ->orWhere('genre', '=', 0)
-                     ->orWhere('genre', '=', '[]')
-                     ->orWhere('genre', '=', null)
-                     ->get()
-                 );
+                 $left = count($songs) - $counter;
                  $this->line("<fg=red;bg=cyan>$left songs left</>");
         }
 
-        $left = count(
-            Song::query()->whereNull('genre')
-                ->orWhere('genre', '=', 0)
-                ->orWhere('genre', '=', '[]')
-                ->orWhere('genre', '=', null)
-                ->get()
-        );
+        $left = count($this->getSongsWithougGenre());
 
         if ($left >  0) {
             // redownload song from sound cloud and update genre
@@ -188,6 +168,17 @@ class SongUpdateGenreCommand extends Command
             'author',
             'genre',
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     */
+    public function getSongsWithougGenre(): array|\Illuminate\Database\Eloquent\Collection
+    {
+        return Song::query()->whereNull('genre')
+//            ->orWhere('genre', '=', 0)
+//            ->orWhere('genre', '=', '[]')
+            ->get();
     }
 
 }

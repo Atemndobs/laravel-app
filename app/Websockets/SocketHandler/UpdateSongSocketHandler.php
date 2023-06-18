@@ -7,8 +7,23 @@ use Ratchet\RFC6455\Messaging\MessageInterface;
 
 class UpdateSongSocketHandler extends BaseSocketHandler
 {
-    public function onMessage(ConnectionInterface $conn, MessageInterface $msg)
+    public function onOpen(ConnectionInterface $connection)
     {
-        dump(['received_message_from_fe:' => $msg->getPayload()]);
+        $this->connections->add($connection);
+    }
+
+    public function onMessage(ConnectionInterface $from, MessageInterface $msg)
+    {
+        $this->connections->broadcast($msg);
+    }
+
+    public function onClose(ConnectionInterface $connection)
+    {
+        $this->connections->remove($connection);
+    }
+
+    public function onError(ConnectionInterface $connection, \Exception $e)
+    {
+        $connection->close();
     }
 }

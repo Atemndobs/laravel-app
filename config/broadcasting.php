@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_DRIVER', 'null'),
+    'default' => env('BROADCAST_DRIVER', 'pusher'),
 
     /*
     |--------------------------------------------------------------------------
@@ -29,6 +29,34 @@ return [
     */
 
     'connections' => [
+//        'pusher' => [
+//            'driver' => 'pusher',
+//            'key' => env('PUSHER_APP_KEY'),
+//            'secret' => env('PUSHER_APP_SECRET'),
+//            'app_id' => env('PUSHER_APP_ID'),
+//            'options' => [
+//                'cluster' => env('PUSHER_APP_CLUSTER'),
+//                'encrypted' => true,
+//                'host' => '127.0.0.1',
+//                'debug' => true,
+//                'port' => 6001,
+//                'scheme' => 'http',
+//            ],
+//        'pusher' => [
+//            'driver' => 'pusher',
+//            'key' => env('PUSHER_APP_KEY'),
+//            'secret' => env('PUSHER_APP_SECRET'),
+//            'app_id' => env('PUSHER_APP_ID'),
+//            'options' => [
+//                // coin-ticker
+//                'cluster' => env('PUSHER_APP_CLUSTER'),
+//                'encrypted' => true,
+//
+//                // Pixelate
+//                // 'cluster' => 'eu',
+//                // 'useTLS' => true
+//
+//            ],
         'pusher' => [
             'driver' => 'pusher',
             'key' => env('PUSHER_APP_KEY'),
@@ -38,9 +66,9 @@ return [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
                 'encrypted' => true,
                 'host' => '127.0.0.1',
-                'debug' => true,
+                'debug'=> true,
                 'port' => 6001,
-                'scheme' => 'http',
+                'scheme' => 'http'
             ],
         ],
 

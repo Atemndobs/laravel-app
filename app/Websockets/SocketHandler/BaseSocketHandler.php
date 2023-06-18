@@ -5,6 +5,8 @@ namespace App\Websockets\SocketHandler;
 use BeyondCode\LaravelWebSockets\Apps\App;
 use BeyondCode\LaravelWebSockets\QueryParameters;
 use BeyondCode\LaravelWebSockets\WebSockets\Exceptions\UnknownAppKey;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Ratchet\ConnectionInterface;
 
 abstract class BaseSocketHandler implements \Ratchet\WebSocket\MessageComponentInterface
@@ -24,6 +26,7 @@ abstract class BaseSocketHandler implements \Ratchet\WebSocket\MessageComponentI
     public function onClose(ConnectionInterface $conn)
     {
         dump('On CLOSE');
+        return "Connection Closed";
     }
 
     /**
@@ -32,6 +35,21 @@ abstract class BaseSocketHandler implements \Ratchet\WebSocket\MessageComponentI
     public function onError(ConnectionInterface $conn, \Exception $e)
     {
         dump('On Error');
+        $message = [
+            'error' => [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ],
+            'action' => 'websockets:error',
+        ];
+
+        Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return response()->json([
+            'error' => [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ],
+        ]);
     }
 
     protected function generateSocketId(ConnectionInterface $connection)

@@ -15,7 +15,7 @@
         "ext-zip": "*",
         "aerni/laravel-spotify": "^2.1",
         "backpack/crud": "^5.5",
-        "beyondcode/laravel-websockets": "^1.13",
+        "beyondcode/laravel-websockets": "*",
         "cesargb/laravel-logs-rotate": "^2.2",
         "cloudatlas/flyclone": "^0.19.0",
         "doctrine/dbal": "^3.3",

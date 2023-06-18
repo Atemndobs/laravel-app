@@ -1,5 +1,7 @@
 <?php
 
+use App\Websockets\SocketHandler\UpdateSongSocketHandler;
+use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 use Illuminate\Support\Facades\Route;
 use TCG\Voyager\Facades\Voyager;
 
@@ -16,6 +18,8 @@ use TCG\Voyager\Facades\Voyager;
 */
 
 Route::get('/', function () {
+
+    event(new \App\Events\NewSongEvent('test'));
     return view('welcome');
 });
 
@@ -34,3 +38,7 @@ Route::get('/mail', function () {
     \Illuminate\Support\Facades\Mail::to('info@acurator.com')->send(new \App\Mail\MusicImportedMail());
     return new App\Mail\MusicImportedMail();
 });
+
+
+
+WebSocketsRouter::webSocket('/socket/song', UpdateSongSocketHandler::class);
