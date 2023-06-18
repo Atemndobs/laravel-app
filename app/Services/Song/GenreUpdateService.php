@@ -7,6 +7,8 @@ use App\Services\Birdy\SpotifyService;
 use App\Services\Scraper\SoundcloudService;
 use App\Services\SongUpdateService;
 use Illuminate\Support\Facades\Log;
+use function Amp\call;
+use const Widmogrod\Monad\IO\tryCatch;
 
 class GenreUpdateService
 {
@@ -29,8 +31,9 @@ class GenreUpdateService
         if ($song->genre != null) {
             return $song;
         }
+        $songPath = $id3Service->getFilePath($song);
 
-        $fileInfo = $id3Service->getAnalyze($song->path);
+        $fileInfo = $id3Service->getAnalyze($songPath);
         $id3Service->getInfoFromId3v2Tags($fileInfo, $song);
         $song->save();
 
@@ -70,34 +73,94 @@ class GenreUpdateService
                     }
                     $song->save();
                 }catch (\Exception $e) {
+                    $message = [
+                        'song' => [
+                            'title' => $song->title,
+                            'author' => $song->author,
+                            'genre' => $song->genre,
+                            'path' => $song->path,
+                            'slug' => $song->slug,
+                        ],
+                        'message' => $e->getMessage(),
+                        'next step' => 'We shall try to get genre from spotify',
+                        'line' => $e->getLine(),
+                        'file' => $e->getFile(),
+                        'class & method' => __CLASS__ . ' ' . __METHOD__,
+                    ];
+                    Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+                    dump($message);
                     $slug = str_replace('mp3', '', $song->slug);
                     $slug = str_replace('_', ' ', $slug);
-                    $song->title = str_replace('/', '', $song->title);
-                    $song->save();
+                    // if song title is empty, get title from slug
+                    if (strlen($song->title) < 1) {
+                        $song->title = str_replace('/', '', $song->title);
+                        $song->save();
+                    }
 
-                    $slug = substr($slug, 0, strrpos($slug, ' '));
-                    $genre = $spotify->getArtistGenre($slug);
-                    $song->genre = $genre;
-                    $song->save();
+                    // if gerne is empty, get genre from spotify
+                    if ($song->genre == null || $song->genre == '[]' || $song->genre == '0' || $song->genre == 0 || count($song->genre) < 1) {
+                        $slug = substr($slug, 0, strrpos($slug, ' '));
+                        $genre = $spotify->getArtistGenre($slug);
+                        $song->genre = $genre;
+                        $song->save();
+                    }
+
                     return $song;
                 }
             }
         }
-        if ($fileInfo['tags_html']){
-            if ($fileInfo['tags_html']['id3v2']){
-                try {
-                    if ($fileInfo['tags_html']['id3v2']['genre']){
-                        $genre = $fileInfo['tags_html']['id3v2']['genre'][0];
-                        // decode $genre
-                        $genre = html_entity_decode($genre);
-                        $song->genre = $genre;
-                        $song->save();
-                        return $song;
+        try {
+            $tags_html = $fileInfo['tags_html'];
+            if ($tags_html){
+                if ($fileInfo['tags_html']['id3v2']){
+                    try {
+                        if ($fileInfo['tags_html']['id3v2']['genre']){
+                            $genre = $fileInfo['tags_html']['id3v2']['genre'][0];
+                            // decode $genre
+                            $genre = html_entity_decode($genre);
+                            $song->genre = $genre;
+                            $song->save();
+                            return $song;
+                        }
+                    }catch (\Exception $e) {
+                        $message = [
+                            'song' => [
+                                'title' => $song->title,
+                                'author' => $song->author,
+                                'genre' => $song->genre,
+                                'path' => $song->path,
+                                'slug' => $song->slug,
+                            ],
+                            'message' => $e->getMessage(),
+                            'next step' => 'We have failed to get genre from id3v2 tags, We need to get the genre by other means',
+                            'idv3 tags' => $fileInfo['tags_html']['id3v2'],
+                            'line' => $e->getLine(),
+                            'file' => $e->getFile(),
+                            'class & method' => __CLASS__ . ' ' . __METHOD__,
+                        ];
+                        Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+                        dump($message);
                     }
-                }catch (\Exception $e) {
-                    dump($e->getMessage());
                 }
             }
+        }catch (\Exception $e) {
+            $message = [
+                'song' => [
+                    'title' => $song->title,
+                    'author' => $song->author,
+                    'genre' => $song->genre,
+                    'path' => $song->path,
+                    'slug' => $song->slug,
+                ],
+                'message' => $e->getMessage(),
+                'next step' => 'HTML Tags are empty',
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'class & method' => __CLASS__ . ' ' . __METHOD__,
+                'file_info' => $fileInfo
+            ];
+            Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+            dump($message);
         }
         $genre = $spotify->getArtistGenre($song->author);
         $song->genre = $genre;

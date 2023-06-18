@@ -324,7 +324,15 @@ class SongUpdateService
                 $this->setImageFromSong($fileInfo['comments']['picture'][0]['data'], $song);
             } catch (\Exception $e) {
                 $song->image = null;
-                Log::warning($e->getMessage());
+                $message = [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'class::method' => $e->getTrace()[0]['class'] . '::' . $e->getTrace()[0]['function'],
+                    'location' => __FILE__ . '::' . __CLASS__ . '::' . __METHOD__,
+                ];
+                Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
                 return $song;
             }
         }
