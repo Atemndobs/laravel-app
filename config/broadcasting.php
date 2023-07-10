@@ -29,57 +29,31 @@ return [
     */
 
     'connections' => [
+        # pusher.com
 //        'pusher' => [
 //            'driver' => 'pusher',
-//            'key' => env('PUSHER_APP_KEY'),
-//            'secret' => env('PUSHER_APP_SECRET'),
-//            'app_id' => env('PUSHER_APP_ID'),
+//        'key' => env('PUSHER_APP_KEY', 'app-key'),
+//        'secret' => env('PUSHER_APP_SECRET', 'app-secret'),
+//        'app_id' => env('PUSHER_APP_ID', 'app-id'),
 //            'options' => [
-//                'cluster' => env('PUSHER_APP_CLUSTER'),
-//                'encrypted' => true,
-//                'host' => '127.0.0.1',
-//                'debug' => true,
-//                'port' => 6001,
-//                'scheme' => 'http',
-//            ],
+//                 'cluster' => 'eu',
+//                 'useTLS' => true
+//            ]
+//        ],
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+            'key' => env('PUSHER_APP_KEY', 'app-key'),
+            'secret' => env('PUSHER_APP_SECRET', 'app-secret'),
+            'app_id' => env('PUSHER_APP_ID', 'app-id'),
             'options' => [
-                 'cluster' => 'eu',
-                 'useTLS' => true
-            ]
+                'cluster' => env('PUSHER_APP_CLUSTER'),
+                'encrypted' => true,
+                'host' => env('PUSHER_HOST', 'websockets'),
+                'debug'=> true,
+                'port' => env('PUSHER_PORT', 6001),
+                'scheme' => env('PUSHER_SCHEME', 'http')
+            ],
         ],
-//        'pusher' => [
-//            'driver' => 'pusher',
-//            'key' => env('PUSHER_APP_KEY'),
-//            'secret' => env('PUSHER_APP_SECRET'),
-//            'app_id' => env('PUSHER_APP_ID'),
-//            'options' => [
-//                'cluster' => env('PUSHER_APP_CLUSTER'),
-//                'encrypted' => true,
-//                'host' => '127.0.0.1',
-//                'debug'=> true,
-//                'port' => 6001,
-//                'scheme' => 'http'
-//            ],
-//        ],
-//        'pusher' => [
-//            'driver' => 'pusher',
-//            'key' => env('PUSHER_APP_KEY', 'app-key'),
-//            'secret' => env('PUSHER_APP_SECRET', 'app-secret'),
-//            'app_id' => env('PUSHER_APP_ID', 'app-id'),
-//            'options' => [
-//                'cluster' => env('PUSHER_APP_CLUSTER'),
-//                'encrypted' => true,
-//                'host' => '127.0.0.1',
-//                'debug'=> true,
-//                'port' => 6001,
-//                'scheme' => 'http'
-//            ],
-//        ],
 
         'redis' => [
             'driver' => 'redis',

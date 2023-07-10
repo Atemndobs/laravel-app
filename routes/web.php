@@ -40,10 +40,7 @@ Route::group(['prefix' => 'voyager'], function () {
 //});
 
 Route::get('/broadcast', function () {
-
-    event(new \App\Events\SpotifySongEvent('From The Broad Cast Controller'));
-
-   // broadcast(new \App\Events\NewSongEvent('From The Broad Cast Controller'), 'public');
+    broadcast(new \App\Events\NewSongEvent('Test : From The Broad Cast Controller'));
 });
 
 

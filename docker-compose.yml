@@ -24,13 +24,13 @@ services:
 
     php-fpm:
         container_name: php-fpm
-       # image: atemndobs/laravel-php-fpm:v1.8.8
-        image: atemndobs/laravel-php-fpm
-        build:
-            context: ../docker/php-fpm
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
+        image: atemndobs/laravel-php-fpm:v1.8.8
+#        image: atemndobs/laravel-php-fpm
+#        build:
+#            context: ../docker/php-fpm
+#            dockerfile: Dockerfile
+#            args:
+#                WWWGROUP: '${WWWGROUP}'
         volumes:
             - "${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}"
             - "../docker/php-fpm/scdl.cfg:/var/www/.config/scdl/scdl.cfg"
@@ -51,19 +51,6 @@ services:
             - meilisearch
         environment:
             TZ: 'Europe/Berlin'
-
-#    websockets:
-#        image: atemndobs/laravel-php-fpm
-#        command: ['php', 'artisan', 'websockets:serve']
-#        container_name: websockets
-#        restart: unless-stopped
-#        working_dir: /var/www/
-#        volumes:
-#            - ./:/var/www
-#        ports:
-#            - ${LARAVEL_WEBSOCKETS_PORT}:6001
-#        networks:
-#            - sail
 
 #    soketi:
 #        image: 'quay.io/soketi/soketi:latest-16-alpine'
