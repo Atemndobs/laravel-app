@@ -15,27 +15,39 @@ class NewSongEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct()
+    public $message;
+
+    public function __construct($message)
     {
-        dd('NewSongEvent');
-        //
+        $this->message = $message;
+        $logMessage = [
+            'Description' => 'info : Event Fired',
+            'event' => 'NewSongEvent',
+            'message' => $this->message,
+            'time' => now()
+        ];
+        Log::info(json_encode($logMessage, JSON_PRETTY_PRINT));
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
-    public function broadcastOn(): array
+    public function broadcastOn()
     {
-        // dd('NewSongEvent');
-        Log::info('NewSongEvent');
-        return [
-            new Channel("public.song.1"),
-           // new PrivateChannel('channel-name'),
-        ];
+
+        return ['public'];
+      //  return new Channel('public');
     }
+
+    public function broadcastAs()
+    {
+        return 'NewSongEvent';
+    }
+
+    //   public function broadcastOn()
+    //  {
+    //      return ['my-channel'];
+    //  }
+    //
+    //  public function broadcastAs()
+    //  {
+    //      return 'my-event';
+    //  }
 }

@@ -96,6 +96,8 @@ return [
                 ],
                 'queue' => [
                     'job' => VladimirYuldashev\LaravelQueueRabbitMQ\Queue\Jobs\RabbitMQJob::class,
+                    'prioritize_delayed' =>  false,
+                    'queue_max_priority' => 10,
                 ],
             ],
 

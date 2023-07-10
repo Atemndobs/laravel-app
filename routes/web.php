@@ -34,11 +34,17 @@ Route::group(['prefix' => 'voyager'], function () {
 });
 
 // Mailing Route
-Route::get('/mail', function () {
-    \Illuminate\Support\Facades\Mail::to('info@acurator.com')->send(new \App\Mail\MusicImportedMail());
-    return new App\Mail\MusicImportedMail();
-});
+//Route::get('/mail', function () {
+//    \Illuminate\Support\Facades\Mail::to('info@acurator.com')->send(new \App\Mail\MusicImportedMail());
+//    return new App\Mail\MusicImportedMail();
+//});
 
+Route::get('/broadcast', function () {
+
+    event(new \App\Events\SpotifySongEvent('From The Broad Cast Controller'));
+
+   // broadcast(new \App\Events\NewSongEvent('From The Broad Cast Controller'), 'public');
+});
 
 
 WebSocketsRouter::webSocket('/socket/song', UpdateSongSocketHandler::class);

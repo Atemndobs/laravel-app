@@ -59,7 +59,7 @@ class Kernel extends ConsoleKernel
 //            ->description('Moves upload Dir to audio and images')
 //            ->appendOutputTo("'storage/logs/upload_$logFile'");
 
-        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=3 --stop-when-empty')
+        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=1 --stop-when-empty')
             ->everyMinute()
             ->withoutOverlapping()
             ->description('Classify songs')

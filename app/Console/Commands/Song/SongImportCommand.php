@@ -83,7 +83,7 @@ class SongImportCommand extends Command
 
         try {
             $this->info('Purging queue classify' );
-            $this->call('rabbitmq:queue-purge', ['queue' => 'classify']);
+           $this->call('rabbitmq:queue-purge', ['queue' => 'classify']);
         }catch (\Exception $e){
            $this->warn('No classify queue to purge');
         }
@@ -140,6 +140,11 @@ class SongImportCommand extends Command
 
         }
 
+        $eventMessage = 'New song added';
+        if (count($unClassified) > 0){
+            $eventMessage = $unClassified;
+        }
+        event(new \App\Events\NewSongEvent($eventMessage));
         $bar->finish();
         return $unClassified;
     }

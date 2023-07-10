@@ -37,14 +37,14 @@ class MeilesearchSongController extends Controller
             'Position' => 'Before Try Catch',
             'query' => $query,
           //  'response' =>  $this->client->post('/indexes/songs/search', $query)
-        ]));
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         try {
             $search = $this->client->post('/indexes/songs/search', $query);
             Log::info(json_encode([
                 'location' => 'MeilesearchSongController@getSongs',
-                'response' => $search,
-            ]));
+                'response - estimatedTotalHits' => $search['estimatedTotalHits']
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -52,8 +52,8 @@ class MeilesearchSongController extends Controller
         Log::info(json_encode([
             'method' => 'MeilesearchSongController@getSongs',
             'position' => 'After Try Catch',
-            'RaW - response' => $search,
-        ]));
+            'RaW - estimatedTotalHits' => $search['estimatedTotalHits'],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $search['total'] = $search['estimatedTotalHits'];
         unset($search['estimatedTotalHits']);
         unset($search['processingTimeMs']);

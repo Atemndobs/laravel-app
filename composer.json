@@ -43,6 +43,7 @@
         "php-decimal/php-decimal": "^1.1",
         "prettus/l5-repository": "^2.8",
         "psr/simple-cache": "^1.0",
+        "pusher/pusher-php-server": "^7.2",
         "rezaamini-ir/migrator": "^1.5",
         "sarfraznawaz2005/servermonitor": "@dev",
         "singlestoredb/singlestoredb-laravel": "^1.4",

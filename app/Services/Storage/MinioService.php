@@ -167,4 +167,9 @@ use Illuminate\Support\Facades\Storage;
         file_put_contents($audioPath,  $fileContent);
         return $audioPath;
     }
+
+    public function getBucketUrl(string $bucket, string $folder= ""): string
+    {
+            return Storage::disk('s3')->temporaryUrl($folder, now()->addHour(), ['Bucket' => $bucket]);
+    }
 }
