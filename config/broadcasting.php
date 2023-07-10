@@ -48,9 +48,9 @@ return [
             'options' => [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
                 'encrypted' => true,
-                'host' => env('PUSHER_HOST', 'websockets'),
+                'host' => env('PUSHER_HOST', 'websocket.curator.atemkeng.eu'),
                 'debug'=> true,
-                'port' => env('PUSHER_PORT', 6001),
+                'port' => env('PUSHER_PORT', 80),
                 'scheme' => env('PUSHER_SCHEME', 'http')
             ],
         ],
