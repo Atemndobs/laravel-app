@@ -13,7 +13,8 @@ return [
     |
     */
 
-    'default' => env('QUEUE_CONNECTION', 'rabbitmq'),
+    'default' => "sync",
+    //'default' => env('QUEUE_CONNECTION', 'rabbitmq'),
 
     /*
     |--------------------------------------------------------------------------
@@ -96,8 +97,8 @@ return [
                 ],
                 'queue' => [
                     'job' => VladimirYuldashev\LaravelQueueRabbitMQ\Queue\Jobs\RabbitMQJob::class,
-                    'prioritize_delayed' =>  false,
-                    'queue_max_priority' => 10,
+//                    'prioritize_delayed' =>  false,
+//                    'queue_max_priority' => 10,
                 ],
             ],
 
