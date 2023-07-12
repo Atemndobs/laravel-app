@@ -278,5 +278,21 @@ class SpotifyService
         return $search[0]->album->name;
     }
 
+    public function getPlaylist(string $playlistName)
+    {
+        $playlists = $this->spotify->getUserPlaylists($this->getMySpotifyId());
+        foreach ($playlists->items as $playlist) {
+            if (str_contains(strtolower($playlist->name), strtolower($playlistName))) {
+                return $playlist;
+            }
+        }
+        return null;
+    }
+
+    public function getMySpotifyId()
+    {
+        $user = $this->spotify->me();
+        return $user->id;
+    }
 
 }

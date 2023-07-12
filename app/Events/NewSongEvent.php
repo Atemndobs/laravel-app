@@ -31,23 +31,13 @@ class NewSongEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-
-        return ['public'];
-      //  return new Channel('public');
+      return ['public'];
+     // return new Channel('public');
     }
 
     public function broadcastAs()
     {
         return 'NewSongEvent';
     }
-
-    //   public function broadcastOn()
-    //  {
-    //      return ['my-channel'];
-    //  }
-    //
-    //  public function broadcastAs()
-    //  {
-    //      return 'my-event';
-    //  }
+    
 }

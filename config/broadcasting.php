@@ -30,16 +30,16 @@ return [
 
     'connections' => [
         # pusher.com
-        'pusher' => [
-            'driver' => 'pusher',
-            'key' => "77497205df3787675849",
-            'secret' => "c1b13a05d80338754108",
-            'app_id' => "1631942",
-            'options' => [
-                 'cluster' => 'eu',
-                 'useTLS' => true
-            ]
-        ],
+//        'pusher' => [
+//            'driver' => 'pusher',
+//            'key' => "2b6e66c32f76cec6c6f7",
+//            'secret' => "bb62a26c8f770c1438ee",
+//            'app_id' => "1631944",
+//            'options' => [
+//                 'cluster' => 'eu',
+//                 'useTLS' => true
+//            ]
+//        ],
 //        'pusher' => [
 //            'driver' => 'pusher',
 //            'key' => env('PUSHER_APP_KEY', 'app-key'),
@@ -54,20 +54,20 @@ return [
 //                'scheme' => env('PUSHER_SCHEME', 'http')
 //            ],
 
-//        'pusher' => [
-//            'driver' => 'pusher',
-//            'key' => 'app-key',
-//            'secret' => 'app-secret',
-//            'app_id' => 'app-id',
-//            'options' => [
-//                'cluster' => 'mt1',
-//                'encrypted' => true,
-//                'host' => 'websocket.curator.atemkeng.eu',
-//                'debug'=> true,
-//                'port' => 80,
-//                'scheme' => 'http'
-//            ],
-//        ],
+        'pusher' => [
+            'driver' => 'pusher',
+            'key' => 'app-key',
+            'secret' => 'app-secret',
+            'app_id' => 'app-id',
+            'options' => [
+                'cluster' => 'mt1',
+                'encrypted' => true,
+                'host' => 'websocket.curator.atemkeng.eu',
+                'debug'=> true,
+                'port' => 80,
+                'scheme' => 'http'
+            ],
+        ],
 
         'redis' => [
             'driver' => 'redis',
