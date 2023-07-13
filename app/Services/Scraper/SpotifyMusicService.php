@@ -52,4 +52,10 @@ class SpotifyMusicService
     {
         return Spotify::playlistTracks($playlistId)->get()['items'];
     }
+
+    public function getPlaylistByName(string $playlistName)
+    {
+        return Spotify::searchPlaylists($playlistName)->get();
+    }
+
 }
