@@ -47,7 +47,20 @@ class SpotifyLikedSongsWatchCommand extends Command
                     $this->info('Checking if number of tracks is the same...');
                     $tracksCount = $playlistExists->tracks;
                     if ($tracksCount == $playlist['tracks']) {
-                        $this->info('Number of tracks is the same!');
+                        $this->warn('Number of tracks is the same!');
+                        // check if playlist songs are the same
+                        $this->info('Checking if playlist songs are the same...');
+                        $playlistSongs = $spotifyService->getPlaylistSongs($playlist['id']);
+                        $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
+                        $playlistSongsExists = $spotifyService->playlistSongsExists($playlistSongs);
+                        if ($playlistSongsExists) {
+                            $this->warn('Playlist songs are the same!');
+                            continue;
+                        }
+                        $this->warn('Playlist songs are not the same!');
+                        // get latest | the newest playlist songs and save them in database
+                        $this->info('get latest | newest playlist songs and save them in database');
+                        $spotifyService->savePlaylistSongsInDB($playlistSongs);
                         continue;
                     }
                     $this->info('Number of tracks is not the same!');
@@ -55,7 +68,7 @@ class SpotifyLikedSongsWatchCommand extends Command
                     $this->info('Updating playlist tracks count...');
                     $playlistExists->tracks = $playlist['tracks'];
                     $playlistExists->save();
-                    // get latest | newest playlist songs and save them in database
+                    // get latest | the newest playlist songs and save them in database
                     $this->info('Getting latest playlist songs...');
                     $playlistSongs = $spotifyService->getPlaylistSongs($playlist['id']);
                     $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
@@ -89,6 +102,19 @@ class SpotifyLikedSongsWatchCommand extends Command
             $tracksCount = $playlistExists->tracks;
             if ($tracksCount == $playlist['tracks']['total']) {
                 $this->info('Number of tracks is the same!');
+                // check if playlist songs are the same
+                $this->info('Checking if playlist songs are the same...');
+                $playlistSongs = $spotifyService->getPlaylistSongs($playlist['id']);
+                $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
+                $playlistSongsExists = $spotifyService->playlistSongsExists($playlistSongs);
+                if ($playlistSongsExists) {
+                    $this->info('Playlist songs are the same!');
+                    return 0;
+                }
+                $this->info('Playlist songs are not the same!');
+                // get latest | the newest playlist songs and save them in database
+                $this->info('get latest | newest playlist songs and save them in database');
+                $spotifyService->savePlaylistSongsInDB($playlistSongs);
 
                 return 0;
             }
@@ -106,7 +132,8 @@ class SpotifyLikedSongsWatchCommand extends Command
             return 0;
         }
         $releases = new Release();
-        $spotifyService->savePlaylistInDB($playlist, $releases);
+        $playlistTable = $spotifyService->prepareSinglePlaylistTable($playlist);
+        $spotifyService->savePlaylistInDB($playlistTable, $releases);
 
         // prepare playlist data
         $playlistData = [

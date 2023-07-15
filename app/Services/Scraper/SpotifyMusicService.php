@@ -15,11 +15,19 @@ class SpotifyMusicService
     {
         // 11171774669
         $playlists  = Spotify::userPlaylists('11171774669')->get()['items'];
+        return $this->getItemByName($playlists, $playlistName);
+    }
 
-      //  dd($playlistName);
-        $playlistDetails = $this->getItemByName($playlists, $playlistName);
-
-        return $playlistDetails;
+    public function prepareSinglePlaylistTable(array $playlist): array
+    {
+        return [
+            'id' => $playlist['id'],
+            'name' => $playlist['name'],
+            'owner' => $playlist['owner']['display_name'],
+            'tracks' => $playlist['tracks']['total'],
+            'url' => $playlist['external_urls']['spotify'],
+            'image' => $playlist['images'][0]['url'],
+        ];
     }
 
     public function userId()
@@ -93,9 +101,10 @@ class SpotifyMusicService
                 'title' => $track['track']['name'],
                 'author' => $track['track']['artists'][0]['name'],
                 'album' => $track['track']['album']['name'],
-                'image' => $track['track']['album']['images'][0]['url'],
+                'added_at' => $track['added_at'],
                 'source' => $source,
                 'url' => $track['track']['external_urls']['spotify'],
+                'image' => $track['track']['album']['images'][0]['url'],
             ];
         }, $tracks);
     }
@@ -107,7 +116,6 @@ class SpotifyMusicService
      */
     public function savePlaylistInDB(array $playlist, Release $release): void
     {
-        dd($playlist);
         $release->id = $playlist['id'];
         $release->name = $playlist['name'];
         $release->owner = $playlist['owner'];
@@ -147,15 +155,26 @@ class SpotifyMusicService
             $release->source = $playlistSong['source'];
             $release->url = $playlistSong['url'];
             $release->image = $playlistSong['image'];
+            $release->added_at = $playlistSong['added_at'];
             $release->date_created = now();
             $release->date_updated = now();
 
             // catch integrity constraint violation and skip
             try {
-                $release->saveOrFail();
+                $release->save();
             } catch (\Throwable $e) {
+               // dd($e->getMessage());
                 // do nothing
             }
         }
+    }
+
+    public function playlistSongsExists(array $playlistSongs)
+    {
+        $ids = [];
+        foreach ($playlistSongs as $playlistSong) {
+            $ids[] = $playlistSong['id'];
+        }
+        return SingleRelease::query()->whereIn('id', $ids)->get()->toArray();
     }
 }

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class SingleRelease
  * 
- * @property int $id
+ * @property string $id
  * @property string $status
  * @property int|null $sort
  * @property string|null $user_created
@@ -21,21 +21,24 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $date_updated
  * @property string|null $title
  * @property string|null $author
- * @property string|null $album
  * @property string|null $source
+ * @property string|null $album
  * @property string|null $url
  * @property string|null $image
+ * @property Carbon|null $added_at
  *
  * @package App\Models\Base
  */
 class SingleRelease extends Model
 {
 	protected $table = 'single_releases';
+	public $incrementing = false;
 	public $timestamps = false;
 
 	protected $casts = [
 		'sort' => 'int',
 		'date_created' => 'datetime',
-		'date_updated' => 'datetime'
+		'date_updated' => 'datetime',
+		'added_at' => 'datetime'
 	];
 }
