@@ -3,19 +3,24 @@
 namespace App\Services\Scraper;
 
 use Aerni\Spotify\Facades\SpotifyFacade as Spotify;
+use Aerni\Spotify\Facades\SpotifySeedFacade as SpotifySeed;
 use App\Models\Release;
 use App\Models\SingleRelease;
-use AWS\CRT\HTTP\Response;
 use Illuminate\Support\Carbon;
 
 class SpotifyMusicService
 {
 
-    public function playlist(string $playlistName)
+    public function playlist(string $playlistName, string $owner)
     {
         // 11171774669
-        $playlists  = Spotify::userPlaylists('11171774669')->get()['items'];
-        return $this->getItemByName($playlists, $playlistName);
+        $playlists = $this->getMyPlaylistByName($playlistName);
+        if($playlists){
+            return $playlists;
+        }else{
+            return $this->getPlaylistByName($playlistName, $owner);
+        }
+
     }
 
     public function prepareSinglePlaylistTable(array $playlist): array
@@ -30,11 +35,6 @@ class SpotifyMusicService
         ];
     }
 
-    public function userId()
-    {
-        return Spotify::me()->id;
-    }
-
     public function getItemByName($array, $name) {
         $filteredArray = array_filter($array, function ($item) use ($name) {
             return $item['name'] === $name;
@@ -46,7 +46,7 @@ class SpotifyMusicService
         return $result !== false ? $result : null;
     }
 
-    public function getPlalistNames(array $playlists)
+    public function getPlaylistNames(array $playlists): array
     {
         $names = [];
         foreach ($playlists as $playlist) {
@@ -57,7 +57,14 @@ class SpotifyMusicService
 
     public function getAllPlaylists()
     {
-        return Spotify::userPlaylists('11171774669')->get()['items'];
+        $total = (int)Spotify::userPlaylists('11171774669')->get()['total'];
+        // if total is greater than 50, we need to paginate
+        if ($total > 50) {
+            $playlists = $this->paginatePlaylists($total);
+        } else {
+            $playlists = Spotify::userPlaylists('11171774669')->limit(50)->get()['items'];
+        }
+        return $playlists;
     }
 
     public function getPlaylistSongs(string $playlistId)
@@ -65,9 +72,11 @@ class SpotifyMusicService
         return Spotify::playlistTracks($playlistId)->get()['items'];
     }
 
-    public function getPlaylistByName(string $playlistName)
+    public function getPlaylistByName(string $playlistName, string $owner)
     {
-        return Spotify::searchPlaylists($playlistName)->get();
+        $playlists =  Spotify::searchPlaylists($playlistName)->get();
+        $playlists = $playlists['playlists']['items'];
+        return $this->getItemByNameAndOwner($playlists, $playlistName, $owner);
     }
 
     /**
@@ -104,7 +113,7 @@ class SpotifyMusicService
                 'added_at' => $track['added_at'],
                 'source' => $source,
                 'url' => $track['track']['external_urls']['spotify'],
-                'image' => $track['track']['album']['images'][0]['url'],
+                'image' => $track['track']['album']['images'][0]['url'] ?? null,
             ];
         }, $tracks);
     }
@@ -169,7 +178,7 @@ class SpotifyMusicService
         }
     }
 
-    public function playlistSongsExists(array $playlistSongs)
+    public function playlistSongsExists(array $playlistSongs): array | null
     {
         $ids = [];
         foreach ($playlistSongs as $playlistSong) {
@@ -177,4 +186,47 @@ class SpotifyMusicService
         }
         return SingleRelease::query()->whereIn('id', $ids)->get()->toArray();
     }
+
+    private function paginatePlaylists(int $total)
+    {
+        $playlists = [];
+        $offset = 0;
+        while ($offset < $total) {
+            $playlists[] = Spotify::userPlaylists('11171774669')->limit(50)->offset($offset)->get()['items'];
+            $offset += 50;
+        }
+        return $playlists[0];
+    }
+
+    public function getMyPlaylistByName(string $playlistName)
+    {
+        $playlists  = Spotify::userPlaylists('11171774669')->get()['items'];
+        if (empty($playlists)) {
+            return null;
+        }
+        return $this->getItemByName($playlists, $playlistName);
+    }
+
+    public function getMyFollowedPlaylistsByName(string $playlistName)
+    {
+        $playlists  = Spotify::myPlaylists()->get()['items'];
+        return $this->getItemByName($playlists, $playlistName);
+    }
+
+    public function getAllMyFollowedPlaylists()
+    {
+
+    }
+
+    private function getItemByNameAndOwner(mixed $items, string $playlistName, string $owner)
+    {
+        $filteredArray = array_filter($items, function ($item) use ($playlistName, $owner) {
+            return trim($item['name']) === $playlistName && trim($item['owner']['display_name']) === $owner;
+        });
+        // Retrieve the first matching item
+        $result = reset($filteredArray);
+
+        return $result !== false ? $result : null;
+    }
+
 }

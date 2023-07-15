@@ -13,7 +13,7 @@ class SpotifyReleasesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'spotify:watch {--p|playlist=} {--a|all=}';
+    protected $signature = 'spotify:watch {--p|playlist=} {--a|all=} {--o|owner=}';
 
     /**
      * The console command description.
@@ -29,6 +29,7 @@ class SpotifyReleasesCommand extends Command
     {
         $playlist = $this->option('playlist');
         $all = $this->option('all');
+        $owner = $this->option('owner') ?? "Spotify";
         $spotifyService = new SpotifyMusicService();
         $this->info('Watching Spotify Liked Songs...');
 
@@ -44,12 +45,17 @@ class SpotifyReleasesCommand extends Command
                 unset($playlists[$key]['image']);
             }
             $this->table(['id', 'name', 'owner', 'tracks', 'url'], $playlists);
+            $this->warn("Total Playlists: " . count($playlists));
             $this->info('Done!');
 
             return 0;
         }
 
-        $playlist = $spotifyService->playlist($playlist);
+        $playlist = $spotifyService->playlist($playlist, $owner);
+        if (!$playlist) {
+            $this->error('Playlist not found!');
+            return 0;
+        }
         $this->processPlaylist($playlist, $spotifyService);
 
         $this->info('Done!');
@@ -102,7 +108,13 @@ class SpotifyReleasesCommand extends Command
         $playlistSongs = $spotifyService->getPlaylistSongs($playlist['id']);
         $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
         $spotifyService->savePlaylistSongsInDB($playlistSongs);
-        $this->table(['id', 'name', 'artist', 'album', 'url'], $playlistSongs);
+        // remove image from table
+        foreach ($playlistSongs as $key => $playlistSong) {
+            unset($playlistSongs[$key]['image']);
+            unset($playlistSongs[$key]['album']);
+        }
+        $this->table(['id', 'name', 'artist','added_at', 'source',  'url'], $playlistSongs);
+        $this->warn("Total songs: {$playlist['tracks']['total']}");
     }
 
     /**
