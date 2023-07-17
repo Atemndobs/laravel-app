@@ -49,9 +49,7 @@
                     <div class="flex items-center">
                         <div class="ml-4 text-lg leading-7 font-semibold"><a href="{{url('/backpack')}}" class="underline text-gray-900 dark:text-white">Backpack Admin</a></div>
                     </div>
-                    <div class="flex items-center">
-                        <div class="ml-4 text-lg leading-7 font-semibold"><a href="{{url('/backpack/log')}}" class="underline text-gray-900 dark:text-white">Backpack Logs</a></div>
-                    </div>
+
 
                     <div class="ml-12">
                         <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
@@ -62,15 +60,9 @@
                 <!--  FIRST CARD -->
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-t-0 md:border-l">
                     <div class="flex items-center">
-                        <div class="ml-4 text-lg leading-7 font-semibold"><a href="http://mage.tech:1337/admin" class="underline text-gray-900 dark:text-white">Strapi Admin </a></div>
+                        <div class="ml-4 text-lg leading-7 font-semibold"><a href="http://mage.tech:8055/admin" class="underline text-gray-900 dark:text-white">Directus Admin </a></div>
                     </div>
 
-                    <div class="ml-12">
-                        <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-                            <div>  <a href="http://mage.tech:1337/admin/content-manager/collectionType/api::song.song?page=1&pageSize=10&sort=source:ASC" > Songs -></a> </div>
-                            <div>  <a href="http://mage.tech:1337/admin/content-manager/collectionType/api::catalog.catalog?page=1&pageSize=10&sort=itemName:ASC" > Catalogs -></a> </div>
-                        </div>
-                    </div>
                 </div>
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700">
                     <div class="flex items-center">
@@ -80,7 +72,7 @@
                     <div class="ml-12">
                         <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
                             <div>  <a href="{{url('/api/songs')}}" > songs -></a> </div>
-                            <div>  <a href="{{url('/api/catalogs')}}" > catalogs -></a> </div>
+{{--                            <div>  <a href="{{url('/api/catalogs')}}" > catalogs -></a> </div>--}}
                         </div>
                     </div>
                 </div>
@@ -100,31 +92,23 @@
                     </div>
                 </div>
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center">
-                        <div class="ml-4 text-lg leading-7 font-semibold"><a href="{{url('/health')}}" class="underline text-gray-900 dark:text-white">Server Monitor</a></div>
-                    </div>
+{{--                    <div class="flex items-center">--}}
+{{--                        <div class="ml-4 text-lg leading-7 font-semibold"><a href="{{url('/health')}}" class="underline text-gray-900 dark:text-white">Server Monitor</a></div>--}}
+{{--                    </div>--}}
 
-                    <div class="ml-12">
-                        <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-                            <div>  <a href="{{url('/health')}}" > Health Check -></a> </div>
-                            <div>  <a href="{{'http://localhost:9999/totem/tasks'}}" > Scheduled Health check tasks -></a> </div>
-                            <div>  <a href="{{'http://localhost:8899/totem/tasks'}}" > Mage Tech task scheduler-></a> </div>
-                        </div>
-                    </div>
+{{--                    <div class="ml-12">--}}
+{{--                        <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">--}}
+{{--                            <div>  <a href="{{url('/health')}}" > Health Check -></a> </div>--}}
+{{--                            <div>  <a href="{{'http://localhost:9999/totem/tasks'}}" > Scheduled Health check tasks -></a> </div>--}}
+{{--                            <div>  <a href="{{'http://localhost:8899/totem/tasks'}}" > Mage Tech task scheduler-></a> </div>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
                 </div>
                 <!--  SECOND CARD -->
 
 
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
-                    <div class="flex items-center">
-                        <div class="ml-4 text-lg leading-7 font-semibold text-gray-900 dark:text-white"> <a href="http://mage.tech:1337/documentation/v1.0.0" >  Strapi API Doc (Swagger) </a> </div>
-                    </div>
 
-                    <div class="ml-12">
-                        <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-                            <div>  <a href="http://mage.tech:1337/documentation/v1.0.0#/Song/get%2Fsongs" > songs -></a> </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700">
@@ -161,12 +145,12 @@
 
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700 md:border-l">
                     <div class="flex items-center">
-                        <div class="ml-4 text-lg leading-7 font-semibold text-gray-900 dark:text-white"> <a href="http://mage.tech:8899/laravel-websockets" >  Web Sockets </a> </div>
+                        <div class="ml-4 text-lg leading-7 font-semibold text-gray-900 dark:text-white"> <a href="http://mage.tech:8899/spotify/login" > Spotify Login </a> </div>
                     </div>
 
                     <div class="ml-12">
                         <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-                            <div>  <a href="http://mage.tech:8899/laravel-websockets" >laravel websockers</a> </div>
+                            <div>  <a href="http://mage.tech:8899/spotify/login" >Spotify Login</a> </div>
                         </div>
                     </div>
                 </div>
@@ -182,8 +166,8 @@
                         Laravel  &
                     </a>
 
-                    <a href="https://strapi.io/" class="ml-1 underline">
-                        Strapi
+                    <a href="https://directus.io/" class="ml-1 underline">
+                        directus
                     </a>
                 </div>
             </div>

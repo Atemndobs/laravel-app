@@ -4,6 +4,8 @@ use App\Websockets\SocketHandler\UpdateSongSocketHandler;
 use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 use Illuminate\Support\Facades\Route;
 use TCG\Voyager\Facades\Voyager;
+use App\Http\Controllers\SpotifyAuthController;
+use App\Http\Controllers\SpotifyController;
 
 
 /*
@@ -45,3 +47,13 @@ Route::get('/broadcast', function () {
 
 
 WebSocketsRouter::webSocket('/socket/song', UpdateSongSocketHandler::class);
+
+
+Route::get('/spotify/login', [SpotifyAuthController::class, 'login'])->name('spotify.login');
+Route::get('/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');
+
+
+Route::get('/spotify/logged-in', [SpotifyController::class, 'loggedIn'])->name('spotify.logged_in');
+Route::get('/open-browser', [SpotifyController::class, 'openBrowser']);
+
+

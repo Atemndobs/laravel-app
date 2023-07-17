@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "@jhurliman/essentia.js": "^0.1.5-dev2",
-        "chokidar": "^3.5.3"
+        "chokidar": "^3.5.3",
+        "playwright": "^1.36.1"
     }
 }

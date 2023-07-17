@@ -24,11 +24,11 @@ services:
 
     php-fpm:
         container_name: php-fpm
-        image: atemndobs/laravel-php-fpm:v1.8.8
-#        image: atemndobs/laravel-php-fpm
-#        build:
-#            context: ../docker/php-fpm
-#            dockerfile: Dockerfile
+     #   image: atemndobs/laravel-php-fpm:v1.8.8
+        image: atemndobs/laravel-php-fpm
+        build:
+            context: ../docker/php-fpm
+            dockerfile: Dockerfile
 #            args:
 #                WWWGROUP: '${WWWGROUP}'
         volumes:

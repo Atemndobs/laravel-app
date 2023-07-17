@@ -2,7 +2,6 @@
 
 namespace App\Services\Birdy;
 
-use Aerni\Spotify\Spotify;
 use App\Jobs\DownloadSpotifyJob;
 use App\Models\Song;
 use Illuminate\Support\Facades\Artisan;
@@ -18,18 +17,27 @@ class SpotifyService
 
     public function __construct()
     {
-        $client_id = env('SPOTIFY_CLIENT_ID');
-        $client_secret = env('SPOTIFY_CLIENT_SECRET');
-        $url = 'http://dejavu.atmkng.de/';
         $session = new Session(
-            'c60869065e4c4a298aaf489700602182',
-            '5548d231e4f74c07964d5d675a587c44',
-            $url
+            env('SPOTIFY_CLIENT_ID'),
+            env('SPOTIFY_CLIENT_SECRET'),
+            env('SPOTIFY_REDIRECT_URI')
         );
-        $session->requestCredentialsToken();
-        $accessToken = $session->getAccessToken();
-        $this->spotify = new SpotifyWebAPI();
-        $this->spotify->setAccessToken($accessToken);
+
+        $state = $session->generateState();
+
+        $options = [
+            'scope' => [
+                'playlist-read-private',
+                'user-read-private',
+                'user-read-email',
+                'playlist-read-collaborative',
+            ],
+            'state' => $state,
+        ];
+
+        header('Location: ' . $session->getAuthorizeUrl($options));
+
+        //dd($this->spotify->getMyDevices());
     }
 
     public function getArtistGenre(string $artist)

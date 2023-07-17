@@ -77,6 +77,9 @@ Route::get('storage/access', [\App\Http\Controllers\Api\Storage\FileAccessRefres
 // upload backup
 Route::post('storage/backup/upload', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'uploadBackup']);
 Route::get('storage/backup/store', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'storeBackup']);
+Route::get('/spotify/app', [\App\Http\Controllers\Api\SpotifyAppController::class, 'index']);
+Route::get('/spotify/auth', [\App\Http\Controllers\Api\SpotifyAuthController::class,'login']);
+Route::get('/spotify/callback', [\App\Http\Controllers\Api\SpotifyAuthController::class, 'callback']);
 
 // webhooks
 Route::webhooks('/webhooks/songs');

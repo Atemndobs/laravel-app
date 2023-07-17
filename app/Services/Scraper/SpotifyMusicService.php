@@ -3,7 +3,6 @@
 namespace App\Services\Scraper;
 
 use Aerni\Spotify\Facades\SpotifyFacade as Spotify;
-use Aerni\Spotify\Facades\SpotifySeedFacade as SpotifySeed;
 use App\Models\Release;
 use App\Models\SingleRelease;
 use Illuminate\Support\Carbon;
@@ -25,14 +24,26 @@ class SpotifyMusicService
 
     public function prepareSinglePlaylistTable(array $playlist): array
     {
-        return [
-            'id' => $playlist['id'],
-            'name' => $playlist['name'],
-            'owner' => $playlist['owner']['display_name'],
-            'tracks' => $playlist['tracks']['total'],
-            'url' => $playlist['external_urls']['spotify'],
-            'image' => $playlist['images'][0]['url'],
-        ];
+        try {
+            return [
+                'id' => $playlist['id'],
+                'name' => $playlist['name'],
+                'owner' => $playlist['owner'] ?? $playlist['owner']['display_name'],
+                'tracks' => $playlist['tracks']?? $playlist['tracks']['total'],
+                'url' => $playlist['external_urls']?? $playlist['external_urls']['spotify'],
+                'image' => $playlist['images'][0]?? $playlist['images'][0]['url'],
+            ];
+        }catch (\Exception $e) {
+            return [
+                'id' => $playlist['id'],
+                'name' => $playlist['name'],
+                'owner' => $playlist['owner']->display_name,
+                'tracks' => $playlist['tracks']->total,
+                'url' => $playlist['external_urls']->spotify,
+                'image' => $playlist['images'][0]->url,
+            ];
+        }
+
     }
 
     public function getItemByName($array, $name) {
@@ -86,6 +97,12 @@ class SpotifyMusicService
     public function preparePlaylistsTable(array $playlists): array
     {
         return array_map(function ($playlist) {
+            !is_array($playlist) ? $playlist = collect($playlist)->toArray() : $playlist;
+            !is_array($playlist['owner']) ? $playlist['owner'] = collect($playlist['owner'])->toArray() : $playlist['owner'];
+            !is_array($playlist['tracks']) ? $playlist['tracks'] = collect($playlist['tracks'])->toArray() : $playlist['tracks'];
+            !is_array($playlist['external_urls']) ? $playlist['external_urls'] = collect($playlist['external_urls'])->toArray() : $playlist['external_urls'];
+            !is_array($playlist['images'][0]) ? $playlist['images'][0] = collect($playlist['images'][0])->toArray() : $playlist['images'][0];
+
             return [
                 'id' => $playlist['id'],
                 'name' => $playlist['name'],
@@ -104,17 +121,22 @@ class SpotifyMusicService
      */
     public function prepareTracksTable(array $tracks, string $source = 'playlist'): array
     {
+
         return array_map(function ($track) use ($source){
-            return [
-                'id' => $track['track']['id'],
-                'title' => $track['track']['name'],
-                'author' => $track['track']['artists'][0]['name'],
-                'album' => $track['track']['album']['name'],
-                'added_at' => $track['added_at'],
-                'source' => $source,
-                'url' => $track['track']['external_urls']['spotify'],
-                'image' => $track['track']['album']['images'][0]['url'] ?? null,
-            ];
+            try {
+                return [
+                    'id' => $track['track']['id'],
+                    'title' => $track['track']['name'],
+                    'author' => $track['track']['artists'][0]['name'],
+                    'album' => $track['track']['album']['name'],
+                    'added_at' => $track['added_at'],
+                    'source' => $source,
+                    'url' => $track['track']['external_urls']['spotify'],
+                    'image' => $track['track']['album']['images'][0]['url'] ?? null,
+                ];
+            }catch (\Exception $e) {
+
+            }
         }, $tracks);
     }
 
@@ -125,6 +147,11 @@ class SpotifyMusicService
      */
     public function savePlaylistInDB(array $playlist, Release $release): void
     {
+        // check if playlist exists
+        $exists = $this->playlistExists($playlist['id']);
+        if ($exists) {
+            return;
+        }
         $release->id = $playlist['id'];
         $release->name = $playlist['name'];
         $release->owner = $playlist['owner'];
@@ -157,23 +184,38 @@ class SpotifyMusicService
     {
         foreach ($playlistSongs as $playlistSong) {
             $release = new SingleRelease();
-            $release->id = $playlistSong['id'];
-            $release->title = $playlistSong['title'];
-            $release->author = $playlistSong['author'];
-            $release->album = $playlistSong['album'];
-            $release->source = $playlistSong['source'];
-            $release->url = $playlistSong['url'];
-            $release->image = $playlistSong['image'];
-            $release->added_at = $playlistSong['added_at'];
-            $release->date_created = now();
-            $release->date_updated = now();
-
-            // catch integrity constraint violation and skip
+            // check if song already exists
+            $exists = null;
             try {
+                $exists = SingleRelease::query()->where('id', $playlistSong['id'])->get();
+            }catch (\Exception $e) {
+//                dump ([
+//                    'Error' => $e->getMessage(),
+//                    'Playlist' => $playlistSong
+//                ]);
+                continue;
+            }
+            if ($exists) {
+                continue;
+            }
+            try {
+                $release->id = $playlistSong['id'];
+                $release->title = $playlistSong['title'];
+                $release->author = $playlistSong['author'];
+                $release->album = $playlistSong['album'];
+                $release->source = $playlistSong['source'];
+                $release->url = $playlistSong['url'];
+                $release->image = $playlistSong['image'];
+                $release->added_at = $playlistSong['added_at'];
+                $release->date_created = now();
+                $release->date_updated = now();
                 $release->save();
             } catch (\Throwable $e) {
-               // dd($e->getMessage());
-                // do nothing
+//                dump ([
+//                    'Error' => $e->getMessage(),
+//                    'Playlist' => $playlistSong
+//                ]);
+                continue;
             }
         }
     }
@@ -213,11 +255,6 @@ class SpotifyMusicService
         return $this->getItemByName($playlists, $playlistName);
     }
 
-    public function getAllMyFollowedPlaylists()
-    {
-
-    }
-
     private function getItemByNameAndOwner(mixed $items, string $playlistName, string $owner)
     {
         $filteredArray = array_filter($items, function ($item) use ($playlistName, $owner) {
@@ -227,6 +264,61 @@ class SpotifyMusicService
         $result = reset($filteredArray);
 
         return $result !== false ? $result : null;
+    }
+
+
+    /**
+     * Process a playlist.
+     *
+     * @param array              $playlist
+     * @param SpotifyMusicService $spotifyService
+     */
+    public function processPlaylist(array $playlist, SpotifyMusicService $spotifyService): void
+    {
+        $releases = new Release();
+        $playlistExists = $spotifyService->playlistExists($playlist['id']);
+
+        if ($playlistExists) {
+            $tracksCount = $playlistExists->tracks;
+            try {
+                $playlistTrackCount = $playlist['tracks']['total']['total'] ?? $playlist['tracks']['total'];
+            }catch (\Throwable $e) {
+                $playlistTrackCount = $playlist['tracks']->total;
+            }
+
+            if ($tracksCount == $playlistTrackCount) {
+                $this->checkAndSavePlaylistSongs($playlist['id'], $spotifyService);
+                return;
+            }
+            $playlistExists->tracks = $playlist['tracks']['total'];
+            $playlistExists->save();
+        } else {
+            $playlistTable = $spotifyService->prepareSinglePlaylistTable($playlist);
+            $spotifyService->savePlaylistInDB($playlistTable, $releases);
+        }
+
+        $playlistSongs = $spotifyService->getPlaylistSongs($playlist['id']);
+        $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
+        $spotifyService->savePlaylistSongsInDB($playlistSongs);
+
+    }
+
+    /**
+     * Check if playlist songs are the same and save them if necessary.
+     *
+     * @param string             $playlistId
+     * @param SpotifyMusicService $spotifyService
+     */
+    protected function checkAndSavePlaylistSongs(string $playlistId, SpotifyMusicService $spotifyService): void
+    {
+        $playlistSongs = $spotifyService->getPlaylistSongs($playlistId);
+        $playlistSongs = $spotifyService->prepareTracksTable($playlistSongs);
+        $playlistSongsExists = $spotifyService->playlistSongsExists($playlistSongs);
+
+        if ($playlistSongsExists) {
+            return;
+        }
+        $spotifyService->savePlaylistSongsInDB($playlistSongs);
     }
 
 }
