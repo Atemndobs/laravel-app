@@ -135,7 +135,7 @@ class SpotifyMusicService
                     'image' => $track['track']['album']['images'][0]['url'] ?? null,
                 ];
             }catch (\Exception $e) {
-
+             //   dump($track);
             }
         }, $tracks);
     }
@@ -152,20 +152,32 @@ class SpotifyMusicService
         if ($exists) {
             return;
         }
-        $release->id = $playlist['id'];
-        $release->name = $playlist['name'];
-        $release->owner = $playlist['owner'];
-        $release->tracks = $playlist['tracks'];
-        $release->url = $playlist['url'];
-        $release->source = 'spotify';
-        $release->type = 'playlist';
-        $release->image = $playlist['image'];
-        $release->date_created = Carbon::now();
-        $release->date_updated = Carbon::now();
-        // catch integrity constraint violation and skip
+
         try {
-            $release->saveOrFail();
+            !is_array($playlist['owner']) ? $playlist['owner'] = collect($playlist['owner'])->toArray()['display_name'] : $playlist['owner'];
+            !is_array($playlist['tracks']) ? $playlist['tracks'] = collect($playlist['tracks'])->toArray()['total'] : $playlist['tracks'];
+            !is_array($playlist['image']) ? $playlist['image'] = collect($playlist['image'])->toArray()['url'] : $playlist['image'];
+            !is_array($playlist['url']) ? $playlist['url'] = collect($playlist['url'])->toArray()['spotify'] : $playlist['url'];
+
+            // remove emojis from name
+            $name = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $playlist['name']);
+            $release->id = $playlist['id'];
+            $release->name = $name;
+            $release->owner = $playlist['owner'];
+            $release->tracks = $playlist['tracks'];
+            $release->url = $playlist['url'];
+            $release->source = 'spotify';
+            $release->type = 'playlist';
+            $release->image = $playlist['image'];
+            $release->date_created = now();
+            $release->date_updated = now();
+
+           $release->saveOrFail();
         } catch (\Throwable $e) {
+            dump([
+                'Error' => $e->getMessage(),
+                'Playlist' => $playlist
+            ]);
             // do nothing
         }
     }
@@ -188,16 +200,18 @@ class SpotifyMusicService
             $exists = null;
             try {
                 $exists = SingleRelease::query()->where('id', $playlistSong['id'])->get();
+                // if song exists, skip
+                if ($exists->count() > 0) {
+                    continue;
+                }
             }catch (\Exception $e) {
-//                dump ([
+//                dump([
 //                    'Error' => $e->getMessage(),
 //                    'Playlist' => $playlistSong
 //                ]);
                 continue;
             }
-            if ($exists) {
-                continue;
-            }
+
             try {
                 $release->id = $playlistSong['id'];
                 $release->title = $playlistSong['title'];
@@ -209,6 +223,7 @@ class SpotifyMusicService
                 $release->added_at = $playlistSong['added_at'];
                 $release->date_created = now();
                 $release->date_updated = now();
+                //dd($release->toArray());
                 $release->save();
             } catch (\Throwable $e) {
 //                dump ([
@@ -224,6 +239,9 @@ class SpotifyMusicService
     {
         $ids = [];
         foreach ($playlistSongs as $playlistSong) {
+            if (empty($playlistSong['id'])) {
+                continue;
+            }
             $ids[] = $playlistSong['id'];
         }
         return SingleRelease::query()->whereIn('id', $ids)->get()->toArray();

@@ -16,37 +16,64 @@ class SpotifyAppController extends Controller
         $accessToken = session('spotify_access_token');
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
+        $spotifyService = new SpotifyMusicService();
+        $playlists = [];
         $options = [
-            'limit' => 10,
+            'limit' => 1,
             'offset' => 0,
         ];
-        $spotifyService = new SpotifyMusicService();
-        $playlists = $api->getMyPlaylists($options)->items;
-        foreach ($playlists as $playlist) {
-            $playlist = collect($playlist)->toArray();
-            $spotifyService->processPlaylist($playlist, $spotifyService);
-        }
-        $playlists = $spotifyService->preparePlaylistsTable($playlists);
+        $getPlaylists = function ($options) use ($api) {
 
-        $options = [
-            'limit' => 30,
-            'offset' => 2,
-        ];
-        $spotifyService = new SpotifyMusicService();
-        $playlists2 = $api->getMyPlaylists($options)->items;
-        foreach ($playlists2 as $playlist) {
-            $playlist = collect($playlist)->toArray();
-            $spotifyService->processPlaylist($playlist, $spotifyService);
-        }
-        $playlists2 = $spotifyService->preparePlaylistsTable($playlists2);
+            return $api->getMyPlaylists($options);
+        };
+        $totalPlaylists = $getPlaylists($options)->total;
+        
+        // get limit and offset from request
+        $limit = $request->get('limit') ?? 2;
+        $offset = $request->get('offset') ?? 0;
 
-        // combine playlists
-        $playlists = array_merge($playlists, $playlists2);
+        $pages = 1;
+
+        if ($totalPlaylists > $limit) {
+            $pages = $totalPlaylists / $limit;
+            $pages = ceil($pages);
+        }
+
+
+        $options['limit'] = $limit;
+        $options['offset'] = $offset;
+
+
+        while ($offset < $pages) {
+            $options['offset'] = $offset;
+            // if its last page, recalculate limit
+            if ($offset === $pages - 1) {
+                $options['limit'] = $totalPlaylists - $offset * $limit;
+            }
+            $currentPlaylists = $getPlaylists($options)->items;
+
+            foreach ($currentPlaylists as $playlist) {
+                // playlist name = ATM Release Radar skip
+                if ($playlist->name === 'ATM Release Radar') {
+                    continue;
+                }
+                $playlist = collect($playlist)->toArray();
+                $spotifyService->processPlaylist($playlist, $spotifyService);
+//                dump([
+//                    'current' => $playlist['name'],
+//                ]);
+            }
+
+            $playlists = array_merge($playlists, $currentPlaylists);
+            $offset += 1;
+        }
+
+        $preparedPlaylists = $spotifyService->preparePlaylistsTable($playlists);
 
         return new JsonResponse([
-            'status ' => 'OK',
-           // 'profile' => $api->me(),
-            'playlist' => $playlists,
+            'status' => 'OK',
+            'total' => $totalPlaylists,
+            'playlist' => $preparedPlaylists,
         ]);
     }
 }
