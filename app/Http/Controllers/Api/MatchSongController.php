@@ -59,6 +59,7 @@ class MatchSongController extends Controller
         }
 
 
+        $range = $this->request->range ?? 1;
         $limit = $this->request->limit ?? 10;
         $search = $this->birdyMatchService->getSongMatch(
             $slug,
@@ -70,7 +71,8 @@ class MatchSongController extends Controller
             $happy,
             $sad,
             $energy,
-            $danceability
+            $danceability,
+            $range
         );
 
         Log::info(json_encode([

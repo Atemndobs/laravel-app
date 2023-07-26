@@ -7,7 +7,6 @@
 namespace App\Models\Base;
 
 use App\Models\DirectusUser;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,25 +15,28 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property int $id
  * @property float|null $bpm
- * @property string|null $key
  * @property float|null $bpm_min
  * @property float|null $bpm_max
+ * @property string|null $key
  * @property string|null $scale
+ * @property string|null $mood
  * @property float|null $happy
  * @property float|null $sad
- * @property string|null $mood
+ * @property string|null $genre
  * @property float|null $energy
  * @property float|null $danceability
  * @property float|null $aggressiveness
  * @property string|null $ip
- * @property string|null $session_token
+ * @property string $session_token
  * @property string $status
  * @property int|null $sort
+ * @property Carbon $date_created
+ * @property Carbon $date_updated
  * @property string|null $user_created
- * @property Carbon|null $date_created
  * @property string|null $user_updated
- * @property Carbon|null $date_updated
- 77* @property DirectusUser|null $directus_user
+ * @property float|null $bmp_range
+ * 
+ * @property DirectusUser|null $directus_user
  *
  * @package App\Models\Base
  */
@@ -44,9 +46,6 @@ class MatchCriterion extends Model
 	public $timestamps = false;
 
 	protected $casts = [
-		'sort' => 'int',
-		'date_created' => 'date',
-		'date_updated' => 'date',
 		'bpm' => 'float',
 		'bpm_min' => 'float',
 		'bpm_max' => 'float',
@@ -55,34 +54,14 @@ class MatchCriterion extends Model
 		'energy' => 'float',
 		'danceability' => 'float',
 		'aggressiveness' => 'float',
-        'ip' => 'string',
-        'session_token' => 'string',
+		'sort' => 'int',
+		'date_created' => 'datetime',
+		'date_updated' => 'datetime',
+		'bmp_range' => 'float'
 	];
 
-//	public function directus_user()
-//	{
-//		return $this->belongsTo(DirectusUser::class, 'user_updated');
-//	}
-
-// add user_created and user updated relater to directus_users table
-    public function user_created()
-    {
-        return $this->belongsTo(User::class, 'user_created');
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user_updated()
-    {
-        return $this->belongsTo(User::class, 'user_updated');
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user() : \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_created');
-    }
+	public function directus_user()
+	{
+		return $this->belongsTo(DirectusUser::class, 'user_updated');
+	}
 }

@@ -45,7 +45,8 @@ class BirdyMatchService
         float $happy,
         float $sad,
         float $energy,
-        float $danceability
+        float $danceability,
+        float $bpmRange
     ): array
     {
         Log::info((
@@ -60,6 +61,7 @@ class BirdyMatchService
                 'sad' => $sad,
                 'energy' => $energy,
                 'danceability' => $danceability,
+                'bpmRange' => $bpmRange,
             ]
         ));
         try {
@@ -75,7 +77,7 @@ class BirdyMatchService
             return ['status' => 'not analyzed'];
         }
 
-        $vibe = $this->getSimmilarSong($song);
+        $vibe = $this->getSimmilarSong($song, $bpmRange);
 
         $songMatchCriteria = new MatchCriteriaService();
 
@@ -88,7 +90,7 @@ class BirdyMatchService
         Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         if ($vibe->getHitsCount() < 3) {
-            $vibe = $this->relaxSearchFilters($vibe, $song);
+            $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
 
         return [
@@ -255,7 +257,7 @@ class BirdyMatchService
      */
     protected function getSimmilarSong(
         Song $song,
-        float $bpmRange = 3.0,
+        float $bpmRange = 1.0,
         float $moodRange = 20.0,
         array $attributes = []
     ): array | SearchResult {
@@ -361,18 +363,19 @@ class BirdyMatchService
         return $this->searchByAttribute($attr, $song->{$attr}, 2);
     }
 
-    public function getNextBestMatch(Song $song)
+    public function getNextBestMatch(Song $song, string $bpmRange)
     {
         $attr = [
             'bpm',
             'key',
             'scale',
         ];
+        $range = $bpmRange + 1;
 
-        $res = $this->getSimmilarSong($song, 4, 100, $attr);
+        $res = $this->getSimmilarSong($song, $range, 100, $attr);
 
         if ($res->getHitsCount() < 3) {
-            $this->relaxSearchFilters($res, $song);
+            $this->relaxSearchFilters($res, $song, $range);
         }
 
         return $res;
@@ -383,14 +386,13 @@ class BirdyMatchService
      * @param  Song  $song
      * @return array|SearchResult
      */
-    public function relaxSearchFilters(SearchResult|array $searchResult, Song $song)
+    public function relaxSearchFilters(SearchResult|array $searchResult, Song $song, float $bpmRange = 2): array | SearchResult
     {
         $attr = [
             'bpm',
             'key',
             'scale',
         ];
-        $bpmRange = 4;
 
         $maxBpm = $this->getMaxBpm();
 
