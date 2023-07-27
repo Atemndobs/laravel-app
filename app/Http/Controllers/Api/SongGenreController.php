@@ -21,10 +21,11 @@ class SongGenreController extends Controller
         // retrieve song genres from genres table and return them as json the format "label" => "genre_name", value => "genre_id"
         $genres = Genre::all();
         $genresArray = [];
+        /** @var Genre $genre */
         foreach ($genres as $genre) {
             $genresArray[] = [
                 'label' => $genre->name,
-                'value' => $genre->id,
+                'value' => $genre->name
             ];
         }
         return response()->json($genresArray);

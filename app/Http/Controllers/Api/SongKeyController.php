@@ -23,10 +23,11 @@ class SongKeyController extends Controller
         // retrive song keys from song_keys table and return them as jsoni the format "label" => "key_name", value => "key_id"
         $songKeys = SongKey::all();
         $songKeysArray = [];
+        /** @var SongKey $songKey */
         foreach ($songKeys as $songKey) {
             $songKeysArray[] = [
                 'label' => $songKey->key_name,
-                'value' => $songKey->id,
+                'value' => $songKey->key_name
             ];
         }
         return response()->json($songKeysArray);
