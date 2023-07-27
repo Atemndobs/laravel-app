@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $user_created
  * @property string|null $user_updated
  * @property float|null $bmp_range
+ * @property string|null $played_songs
  * 
  * @property DirectusUser|null $directus_user
  *

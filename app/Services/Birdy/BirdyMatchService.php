@@ -10,12 +10,14 @@ use MeiliSearch\Endpoints\Indexes;
 use MeiliSearch\Search\SearchResult;
 use Stancl\Tenancy\Events\DatabaseDeleted;
 use function example\int;
+use function FlixTech\SchemaRegistryApi\Requests\singleSubjectVersionRequest;
 use function PHPUnit\Framework\isEmpty;
 
 class BirdyMatchService
 {
     public MeiliSearchService $meiliSearchService;
     private Indexes $songIndex;
+    public array $playedSongs = [];
 
     public function __construct()
     {
@@ -88,15 +90,16 @@ class BirdyMatchService
             $songMatchCriteria->getCriteria()->toArray(),
         ];
         $vibe = $this->getSimmilarSong($song, $bpmRange);
+        //Log::info(json_encode($message, JSON_PRETTY_PRINT));
 
-
-        Log::info(json_encode($message, JSON_PRETTY_PRINT));
-
-        Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+       // Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
+
+        $criteria->played_songs = $this->getPlayedSongs($vibe);
+        $criteria->save();
 
         return [
             'hits_count' => $vibe->getHitsCount(),
@@ -264,7 +267,8 @@ class BirdyMatchService
         Song $song,
         float $bpmRange = 1.0,
         float $moodRange = 20.0,
-        array $attributes = []
+        array $attributes = [],
+        array $playedSongs = []
     ): array | SearchResult {
         $filter = [];
 
@@ -315,9 +319,11 @@ class BirdyMatchService
         $filter[] = "slug != '{$song->slug}'";
         $filter[] = 'analyzed = 1';
         $filter[] = 'energy >= 0';
+        // remove songs with ids from the playedSongs array
+       // $filter[] = "NOT id IN ";
         // genre is an array so we need to use the IN operator
         // $filter[] = "genre IN '$genre'";
-        $filter[] = "key = '$searchKey'";
+       // $filter[] = "key = '$searchKey'";
         $direction = 'asc';
 
         if ((int)$attribute === 0){
@@ -422,6 +428,20 @@ class BirdyMatchService
             }
             $searchResult = $this->getSimmilarSong($song, $bpmRange, 100, $attr);
         }
+        // check of resulting songs were already in played songs
+        $songMatchCriteria = new MatchCriteriaService();
+        $criteria = $songMatchCriteria->getCriteria();
+        $playedSongs = explode(',', $criteria->played_songs);
+
+        if (! empty($playedSongs)) {
+            $newVibe = $this->removePlayedSong($searchResult->getHits(), $playedSongs);
+        }
+
+        if (empty($newVibe)) {
+            // relax search even more
+            $bpmRange = $bpmRange + 1;
+            $searchResult = $this->getSimmilarSong($song, $bpmRange, 100, $attr, $playedSongs);
+        }
 
         /** @var SearchResult|array $searchResult2 */
         $searchResult2 = [];
@@ -458,5 +478,24 @@ class BirdyMatchService
         $spotifyService = new SpotifyService($song);
 
         return $spotifyService->searchSong();
+    }
+
+    private function getPlayedSongs(array|SearchResult $vibe)
+    {
+        foreach ($vibe as $song) {
+            $this->playedSongs[] = $song['id'];
+        }
+
+        return implode(',', $this->playedSongs);
+    }
+
+    private function removePlayedSong(mixed $vibe, array $playedSongs)
+    {
+        foreach ($vibe as $key => $song) {
+            if (in_array($song['id'], $playedSongs)) {
+                unset($vibe[$key]);
+            }
+        }
+        return $vibe;
     }
 }
