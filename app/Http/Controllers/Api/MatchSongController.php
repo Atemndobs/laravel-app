@@ -38,6 +38,9 @@ class MatchSongController extends Controller
     }
 
 
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
     public function getSongMatch()
     {
         $slug = $this->request->input('slug');
@@ -57,7 +60,6 @@ class MatchSongController extends Controller
             $bpmMin = $bpmRange[0];
             $bpmMax = $bpmRange[count($bpmRange) - 1];
         }
-
 
         $range = $this->request->range ?? 1;
         $limit = $this->request->limit ?? 10;

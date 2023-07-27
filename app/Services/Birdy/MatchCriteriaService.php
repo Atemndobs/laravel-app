@@ -103,9 +103,9 @@ use Illuminate\Support\Facades\Log;
     }
 
     /**
-     * @return array
+     * @return MatchCriterion
      */
-    public function getCriteria(): array
+    public function getCriteria() : MatchCriterion
     {
         $ip = $this->ip;
         $sessionToken = $this->sessionToken;
@@ -122,7 +122,7 @@ use Illuminate\Support\Facades\Log;
 
         Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
-        return $matchCriteria->toArray();
+        return $matchCriteria;
     }
 
     /**

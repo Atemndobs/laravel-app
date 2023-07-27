@@ -29,7 +29,7 @@ class MatchCriteriaController extends Controller
 
     public function getCriteria(): array
     {
-        return $this->matchCriteriaService->getCriteria();
+        return $this->matchCriteriaService->getCriteria()->toArray();
     }
 
     public function setCriteria(): JsonResponse
@@ -61,7 +61,7 @@ class MatchCriteriaController extends Controller
         $this->matchCriteriaService->setCriteria($criteria);
         return response()->json([
             'message' => 'Criteria set successfully',
-            'criteria' => $this->matchCriteriaService->getCriteria(),
+            'criteria' => $this->matchCriteriaService->getCriteria()->toArray()
         ], 200);
     }
 }

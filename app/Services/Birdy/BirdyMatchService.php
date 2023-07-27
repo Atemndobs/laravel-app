@@ -2,6 +2,7 @@
 
 namespace App\Services\Birdy;
 
+use App\Models\MatchCriterion;
 use App\Models\Song;
 use Illuminate\Support\Facades\Log;
 use MeiliSearch\Client;
@@ -49,21 +50,21 @@ class BirdyMatchService
         float $bpmRange
     ): array
     {
-        Log::info((
-            [
-                'slug' => $slug,
-                'key' => $key,
-                'mood' => $mood,
-                'bpm' => $bpm,
-                'bpmMin' => $bpmMin,
-                'bpmMax' => $bpmMax,
-                'happy' => $happy,
-                'sad' => $sad,
-                'energy' => $energy,
-                'danceability' => $danceability,
-                'bpmRange' => $bpmRange,
-            ]
-        ));
+//        Log::info((
+//            [
+//                'slug' => $slug,
+//                'key' => $key,
+//                'mood' => $mood,
+//                'bpm' => $bpm,
+//                'bpmMin' => $bpmMin,
+//                'bpmMax' => $bpmMax,
+//                'happy' => $happy,
+//                'sad' => $sad,
+//                'energy' => $energy,
+//                'danceability' => $danceability,
+//                'bpmRange' => $bpmRange,
+//            ]
+//        ));
         try {
 
             $song = $this->getExistingSong($slug);
@@ -76,15 +77,19 @@ class BirdyMatchService
         if (! $this->checkAnalyzedSong($song)) {
             return ['status' => 'not analyzed'];
         }
-
-        $vibe = $this->getSimmilarSong($song, $bpmRange);
-
         $songMatchCriteria = new MatchCriteriaService();
+        $criteria = $songMatchCriteria->getCriteria();
+        $bpmRange = $criteria->bmp_range;
 
         $message = [
-        'Song Criteria',
-            $songMatchCriteria->getCriteria(),
+            'Song Criteria',
+            'BPM Range' => $bpmRange,
+            'Genre' => $criteria->genre,
+            $songMatchCriteria->getCriteria()->toArray(),
         ];
+        $vibe = $this->getSimmilarSong($song, $bpmRange);
+
+
         Log::info(json_encode($message, JSON_PRETTY_PRINT));
 
         Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
