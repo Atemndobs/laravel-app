@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('key_name', 10);
             $table->integer('key_number');
             $table->string('scale', 6);
-            $table->timestamps();
         });
 
         DB::table('song_keys')->insert([
