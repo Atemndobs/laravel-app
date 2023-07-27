@@ -84,7 +84,7 @@ class BirdyMatchService
         $message = [
             'Song Criteria',
             'BPM Range' => $bpmRange,
-            'Genre' => $criteria->genre,
+            'Search Genre' => $criteria->genre,
             $songMatchCriteria->getCriteria()->toArray(),
         ];
         $vibe = $this->getSimmilarSong($song, $bpmRange);
@@ -272,13 +272,6 @@ class BirdyMatchService
             $attributes = $this->songIndex->getFilterableAttributes();
         }
 
-        $songMatchCriteria = new MatchCriteriaService();
-        $criteria = $songMatchCriteria->getCriteria();
-        $bpmRange = $criteria->bmp_range;
-        $searchGenre = $criteria->genre;
-        $searchKey = $criteria->key;
-
-
         foreach ($attributes as $attribute) {
             $value = $song->{$attribute};
 
@@ -292,7 +285,8 @@ class BirdyMatchService
             if ($attribute === 'bpm') {
                 $min = $value - $bpmRange;
                 $max = $value + $bpmRange;
-                $filter[] = "$attribute >= $min AND $attribute <= $max";
+                $filter[] = "$attribute = $value";
+               // $filter[] = "$attribute >= $min AND $attribute <= $max";
             } elseif (is_float($value)) {
                 $range = $moodRange / 100;
                 $moodMin = $value - $range;
