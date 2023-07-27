@@ -85,6 +85,10 @@ Route::get('/spotify/callback', [\App\Http\Controllers\Api\SpotifyAuthController
 Route::get('songkeys', [\App\Http\Controllers\Api\SongKeyController::class, 'index']);
 Route::get('song/keys', [\App\Http\Controllers\Api\SongKeyController::class, 'getSongKeys']);
 
+// Routes for songGenreController
+Route::get('songgenres', [\App\Http\Controllers\Api\SongGenreController::class, 'index']);
+Route::get('song/genres', [\App\Http\Controllers\Api\SongGenreController::class, 'getSongGenres']);
+
 // webhooks
 Route::webhooks('/webhooks/songs');
 
