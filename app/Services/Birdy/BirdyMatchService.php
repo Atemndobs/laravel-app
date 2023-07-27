@@ -272,6 +272,11 @@ class BirdyMatchService
             $attributes = $this->songIndex->getFilterableAttributes();
         }
 
+        $songMatchCriteria = new MatchCriteriaService();
+        $criteria = $songMatchCriteria->getCriteria();
+        $bpmRange = $criteria->bmp_range;
+        $searchGenre = $criteria->genre;
+        $searchKey = $criteria->key;
 
 
         foreach ($attributes as $attribute) {
@@ -297,14 +302,28 @@ class BirdyMatchService
                 }
                 $filter[] = "$attribute >= $moodMin AND $attribute <= $moodMax";
             } else {
-                $val = strval($value);
-           //     $filter[] = "$attribute = '$val'";
+                //dump($value, gettype($value));
+                if (is_array($value)) {
+                    $val = implode(',', $value);
+                    $filter[] = "$attribute = '$val'";
+                }
+                if (is_string($value)) {
+                    $filter[] = "$attribute = '$value'";
+                }
+                if (is_int($value)) {
+                    $filter[] = "$attribute = $value";
+                }
             }
         }
+
+        $searchKey = $song->key;
         // remove song with same slug as the song we are analyzing
         $filter[] = "slug != '{$song->slug}'";
         $filter[] = 'analyzed = 1';
         $filter[] = 'energy >= 0';
+        // genre is an array so we need to use the IN operator
+        // $filter[] = "genre IN '$genre'";
+        $filter[] = "key = '$searchKey'";
         $direction = 'asc';
 
         if ((int)$attribute === 0){

@@ -96,6 +96,7 @@ class MeiliSearchService
                 "slug",
                 "image",
                 "related_songs",
+                "genre",
             ]);
             $meiliSearch->index("songs")->updateFilterableAttributes([
                 "title",
@@ -110,7 +111,8 @@ class MeiliSearchService
                 "danceability",
                 "relaxed",
                 "slug",
-                "status"
+                "status",
+                "genre"
             ]);
             $meiliSearch->index("songs")->updateSortableAttributes([
                 "title",
@@ -126,6 +128,7 @@ class MeiliSearchService
                 "relaxed",
                 "slug",
                 "status",
+                "genre"
             ]);
             $meiliSearch->index("songs")->updateDisplayedAttributes([
                 'id',
