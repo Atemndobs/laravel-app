@@ -8,16 +8,23 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('webhook_calls', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        if (!Schema::hasTable('webhook_calls')) {
+            Schema::create('webhook_calls', function (Blueprint $table) {
+                $table->bigIncrements('id');
 
-            $table->string('name');
-            $table->string('url');
-            $table->json('headers')->nullable();
-            $table->json('payload')->nullable();
-            $table->text('exception')->nullable();
+                $table->string('name');
+                $table->string('url');
+                $table->json('headers')->nullable();
+                $table->json('payload')->nullable();
+                $table->text('exception')->nullable();
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('webhook_calls');
     }
 };

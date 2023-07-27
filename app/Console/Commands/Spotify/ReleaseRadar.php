@@ -6,6 +6,7 @@ use Aerni\Spotify\Facades\SpotifyFacade as Spotify;
 use App\Models\SpotifyAuth;
 use App\Services\Birdy\SpotifyService;
 use App\Models\SingleRelease;
+use App\Services\Scraper\SpotifyMusicService;
 use App\Services\Spotify\SpotifyAuthService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -35,45 +36,6 @@ class ReleaseRadar extends Command
      */
     public function handle()
     {
-        // clear session
-//        session()->flush();
-//        SpotifyAuth::truncate();
-
-        $spotify_auth = SpotifyAuth::all()->first();
-        if ($spotify_auth) {
-            $sessionToken = $spotify_auth->access_token;
-            $expires = $spotify_auth->expires;
-            // convert the expires timestamp to minutes
-            $expires = date('Y-m-d H:i:s', $expires);
-            $expires = Carbon::parse($expires)->diffInMinutes(Carbon::now());
-            // if the access token is expired, truncate the spotify_auth table and get a new access token
-            if ($expires < 0) {
-                SpotifyAuth::truncate();
-                $service = new SpotifyAuthService();
-                $authUrl = $service->auth();
-            }
-        }else{
-            $spotifyAuthService = new SpotifyAuthService();
-            $authUrl = $spotifyAuthService->auth();
-
-            $sessionToken = null;
-            $expires = null;
-            dd([
-                'authUrl' => $authUrl,
-                'sessionToken' => $sessionToken,
-                'expires' => $expires,
-            ]);
-        }
-
-        dump([
-            'authUrl' => session('spotify_auth'),
-            'sessionToken' => $sessionToken,
-            'expires' => $expires,
-        ]);
-
-        dd($this->getMyLibrary($sessionToken));
-
-
         $playlist = $this->option('playlist');
         $all = $this->option('all');
         $owner = $this->option('owner') ?? "Spotify";
@@ -82,6 +44,12 @@ class ReleaseRadar extends Command
         if (str_contains($time, 'd')) {
             $time = intval($time) * 24;
         }
+
+        $spotifyMusicService = new SpotifyMusicService();
+        $songIds = $spotifyMusicService->getRecentlyAddedSongs($time);
+        $spotifyMusicService->addSongToReleaseRadar($songIds);
+
+        dd($sonIds);
 
         // Run the SpotifyReleasesCommand with the --all option if no playlist is given
         if (!$playlist) {
@@ -107,7 +75,6 @@ class ReleaseRadar extends Command
         // Add them to the ATM Release Radar playlist in Spotify
         $this->info('Adding releases to ATM Release Radar playlist...');
 
-        dd($this->getMyLibrary($sessionToken));
 
     }
 

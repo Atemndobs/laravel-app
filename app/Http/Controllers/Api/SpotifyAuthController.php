@@ -23,6 +23,8 @@ class SpotifyAuthController extends Controller
             'scope' => [
                 'playlist-read-private',
                 'user-read-private',
+                'playlist-modify-public',
+                'playlist-modify-private',
             ],
             'state' => $state,
         ];

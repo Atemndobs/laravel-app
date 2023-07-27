@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Release;
+use App\Models\SpotifyAuth;
 use App\Services\Scraper\SpotifyMusicService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,16 @@ class SpotifyAppController extends Controller
             'offset' => 0,
         ];
         $getPlaylists = function ($options) use ($api) {
+            try {
+                $api->getMyPlaylists($options);
+            } catch (\Exception $e) {
+                // truncate Spotify Auth table
+                SpotifyAuth::truncate();
+                $accessToken = session('spotify_access_token');
+                $api = new SpotifyWebAPI();
+                $api->setAccessToken($accessToken);
 
+            }
             return $api->getMyPlaylists($options);
         };
         $totalPlaylists = $getPlaylists($options)->total;
@@ -54,9 +64,9 @@ class SpotifyAppController extends Controller
 
             foreach ($currentPlaylists as $playlist) {
                 // playlist name = ATM Release Radar skip
-                if ($playlist->name === 'ATM Release Radar') {
-                    continue;
-                }
+//                if ($playlist->name === 'ATM Release Radar') {
+//                    continue;
+//                }
                 $playlist = collect($playlist)->toArray();
                 $spotifyService->processPlaylist($playlist, $spotifyService);
 //                dump([
@@ -64,11 +74,13 @@ class SpotifyAppController extends Controller
 //                ]);
             }
 
+            $playlists = $currentPlaylists;
             $playlists = array_merge($playlists, $currentPlaylists);
             $offset += 1;
         }
 
         $preparedPlaylists = $spotifyService->preparePlaylistsTable($playlists);
+        // If the playlist is new, add it to the database
 
         return new JsonResponse([
             'status' => 'OK',

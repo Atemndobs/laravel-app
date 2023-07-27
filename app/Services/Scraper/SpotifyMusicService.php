@@ -5,7 +5,10 @@ namespace App\Services\Scraper;
 use Aerni\Spotify\Facades\SpotifyFacade as Spotify;
 use App\Models\Release;
 use App\Models\SingleRelease;
+use App\Models\SpotifyAuth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
+use SpotifyWebAPI\SpotifyWebAPI;
 
 class SpotifyMusicService
 {
@@ -172,7 +175,7 @@ class SpotifyMusicService
             $release->date_created = now();
             $release->date_updated = now();
 
-           $release->saveOrFail();
+           $release->save();
         } catch (\Throwable $e) {
             dump([
                 'Error' => $e->getMessage(),
@@ -308,7 +311,9 @@ class SpotifyMusicService
                 $this->checkAndSavePlaylistSongs($playlist['id'], $spotifyService);
                 return;
             }
-            $playlistExists->tracks = $playlist['tracks']['total'];
+
+            $tracksCount = $playlist['tracks']->total ?? $playlist['tracks']['total'];
+            $playlistExists->tracks = $tracksCount;
             $playlistExists->save();
         } else {
             $playlistTable = $spotifyService->prepareSinglePlaylistTable($playlist);
@@ -337,6 +342,42 @@ class SpotifyMusicService
             return;
         }
         $spotifyService->savePlaylistSongsInDB($playlistSongs);
+        // Add the song to the Release Radar Playlist
     }
 
+    /**
+     * Add a song to the Release Radar playlist.
+     *
+     * @param int $addedSince
+     * @param Date|null $from
+     * @param Date|null $until
+     * @return array
+     */
+    public function getRecentlyAddedSongs(int $addedSince, Date $from = null, Date $until = null): array
+    {
+        $dateSince = Carbon::now()->subHours($addedSince);
+        $formattedDateTime = $dateSince->format('Y-m-d\TH:i:s.u\Z');
+        if ($from && $until) {
+            $playlistSongs = SingleRelease::query()->whereBetween('added_at', [$from, $until])->get();
+        } else {
+            $playlistSongs = SingleRelease::query()->where('added_at', '>=', $formattedDateTime)->get();
+        }
+        // collect all song ids into an array and rerurn it
+        $songIds = [];
+        foreach ($playlistSongs as $playlistSong) {
+            $songIds[] = $playlistSong->id;
+        }
+        return $songIds;
+    }
+
+    public function addSongToReleaseRadar(array $songIds)
+    {
+        $releaseRadarPlaylistId = Release::query()->where('name', 'ATM Release Radar')->first()->id;
+        $accessToken = SpotifyAuth::query()->first()->access_token;
+        $api = new SpotifyWebAPI();
+        $api->setAccessToken($accessToken);
+        $api->addPlaylistTracks($releaseRadarPlaylistId, $songIds);
+        dd($releaseRadarPlaylistId);
+
+    }
 }
