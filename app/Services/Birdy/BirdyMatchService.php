@@ -79,7 +79,7 @@ class BirdyMatchService
         }
         $songMatchCriteria = new MatchCriteriaService();
         $criteria = $songMatchCriteria->getCriteria();
-        $bpmRange = $criteria->bmp_range;
+        $bpmRange = $criteria->bmp_range ?? $bpmRange;
 
         $message = [
             'Song Criteria',
