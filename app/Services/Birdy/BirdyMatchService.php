@@ -2,15 +2,10 @@
 
 namespace App\Services\Birdy;
 
-use App\Models\MatchCriterion;
 use App\Models\Song;
 use Illuminate\Support\Facades\Log;
-use MeiliSearch\Client;
 use MeiliSearch\Endpoints\Indexes;
 use MeiliSearch\Search\SearchResult;
-use Stancl\Tenancy\Events\DatabaseDeleted;
-use function example\int;
-use function FlixTech\SchemaRegistryApi\Requests\singleSubjectVersionRequest;
 use function PHPUnit\Framework\isEmpty;
 
 class BirdyMatchService
@@ -27,15 +22,17 @@ class BirdyMatchService
 
     /**
      * @param string $slug
+     * @param string $key
+     * @param string $mood
      * @param float $bpm
      * @param float $bpmMin
      * @param float $bpmMax
      * @param float $happy
      * @param float $sad
-     * @param string $key
      * @param float $energy
-     * @param string $mood
      * @param float $danceability
+     * @param float $bpmRange
+     * @param int $id
      * @return array
      */
     public function getSongMatch(
@@ -49,7 +46,8 @@ class BirdyMatchService
         float $sad,
         float $energy,
         float $danceability,
-        float $bpmRange
+        float $bpmRange,
+        int $id
     ): array
     {
 //        Log::info((
@@ -68,7 +66,6 @@ class BirdyMatchService
 //            ]
 //        ));
         try {
-
             $song = $this->getExistingSong($slug);
         }catch (\Exception $e){
             return [
@@ -82,6 +79,8 @@ class BirdyMatchService
         $songMatchCriteria = new MatchCriteriaService();
         $criteria = $songMatchCriteria->getCriteria();
         $bpmRange = $criteria->bmp_range ?? $bpmRange;
+        // add Id to played songs
+        $criteria->addPlayedSongs($id);
 
         $message = [
             'Song Criteria',
@@ -89,11 +88,10 @@ class BirdyMatchService
             'Search Genre' => $criteria->genre,
             $songMatchCriteria->getCriteria()->toArray(),
         ];
-        $vibe = $this->getSimmilarSong($song, $bpmRange);
         //Log::info(json_encode($message, JSON_PRETTY_PRINT));
-
        // Log::info(json_encode($vibe->getHits(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
+        $vibe = $this->getSimmilarSong($song, $bpmRange);
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
@@ -330,7 +328,8 @@ class BirdyMatchService
             $attribute = 'bpm';
         }
 
-        Log::info((json_encode($filter, JSON_PRETTY_PRINT)));
+        Log::info('filter__________________________________');
+        Log::info((json_encode($filter, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)));
         return $this->songIndex->search('', [
             'filter' => $filter,
             'sort' => ["$attribute:$direction"],
@@ -469,18 +468,7 @@ class BirdyMatchService
         return Song::max('bpm');
     }
 
-    /**
-     * @param  Song  $song
-     * @return mixed
-     */
-    public function getGenre(Song $song)
-    {
-        $spotifyService = new SpotifyService($song);
-
-        return $spotifyService->searchSong();
-    }
-
-    private function getPlayedSongs(array|SearchResult $vibe)
+    private function getPlayedSongs(array|SearchResult $vibe): string
     {
         foreach ($vibe as $song) {
             $this->playedSongs[] = $song['id'];

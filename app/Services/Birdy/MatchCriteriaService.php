@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Log;
     protected string $genre = "Afrobeat";
     protected float $energy = 80;
     protected float $danceability = 80;
-    protected float $aggressiveness = 50;
+    protected float $aggressiveness = 80;
     protected string $ip = '';
     protected string $sessionToken = '';
     protected ?\Illuminate\Contracts\Auth\Authenticatable $user;
@@ -102,6 +102,7 @@ use Illuminate\Support\Facades\Log;
 
     }
 
+
     /**
      * @return MatchCriterion
      */
@@ -109,6 +110,7 @@ use Illuminate\Support\Facades\Log;
     {
         $ip = $this->ip;
         $sessionToken = $this->sessionToken;
+        /** @var MatchCriterion $matchCriteria */
         $matchCriteria = MatchCriterion::query()->where('ip', $ip)
             ->orWhere('session_token', $sessionToken)
             ->first();
@@ -120,6 +122,7 @@ use Illuminate\Support\Facades\Log;
                 ->first();
         }
 
+        Log::warning('Match Criteria______________________________________');
         Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         return $matchCriteria;
@@ -146,12 +149,13 @@ use Illuminate\Support\Facades\Log;
             'ip' => $this->ip,
             'sessionToken' => $this->sessionToken,
             'status' => 'active',
-            'sort' => 0
+            'sort' => 0,
+            'bpm_range' => 1
         ];
         $this->setCriteria($criteria);
     }
 
-    public function removePlayedSong(mixed $id)
+    public function removePlayedSong(mixed $id): ?string
     {
         $matchCriteria = $this->getCriteria();
         $playedSongs = $matchCriteria->played_songs;
@@ -167,7 +171,7 @@ use Illuminate\Support\Facades\Log;
         return $matchCriteria->played_songs;
     }
 
-    public function removeAllPlayedSongs()
+    public function removeAllPlayedSongs(): ?string
     {
         $matchCriteria = $this->getCriteria();
         $matchCriteria->played_songs = null;

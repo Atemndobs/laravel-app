@@ -54,6 +54,7 @@ class MatchSongController extends Controller
         $energy = $this->request->input('energy');
         $mood = $this->request->input('mood');
         $danceability = $this->request->input('danceability');
+        $id = $this->request->input('id');
         // get pbm range if bpm has more than 1 value
         if (str_contains($bpmRange, '-')) {
             $bpmRange = explode('-', $bpmRange);
@@ -74,7 +75,8 @@ class MatchSongController extends Controller
             $sad,
             $energy,
             $danceability,
-            $range
+            $range,
+            $id
         );
 
         Log::info(json_encode([

@@ -27,4 +27,16 @@ class MatchCriterion extends BaseMatchCriterion
 		'user_updated',
 		'date_updated',
 	];
+
+    public function addPlayedSongs(int $id): void
+    {
+        $this->played_songs = $this->played_songs . ',' . $id;
+        $this->update();
+    }
+
+    public function getPlayedSongs(): array
+    {
+        return explode(',', $this->played_songs);
+    }
+
 }

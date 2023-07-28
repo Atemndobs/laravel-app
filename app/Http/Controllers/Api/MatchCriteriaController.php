@@ -56,7 +56,7 @@ class MatchCriteriaController extends Controller
             $criteria['genre'] = 'Afrobeat';
         }
 
-        Log::info($criteria);
+        Log::info(json_encode($criteria, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $this->matchCriteriaService->setCriteria($criteria);
         return response()->json([

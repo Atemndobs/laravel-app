@@ -377,7 +377,15 @@ class SpotifyMusicService
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
         $api->addPlaylistTracks($releaseRadarPlaylistId, $songIds);
-        dd($releaseRadarPlaylistId);
-
+        // get numbe of songs added
+        $playlist = $api->getPlaylist($releaseRadarPlaylistId);
+        $tracksCount = $playlist->tracks->total;
+        $songsAdded = count($songIds);
+        $message  = [
+            'message' => 'Songs added to Release Radar',
+            'Songs in Release Radar Playlist' => $tracksCount,
+            'Songs Added' => $songsAdded,
+        ];
+        return json_encode($message, JSON_PRETTY_PRINT);
     }
 }
