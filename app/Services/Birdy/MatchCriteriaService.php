@@ -158,9 +158,21 @@ use Illuminate\Support\Facades\Log;
         if (is_null($playedSongs)) {
             $playedSongs = [];
         }
-        array_push($playedSongs, $id);
+
+        $playedSongs = explode(',', $playedSongs);
+        $playedSongs = array_diff($playedSongs, [$id]);
+        $playedSongs = implode(',', $playedSongs);
         $matchCriteria->played_songs = $playedSongs;
         $matchCriteria->update();
+        return $matchCriteria->played_songs;
+    }
+
+    public function removeAllPlayedSongs()
+    {
+        $matchCriteria = $this->getCriteria();
+        $matchCriteria->played_songs = null;
+        $matchCriteria->update();
+        return $matchCriteria->played_songs;
     }
 
 }
