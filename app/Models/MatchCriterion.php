@@ -33,6 +33,8 @@ class MatchCriterion extends BaseMatchCriterion
         $this->played_songs = $this->played_songs . ',' . $id;
         // remove duplicates
         $this->played_songs = implode(',', array_unique(explode(',', $this->played_songs)));
+        // remove trailing comma at the beginning
+        $this->played_songs = ltrim($this->played_songs, ',');
         $this->update();
     }
 
