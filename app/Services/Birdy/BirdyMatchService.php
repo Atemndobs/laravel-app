@@ -32,7 +32,7 @@ class BirdyMatchService
      * @param float $energy
      * @param float $danceability
      * @param float $bpmRange
-     * @param int $id
+     * @param int|null $id
      * @return array
      */
     public function getSongMatch(
@@ -47,7 +47,7 @@ class BirdyMatchService
         float $energy,
         float $danceability,
         float $bpmRange,
-        int $id
+        int | null $id
     ): array
     {
 //        Log::info((
@@ -80,7 +80,8 @@ class BirdyMatchService
         $criteria = $songMatchCriteria->getCriteria();
         $bpmRange = $criteria->bmp_range ?? $bpmRange;
         // add Id to played songs
-        $criteria->addPlayedSongs($id);
+        if ($id)
+            $criteria->addPlayedSongs($id);
 
         $message = [
             'Song Criteria',
@@ -95,9 +96,6 @@ class BirdyMatchService
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
-
-        $criteria->played_songs = $this->getPlayedSongs($vibe);
-        $criteria->save();
 
         return [
             'hits_count' => $vibe->getHitsCount(),

@@ -31,6 +31,8 @@ class MatchCriterion extends BaseMatchCriterion
     public function addPlayedSongs(int $id): void
     {
         $this->played_songs = $this->played_songs . ',' . $id;
+        // remove duplicates
+        $this->played_songs = implode(',', array_unique(explode(',', $this->played_songs)));
         $this->update();
     }
 
