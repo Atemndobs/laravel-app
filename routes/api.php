@@ -52,6 +52,8 @@ Route::post('songs/upload', [\App\Http\Controllers\Api\SongUploadController::cla
 Route::post('songs/match', [\App\Http\Controllers\Api\MatchSongController::class, 'getSongMatch']);
 Route::get('songs/match/criteria/get', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'getCriteria']);
 Route::post('songs/match/criteria/set', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'setCriteria']);
+// cleat match criteria
+Route::post('songs/match/criteria/clear', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'clearCriteria']);
 Route::get('search/songs', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'getSongs']);
 Route::post('ping', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'ping']);
 //Route::get('songs/match/{title}/{$attribute}', [\App\Http\Controllers\Api\MatchSongController::class, 'matchByAttribute']);

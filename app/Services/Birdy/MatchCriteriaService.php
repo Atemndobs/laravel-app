@@ -151,4 +151,16 @@ use Illuminate\Support\Facades\Log;
         $this->setCriteria($criteria);
     }
 
+    public function removePlayedSong(mixed $id)
+    {
+        $matchCriteria = $this->getCriteria();
+        $playedSongs = $matchCriteria->played_songs;
+        if (is_null($playedSongs)) {
+            $playedSongs = [];
+        }
+        array_push($playedSongs, $id);
+        $matchCriteria->played_songs = $playedSongs;
+        $matchCriteria->update();
+    }
+
 }

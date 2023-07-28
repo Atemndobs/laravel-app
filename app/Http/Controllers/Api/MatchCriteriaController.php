@@ -64,4 +64,12 @@ class MatchCriteriaController extends Controller
             'criteria' => $this->matchCriteriaService->getCriteria()->toArray()
         ], 200);
     }
+
+    public function clearCriteria()
+    {
+        // get id from request
+        $id = $this->request->input('id');
+        // remove this id from the played songs comma separated string int the match_criteria table using the matchCriteriaService
+        $this->matchCriteriaService->removePlayedSong($id);
+    }
 }
