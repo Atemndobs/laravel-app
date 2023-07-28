@@ -22,31 +22,31 @@ class BirdyMatchService
 
     /**
      * @param string $slug
-     * @param string $key
-     * @param string $mood
-     * @param float $bpm
-     * @param float $bpmMin
-     * @param float $bpmMax
-     * @param float $happy
-     * @param float $sad
-     * @param float $energy
-     * @param float $danceability
-     * @param float $bpmRange
+     * @param string|null $key
+     * @param string|null $mood
+     * @param float|null $bpm
+     * @param float|null $bpmMin
+     * @param float|null $bpmMax
+     * @param float|null $happy
+     * @param float|null $sad
+     * @param float|null $energy
+     * @param float|null $danceability
+     * @param float|null $bpmRange
      * @param int|null $id
      * @return array
      */
     public function getSongMatch(
         string $slug,
-        string $key,
-        string $mood,
-        float $bpm,
-        float $bpmMin,
-        float $bpmMax,
-        float $happy,
-        float $sad,
-        float $energy,
-        float $danceability,
-        float $bpmRange,
+        string | null $key,
+        string | null $mood,
+        float | null $bpm,
+        float | null $bpmMin,
+        float | null $bpmMax,
+        float | null $happy,
+        float | null $sad,
+        float | null $energy,
+        float | null $danceability,
+        float | null $bpmRange,
         int | null $id
     ): array
     {
