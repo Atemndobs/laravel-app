@@ -50,12 +50,14 @@ class MatchCriteriaController extends Controller
         $criteria['ip'] = $ip;
         $sessionToken = $this->request->session()->token();
         $criteria['sessionToken'] = $sessionToken;
+        $criteria['range'] = $this->request->range ?? 1;
 
         // if genre is null, set default genre as Afrobeat
         if (is_null($criteria['genre'])) {
             $criteria['genre'] = 'Afrobeat';
         }
 
+        Log::warning('Setting Criteria ###########################################');
         Log::info(json_encode($criteria, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $this->matchCriteriaService->setCriteria($criteria);
@@ -68,8 +70,6 @@ class MatchCriteriaController extends Controller
     public function clearCriteria()
     {
         $id = $this->request->input('id');
-        // remove this id from the played songs comma separated string int the match_criteria table using the matchCriteriaService
-        // if id is null, remove all played songs
         if (is_null($id)) {
             $this->matchCriteriaService->removeAllPlayedSongs();
         }else {

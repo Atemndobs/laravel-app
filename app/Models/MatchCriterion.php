@@ -6,7 +6,7 @@ use App\Models\Base\MatchCriterion as BaseMatchCriterion;
 
 class MatchCriterion extends BaseMatchCriterion
 {
-	protected $fillable = [
+    protected $fillable = [
 		'bpm',
 		'key',
 		'bpm_min',
@@ -22,6 +22,8 @@ class MatchCriterion extends BaseMatchCriterion
         'session_token',
         'status',
 		'sort',
+        'played_songs',
+        'bpm_range',
 		'user_created',
 		'date_created',
 		'user_updated',

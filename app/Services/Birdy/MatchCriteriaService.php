@@ -37,22 +37,19 @@ use Illuminate\Support\Facades\Log;
         }
     }
 
-    public function setCriteria(array $criteria): void
+    public function setCriteria(array $criteria) : MatchCriterion
     {
-
         $this->bpm = $criteria['bpm'];
         $this->bpmMin = $criteria['bpmMin'];
         $this->bpmMax = $criteria['bpmMax'];
         $this->happy = $criteria['happy'];
         $this->sad = $criteria['sad'];
         $this->key = $criteria['key'];
-        // split $key into $key and $scale
         if (str_contains($this->key, ' ')) {
             $keyArray = explode(' ', $this->key);
             $this->key = $keyArray[0];
             $this->scale = $keyArray[1];
         }
-
         $this->genre = $criteria['genre'];
         $this->energy = $criteria['energy'];
         $this->mood = $criteria['mood'];
@@ -60,15 +57,14 @@ use Illuminate\Support\Facades\Log;
         $this->aggressiveness = $criteria['aggressiveness'];
         $this->ip = $criteria['ip'];
         $this->sessionToken = $criteria['sessionToken'];
+        $this->bpm_range = $criteria['range'];
 
         // check if session token exists
         if (empty($this->sessionToken)) {
             $this->sessionToken = session()->getId();
         }
 
-
         $matchCriteriaExist = MatchCriterion::query()->where('session_token', $this->sessionToken)
-            ->orWhere('ip', $this->ip)
             ->get()->first();
         if (is_null($matchCriteriaExist)) {
             $matchCriteria = new MatchCriterion();
@@ -89,6 +85,7 @@ use Illuminate\Support\Facades\Log;
         $matchCriteria->aggressiveness = $this->aggressiveness;
         $matchCriteria->ip = $this->ip;
         $matchCriteria->session_token = $this->sessionToken;
+        $matchCriteria->bpm_range = $this->bpm_range;
 
         if ($matchCriteriaExist) {
             $matchCriteria->date_updated = now();
@@ -100,6 +97,7 @@ use Illuminate\Support\Facades\Log;
             $matchCriteria->save();
         }
 
+        return $matchCriteria;
     }
 
 
@@ -108,30 +106,25 @@ use Illuminate\Support\Facades\Log;
      */
     public function getCriteria() : MatchCriterion
     {
-        $ip = $this->ip;
         $sessionToken = $this->sessionToken;
         /** @var MatchCriterion $matchCriteria */
-        $matchCriteria = MatchCriterion::query()->where('ip', $ip)
-            ->orWhere('session_token', $sessionToken)
+        $matchCriteria = MatchCriterion::query()->where('session_token', $sessionToken)
             ->first();
 
         if (!$matchCriteria) {
-            $this->setDefaultCriteria();
-            $matchCriteria = MatchCriterion::query()->where('ip', $ip)
-                ->orWhere('session_token', $sessionToken)
-                ->first();
+            $matchCriteria = $this->setDefaultCriteria();
         }
 
-        Log::warning('Match Criteria______________________________________');
+        Log::warning('Get Match Criteria______________________________________');
         Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         return $matchCriteria;
     }
 
     /**
-     * @return void
+     * @return MatchCriterion
      */
-    public function setDefaultCriteria(): void
+    public function setDefaultCriteria(): MatchCriterion
     {
         $criteria = [
             'bpm' => $this->bpm,
@@ -152,7 +145,8 @@ use Illuminate\Support\Facades\Log;
             'sort' => 0,
             'bpm_range' => 1
         ];
-        $this->setCriteria($criteria);
+
+        return $this->setCriteria($criteria);
     }
 
     public function removePlayedSong(mixed $id): ?string
