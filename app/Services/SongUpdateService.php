@@ -33,7 +33,9 @@ class SongUpdateService
         $song->scale = $chords_scale;
         $song->energy = (float)$energy;
         $song->bpm = $bpm;
-        $song->author = $author;
+        if ($author && $song->author == null) {
+            $song->author = $author;
+        }
         $song->save();
 
         $slug = $song->slug;
@@ -308,7 +310,7 @@ class SongUpdateService
         if ($song->genre === null) {
             $song->genre = $genres;
         }
-        if ($song->author === null) {
+        if ($song->author == null) {
             // if author is an array get all authors and implode seperated by &
             if (is_array($artist)) {
                 $artist = implode(' & ', $artist);
@@ -317,7 +319,7 @@ class SongUpdateService
         }
 
         $song->title = $title;
-        $song->comment = json_encode($comment);
+        $song->comment = json_encode($comment, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         if ($song->image === null) {
             try {
