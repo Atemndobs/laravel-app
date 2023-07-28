@@ -35,15 +35,21 @@ class CleanUpAuthorCommand extends Command
             $slug = $song->slug;
             $placeHolder = str_replace('_', ' ', $slug);
             $placeHolder = ucwords($placeHolder);
-            if ($author === null) {
+            if ($author == null) {
                 $song->author = $placeHolder;
                 $song->save();
                 continue;
             }
-            if ($title === null) {
+            if ($title == null) {
                 $song->title = $placeHolder;
                 $song->save();
                 continue;
+            }
+            // if title starts with - or with /, remove it
+            if (substr($title, 0, 1) == '-' || substr($title, 0, 1) == '/') {
+                $title = substr($title, 1);
+                $song->title = $title;
+                $song->save();
             }
 
             // if the author's special characters are encoded, decode them
