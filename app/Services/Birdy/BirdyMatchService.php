@@ -2,6 +2,7 @@
 
 namespace App\Services\Birdy;
 
+use App\Models\MatchCriterion;
 use App\Models\Song;
 use Illuminate\Support\Facades\Log;
 use Laravel\Octane\Exceptions\DdException;
@@ -71,7 +72,7 @@ class BirdyMatchService
         if ($id)
             $criteria->addPlayedSongs($id);
 
-        $vibe = $this->getSimilarSongWithExactBpm($song,  $limit);
+        $vibe = $this->getSimilarSongWithExactBpm($song,  $limit, $criteria);
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
@@ -459,7 +460,7 @@ class BirdyMatchService
         return $vibe;
     }
 
-    private function getSimilarSongWithExactBpm(Song $song, int $limit)
+    private function getSimilarSongWithExactBpm(Song $song, int $limit, MatchCriterion $criteria)
     {
         $filter = [];
         $attributes = $this->songIndex->getFilterableAttributes();
@@ -507,11 +508,7 @@ class BirdyMatchService
 //        $genreFilterQuery = '(' . implode(' OR ', $genreFilters) . ')';
 //        $filter[] = $genreFilterQuery;
 
-        // exclude played songs
-        $songMatchCriteria = new MatchCriteriaService();
-        $criteria = $songMatchCriteria->getCriteria();
         $playedSongs = explode(',', $criteria->played_songs);
-
         if (! empty($playedSongs)) {
             $playedSongsFilter = [];
             foreach ($playedSongs as $playedSong) {
