@@ -76,7 +76,8 @@ class MatchSongController extends Controller
             $energy,
             $danceability,
             $range,
-            $id
+            $id,
+            $limit
         );
 
         Log::info(json_encode([

@@ -57,7 +57,7 @@ use Illuminate\Support\Facades\Log;
         $this->aggressiveness = $criteria['aggressiveness'];
         $this->ip = $criteria['ip'];
         $this->sessionToken = $criteria['sessionToken'];
-        $this->bpm_range = $criteria['range'];
+        $this->bpm_range = $criteria['bpm_range'];
 
         // check if session token exists
         if (empty($this->sessionToken)) {
