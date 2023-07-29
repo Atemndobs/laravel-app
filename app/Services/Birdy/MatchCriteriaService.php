@@ -65,6 +65,7 @@ use Illuminate\Support\Facades\Log;
         }
 
         $matchCriteriaExist = MatchCriterion::query()->where('session_token', $this->sessionToken)
+            ->where('ip', $this->ip)
             ->get()->first();
         if (is_null($matchCriteriaExist)) {
             $matchCriteria = new MatchCriterion();
@@ -107,8 +108,10 @@ use Illuminate\Support\Facades\Log;
     public function getCriteria() : MatchCriterion
     {
         $sessionToken = $this->sessionToken;
+        $ip = $this->ip;
         /** @var MatchCriterion $matchCriteria */
         $matchCriteria = MatchCriterion::query()->where('session_token', $sessionToken)
+            ->orWhere('ip', $ip)
             ->first();
 
         if (!$matchCriteria) {
