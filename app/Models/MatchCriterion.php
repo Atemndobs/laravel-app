@@ -45,4 +45,9 @@ class MatchCriterion extends BaseMatchCriterion
         return explode(',', $this->played_songs);
     }
 
+    public function getPlayedSongsCount()
+    {
+        return count($this->getPlayedSongs());
+    }
+
 }

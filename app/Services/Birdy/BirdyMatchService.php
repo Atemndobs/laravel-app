@@ -16,6 +16,8 @@ class BirdyMatchService
     private Indexes $songIndex;
     public array $playedSongs = [];
     public string $mood = 'happy';
+    public int $matchCount = 0;
+    public int $excludedCount = 0;
 
     public function __construct()
     {
@@ -36,8 +38,8 @@ class BirdyMatchService
      * @param float|null $danceability
      * @param float|null $bpmRange
      * @param int|null $id
+     * @param int|null $limit
      * @return array
-     * @throws DdException
      */
     public function getSongMatch(
         string $slug,
@@ -71,8 +73,24 @@ class BirdyMatchService
         $bpmRange = $criteria->bmp_range ?? $bpmRange;
         if ($id)
             $criteria->addPlayedSongs($id);
+        $this->excludedCount = $criteria->getPlayedSongsCount();
 
-        $vibe = $this->getSimilarSongWithExactBpm($song,  $limit, $criteria);
+        $vibe = $this->getSimilarSongWithExactBpm($song,  1000, $criteria);
+        if ($vibe->getHitsCount() >= 3) {
+            $this->matchCount = $vibe->getHitsCount();
+            // return only $limit songs
+            $results =  array_slice($vibe->getHits(), 0, $limit);
+            return [
+                'hits_count' => $this->matchCount,
+                'hits' => $results,
+                'match_count' => $this->matchCount,
+                'excluded_count' => $this->excludedCount,
+            ];
+        }
+
+
+
+
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }

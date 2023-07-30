@@ -90,8 +90,6 @@ class MatchSongController extends Controller
 
         // limit results to $limit
         $search['hits'] = array_slice($search['hits'], 0, $limit);
-
-        
         return response($search);
     }
 
