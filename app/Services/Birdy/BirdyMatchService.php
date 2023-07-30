@@ -94,10 +94,12 @@ class BirdyMatchService
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
         }
+        $this->matchCount = $vibe->getHitsCount();
 
         return [
             'hits_count' => $vibe->getHitsCount(),
             'hits' => $vibe->getHits(),
+            'excluded_count' => $this->excludedCount,
         ];
     }
 
