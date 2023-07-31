@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $user_updated
  * @property string|null $played_songs
  * @property float|null $bpm_range
+ * @property float|null $mood_range
  * 
  * @property DirectusUser|null $directus_user
  *
@@ -58,7 +59,8 @@ class MatchCriterion extends Model
 		'sort' => 'int',
 		'date_created' => 'datetime',
 		'date_updated' => 'datetime',
-		'bpm_range' => 'float'
+		'bpm_range' => 'float',
+		'mood_range' => 'float'
 	];
 
 	public function directus_user()

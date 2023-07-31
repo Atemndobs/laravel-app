@@ -98,6 +98,9 @@ use Illuminate\Support\Facades\Log;
             $matchCriteria->save();
         }
 
+        Log::warning('Setting Match Criteria______________________________________');
+        Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
         return $matchCriteria;
     }
 
@@ -117,9 +120,6 @@ use Illuminate\Support\Facades\Log;
         if (!$matchCriteria) {
             $matchCriteria = $this->setDefaultCriteria();
         }
-
-        Log::warning('Get Match Criteria______________________________________');
-        Log::info(json_encode($matchCriteria->toArray(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
         return $matchCriteria;
     }

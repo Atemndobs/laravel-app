@@ -18,6 +18,10 @@ class BirdyMatchService
     public string $mood = 'happy';
     public int $matchCount = 0;
     public int $excludedCount = 0;
+    public array $options = [
+        'bpm',
+        'analyzed'
+    ];
 
     public function __construct()
     {
@@ -38,6 +42,7 @@ class BirdyMatchService
      * @param float|null $danceability
      * @param float|null $bpmRange
      * @param int|null $id
+     * @param array|null $options
      * @param int|null $limit
      * @return array
      */
@@ -54,6 +59,7 @@ class BirdyMatchService
         float | null $danceability,
         float | null $bpmRange,
         int | null $id,
+        array | null $options,
         int | null $limit = 100
     ): array
     {
@@ -75,7 +81,16 @@ class BirdyMatchService
             $criteria->addPlayedSongs($id);
         $this->excludedCount = $criteria->getPlayedSongsCount();
 
-        $vibe = $this->getSimilarSongWithExactBpm($song,  1000, $criteria);
+        // add options to  $this->options
+        if ($options) {
+            foreach ($options as $option) {
+                if (! in_array($option, $this->options)) {
+                    $this->options[] = $option;
+                }
+            }
+        }
+
+        $vibe = $this->getSimilarSongsWithOptions($song,  1000, $criteria);
         if ($vibe->getHitsCount() >= 3) {
             $this->matchCount = $vibe->getHitsCount();
             // return only $limit songs
@@ -87,9 +102,6 @@ class BirdyMatchService
                 'excluded_count' => $this->excludedCount,
             ];
         }
-
-
-
 
         if ($vibe->getHitsCount() < 3) {
             $vibe = $this->relaxSearchFilters($vibe, $song, $bpmRange);
@@ -318,17 +330,8 @@ class BirdyMatchService
         }
         $filter[] = "slug != '{$song->slug}'";
         $filter[] = 'analyzed = 1';
-        $filter[] = 'energy >= 0';
-        // remove songs with ids from the playedSongs array
-       // $filter[] = "NOT id IN ";
-        // genre is an array so we need to use the IN operator
-        // $filter[] = "genre IN '$genre'";
-       // $filter[] = "key = '$searchKey'";
         $direction = 'asc';
 
-        if ((int)$attribute === 0){
-            $attribute = 'bpm';
-        }
         Log::info('filter__________________________________');
         Log::info((json_encode($filter, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)));
         return $this->songIndex->search('', [
@@ -480,68 +483,36 @@ class BirdyMatchService
         return $vibe;
     }
 
-    private function getSimilarSongWithExactBpm(Song $song, int $limit, MatchCriterion $criteria)
+    private function getSimilarSongsWithOptions(Song $song, int $limit, MatchCriterion $criteria)
     {
         $filter = [];
         $attributes = $this->songIndex->getFilterableAttributes();
-        $this->setMood($attributes, $song);
+        $this->setMood($song);
         foreach ($attributes as $attribute) {
             $value = $song->{$attribute};
             if ($attribute === "analyzed" && $value === 0) {
                 return [];
             }
-
-            if (in_array($attribute, ['scale', 'key', 'genre', 'status', 'title', 'author', 'slug', 'sad', 'happy'])) {
+            // if $attribute is not in $this->options, skip it
+            if (! in_array($attribute, $this->options)) {
                 continue;
             }
-            if ($attribute == 'bpm' ) {
-                 $filter[] = "$attribute = $value";
-            } elseif (is_float($value)) {
-//                if ($value >= 0.5) {
-//                    $moodMin = 0.5;
-//                    $moodMax = 1;
-//                }
-//                if ($value < 0.5) {
-//                    $moodMin = 0;
-//                    $moodMax = 0.5;
-//                }
-//                $filter[] = "$attribute >= $moodMin AND $attribute <= $moodMax";
+            if ($attribute === 'genre') {
+                $genres = $song->genre;
+                foreach ($genres as $genre) {
+                    $genreFilters[] = "genre = '{$genre}'";
+                }
+
+                $genreFilterQuery = '(' . implode(' OR ', $genreFilters) . ')';
+                $filter[] = $genreFilterQuery;
+                continue;
             }
+            $filter[] = "$attribute = $value";
+
         }
 
-        if ($this->mood === 'happy') {
-            $filter[] = "happy >= 0.5";
-        }elseif ($this->mood === 'sad') {
-            $filter[] = "sad >= 0.5";
-        }
-
-
-        $filter[] = 'analyzed = 1';
-
-        // removable attributes
-//        $filter[] = "key = '{$song->key}'";
-//        $filter[] = "scale = '{$song->scale}'";
-//        $genres = $song->genre;
-//        foreach ($genres as $genre) {
-//            $genreFilters[] = "genre = '{$genre}'";
-//        }
-//        $genreFilterQuery = '(' . implode(' OR ', $genreFilters) . ')';
-//        $filter[] = $genreFilterQuery;
-
-        $playedSongs = explode(',', $criteria->played_songs);
-        if (! empty($playedSongs)) {
-            $playedSongsFilter = [];
-            foreach ($playedSongs as $playedSong) {
-                // get slug from song id
-                $playedSong = Song::find($playedSong)->slug;
-                $playedSongsFilter[] = "slug != '{$playedSong}'";
-            }
-            $playedSongsFilter[] = "slug != '{$song->slug}'";
-            $playedSongsFilterQuery = '(' . implode(' AND ', $playedSongsFilter) . ')';
-            $filter[] = $playedSongsFilterQuery;
-        }else{
-            $filter[] = "slug != '{$song->slug}'";
-        }
+        $filter = $this->addMoodToFilter($filter, $song, $criteria);
+        $filter = $this->addSlugToFilter($criteria, $song, $filter);
 
         $direction = 'asc';
         Log::info('filter__________________________________');
@@ -555,25 +526,67 @@ class BirdyMatchService
     }
 
 
-    private function setMood(array $attributes, Song $song): void
+    private function setMood(Song $song): void
     {
-        $happy = 0;
-        $sad = 0;
-        foreach ($attributes as $attribute) {
-            $value = $song->{$attribute};
-
-            if ($attribute == 'happy') {
-                $happy = $value;
-            }
-            if ($attribute == 'sad') {
-                $sad = $value;
-            }
-        }
+        $happy = $song->happy;
+        $sad = $song->sad;
         if ($happy > $sad) {
             $this->mood = 'happy';
         }
         if ($sad > $happy) {
             $this->mood = 'sad';
         }
+    }
+
+    /**
+     * @param MatchCriterion $criteria
+     * @param Song $song
+     * @param array $filter
+     * @return array
+     */
+    public function addSlugToFilter(MatchCriterion $criteria, Song $song, array $filter): array
+    {
+        $playedSongs = explode(',', $criteria->played_songs);
+        $playedSongs = array_filter($playedSongs);
+        if (!empty($playedSongs)) {
+            $playedSongsFilter = [];
+            foreach ($playedSongs as $playedSong) {
+                // get slug from song id
+                $playedSong = Song::find($playedSong)->slug;
+                $playedSongsFilter[] = "slug != '{$playedSong}'";
+            }
+            $playedSongsFilter[] = "slug != '{$song->slug}'";
+            $playedSongsFilterQuery = '(' . implode(' AND ', $playedSongsFilter) . ')';
+            $filter[] = $playedSongsFilterQuery;
+        } else {
+            $filter[] = "slug != '{$song->slug}'";
+        }
+        return $filter;
+    }
+
+    /**
+     * @param array $filter
+     * @param Song $song
+     * @param MatchCriterion $criteria
+     * @return array
+     */
+    public function addMoodToFilter(array $filter, Song $song, MatchCriterion $criteria): array
+    {
+        if (in_array('mood', $this->options)) {
+            $mood = $this->mood;
+            $value = $song->{$mood};
+            $moodRange = $criteria->mood_range;
+            $maxMood = $value + $moodRange;
+            $minMood = $value - $moodRange;
+            $filter[] = "$mood >= $minMood";
+            $filter[] = "$mood <= $maxMood";
+            return $filter;
+        }
+        if ($this->mood === 'happy') {
+            $filter[] = "happy >= 0.5";
+        } elseif ($this->mood === 'sad') {
+            $filter[] = "sad >= 0.5";
+        }
+        return $filter;
     }
 }
