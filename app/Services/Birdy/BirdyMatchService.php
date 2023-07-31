@@ -169,23 +169,6 @@ class BirdyMatchService
     }
 
     /**
-     * @param string $attribute
-     * @param float|string $value
-     * @param float $range
-     * @return array|array[]|SearchResult|\mixed[][]
-     */
-    public function searchByAttribute(string $attribute, float|string $value, float $range = 1): array|SearchResult
-    {
-        if ($attribute === 'bpm') {
-            return $this->getByBpm($value, $range, $attribute);
-        } elseif (is_float($value)) {
-            return $this->getBySingleMood($range, $value, $attribute);
-        }
-
-        return $this->getByKey($attribute, $value);
-    }
-
-    /**
      * @param  float|string  $value
      * @param  float  $range
      * @param  string  $attribute
@@ -227,7 +210,7 @@ class BirdyMatchService
      */
     protected function getBySingleMood(float $range, float|string $value, string $attribute): array
     {
-        $possitives = [
+        $positives = [
             'energy',
             'happy',
             'aggressiveness',
@@ -239,34 +222,17 @@ class BirdyMatchService
             'relaxed',
         ];
 
-        $dirrection = 'asc';
+        $direction = 'asc';
 
-        if (in_array($attribute, $possitives)) {
-            $dirrection = 'asc';
+        if (in_array($attribute, $positives)) {
+            $direction = 'asc';
         }
         if (in_array($attribute, $negatives)) {
-            $dirrection = 'desc';
+            $direction = 'desc';
         }
         $range = $range / 100;
 
-        return $this->filterAndSort($value, $range, $attribute, $dirrection);
-    }
-
-    /**
-     * @param string $attribute
-     * @param string $keyValue
-     * @param string $scaleValue
-     * @return array|SearchResult
-     */
-    protected function getByKey(string $attribute, string $keyValue, string $scaleValue = 'major'): array | SearchResult
-    {
-        $direction = 'asc';
-        $key = $attribute;
-
-        return $this->songIndex->search('', [
-            'filter' => ["$key = $keyValue", "scale = $scaleValue"],
-            'sort' => ["$attribute:$direction"],
-        ]);
+        return $this->filterAndSort($value, $range, $attribute, $direction);
     }
 
     /**
@@ -342,12 +308,6 @@ class BirdyMatchService
         ]);
     }
 
-    public function defaltMatches(Song $incommingSong)
-    {
-        $id = $incommingSong->id;
-        $bpmMatches = $this->getAttributeMatch($incommingSong, 'bpm');
-    }
-
     public function getBpmMatch(Song $incommingSong)
     {
         $matches = [];
@@ -362,32 +322,6 @@ class BirdyMatchService
         }
 
         return $matches;
-    }
-
-    /**
-     * @param  Song  $song
-     * @param  string  $attr
-     * @return void
-     */
-    public function getMatchByAttribute(Song $song, string $attr = 'bpm')
-    {
-        $matches = [
-            $this->getAttributeMatch($song, 'bpm'),
-            $this->getAttributeMatch($song, 'key'),
-            $this->getAttributeMatch($song, 'scale'),
-            $this->getAttributeMatch($song, 'happy'),
-        ];
-
-        $response = [
-            'query' => [
-                'slug' => $song->slug,
-                'bpm' => $this->roundNumbers($song->bpm),
-                'path' => $song->path,
-            ],
-            'matches' => $matches,
-        ];
-
-        return $this->searchByAttribute($attr, $song->{$attr}, 2);
     }
 
     public function getNextBestMatch(Song $song, string $bpmRange)

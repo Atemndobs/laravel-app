@@ -106,13 +106,4 @@ class MatchSongController extends Controller
         $search['hits'] = array_slice($search['hits'], 0, $limit);
         return response($search);
     }
-
-    /**
-     * @param $song
-     * @return array|array[]|\MeiliSearch\Search\SearchResult|\mixed[][]|void|null
-     */
-    public function matchByAttribute($song)
-    {
-        return $this->birdyMatchService->getMatchByAttribute($song);
-    }
 }
