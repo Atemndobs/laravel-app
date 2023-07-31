@@ -44,7 +44,7 @@ class MatchSongController extends Controller
     public function getSongMatch()
     {
         $slug = $this->request->input('slug') ?? null;
-        if (is_null($slug)) {
+        if (is_null($slug) ) {
             return response([
                 'hits' => [],
                 'hit_count' => 0,
@@ -53,16 +53,16 @@ class MatchSongController extends Controller
 
             ], 400);
         }
-        $bpm = $this->request->input('bpm');
-        $bpmMin = null;
-        $bpmMax = null;
-        $bpmRange = $this->request->input('bpmRange');
-        $happy = $this->request->input('happy');
-        $sad = $this->request->input('sad');
-        $key = $this->request->input('key');
-        $energy = $this->request->input('energy');
-        $mood = $this->request->input('mood');
-        $danceability = $this->request->input('danceability');
+        $bpm = $this->request->input('bpm') ?? 0.00;
+        $bpmMin = 0.00;
+        $bpmMax = 0.00;
+        $bpmRange = $this->request->input('bpmRange') ?? 0.00;
+        $happy = $this->request->input('happy') ?? 0.00;
+        $sad = $this->request->input('sad') ?? 0.00;
+        $key = $this->request->input('key') ?? null;
+        $energy = $this->request->input('energy') ?? 0.00;
+        $mood = $this->request->input('mood') ?? 'happy';
+        $danceability = $this->request->input('danceability') ?? 0.00;
         $id = $this->request->input('id') ?? null;
         $options = $this->request->input('options') ?? [];
         if (!is_array($options)) {
