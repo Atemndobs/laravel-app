@@ -495,7 +495,7 @@ class BirdyMatchService
         } else {
             $filter[] = "slug != '{$song->slug}'";
         }
-        return array_unique($filter);
+        return $filter;
     }
 
     /**
