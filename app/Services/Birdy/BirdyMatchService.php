@@ -507,7 +507,7 @@ class BirdyMatchService
                 $filter[] = $genreFilterQuery;
                 continue;
             }
-            $filter[] = "$attribute = $value";
+            $filter[] = "$attribute = '{$value}'";
 
         }
 

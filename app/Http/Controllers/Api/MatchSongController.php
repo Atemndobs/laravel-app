@@ -43,7 +43,16 @@ class MatchSongController extends Controller
      */
     public function getSongMatch()
     {
-        $slug = $this->request->input('slug');
+        $slug = $this->request->input('slug') ?? null;
+        if (is_null($slug)) {
+            return response([
+                'hits' => [],
+                'hit_count' => 0,
+                "excluded_count" => 0,
+                "limit" =>  0,
+
+            ], 400);
+        }
         $bpm = $this->request->input('bpm');
         $bpmMin = null;
         $bpmMax = null;
@@ -56,6 +65,9 @@ class MatchSongController extends Controller
         $danceability = $this->request->input('danceability');
         $id = $this->request->input('id') ?? null;
         $options = $this->request->input('options') ?? [];
+        if (!is_array($options)) {
+            $options = [];
+        }
         // get pbm range if bpm has more than 1 value
         if (str_contains($bpmRange, '-')) {
             $bpmRange = explode('-', $bpmRange);
