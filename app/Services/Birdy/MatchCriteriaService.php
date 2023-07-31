@@ -39,25 +39,25 @@ use Illuminate\Support\Facades\Log;
 
     public function setCriteria(array $criteria) : MatchCriterion
     {
-        $this->bpm = $criteria['bpm'];
-        $this->bpmMin = $criteria['bpmMin'];
-        $this->bpmMax = $criteria['bpmMax'];
-        $this->happy = $criteria['happy'];
-        $this->sad = $criteria['sad'];
-        $this->key = $criteria['key'];
+        $this->bpm = $criteria['bpm'] ?? 100;
+        $this->bpmMin = $criteria['bpmMin'] ?? 50;
+        $this->bpmMax = $criteria['bpmMax'] ?? 200;
+        $this->happy = $criteria['happy'] ?? 0.00;
+        $this->sad = $criteria['sad'] ?? 0.00;
+        $this->key = $criteria['key'] ?? 'A';
         if (str_contains($this->key, ' ')) {
             $keyArray = explode(' ', $this->key);
             $this->key = $keyArray[0];
             $this->scale = $keyArray[1];
         }
-        $this->genre = $criteria['genre'];
-        $this->energy = $criteria['energy'];
-        $this->mood = $criteria['mood'];
-        $this->danceability = $criteria['danceability'];
-        $this->aggressiveness = $criteria['aggressiveness'];
-        $this->ip = $criteria['ip'];
-        $this->sessionToken = $criteria['sessionToken'];
-        $this->bpm_range = $criteria['bpm_range'];
+        $this->genre = $criteria['genre'] ?? [];
+        $this->energy = $criteria['energy'] ?? 0.00;
+        $this->mood = $criteria['mood'] ?? 'happy';
+        $this->danceability = $criteria['danceability'] ?? 0.00;
+        $this->aggressiveness = $criteria['aggressiveness'] ?? 0.00 ;
+        $this->ip = $criteria['ip'] ?? '';
+        $this->sessionToken = $criteria['sessionToken'] ?? '';
+        $this->bpm_range = $criteria['bpm_range'] ?? 0.00;
 
         // check if session token exists
         if (empty($this->sessionToken)) {
