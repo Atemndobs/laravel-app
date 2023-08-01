@@ -453,7 +453,16 @@ class SpotifyMusicService
         $accessToken = SpotifyAuth::query()->first()->access_token;
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
-        $search = $api->search($title, 'track');
+        try {
+            $search = $api->search($title, 'track');
+        }catch (\Throwable $e){
+           dump([
+               'token' => $accessToken,
+                'title' => $title,
+                'artist' => $artist,
+                'error' => $e->getMessage()
+           ]);
+        }
         $tracks = $search->tracks->items;
         $track = $this->getItemByName($tracks, $title, $artist);
 
