@@ -11,16 +11,11 @@ class SpotifyAuthController extends Controller
     public function login()
     {
         // clear all sessions
-        //session()->flush();
-//        $session = new Session(
-//            env('SPOTIFY_CLIENT_ID'),
-//            env('SPOTIFY_CLIENT_SECRET'),
-//            env('SPOTIFY_REDIRECT_URI')
-//        );
+        session()->flush();
         $session = new Session(
-            'b0ba238623c6499b9fab2d7f5c497d8f',
-            '32863d8fb52440fc9d35a654f2cf0df1',
-            'http://core.curator.atemkeng.eu/api/spotify/callback'
+            env('SPOTIFY_CLIENT_ID'),
+            env('SPOTIFY_CLIENT_SECRET'),
+            env('SPOTIFY_REDIRECT_URI')
         );
 
         $state = $session->generateState();
@@ -40,24 +35,14 @@ class SpotifyAuthController extends Controller
 
     public function callback(Request $request)
     {
-//        $session = new Session(
-//            env('SPOTIFY_CLIENT_ID'),
-//            env('SPOTIFY_CLIENT_SECRET'),
-//            env('SPOTIFY_REDIRECT_URI')
-//        );
         $session = new Session(
-            'b0ba238623c6499b9fab2d7f5c497d8f',
-            '32863d8fb52440fc9d35a654f2cf0df1',
-            'http://core.curator.atemkeng.eu/api/spotify/callback'
+            env('SPOTIFY_CLIENT_ID'),
+            env('SPOTIFY_CLIENT_SECRET'),
+            env('SPOTIFY_REDIRECT_URI')
         );
 
         $state = $request->input('state');
         $storedState = session('spotify_state');
-
-//        if ($state !== $storedState) {
-//            return response('State mismatch', 400);
-//        }
-
         $session->requestAccessToken($request->input('code'));
 
         $accessToken = $session->getAccessToken();
@@ -66,9 +51,6 @@ class SpotifyAuthController extends Controller
         // Store the access and refresh tokens somewhere (e.g., session or database)
         session(['spotify_access_token' => $accessToken]);
         session(['spotify_refresh_token' => $refreshToken]);
-
-        // save the access token to the database in spotify_auth table
-           // save the refresh token to the database in spotify_auth table
         $spotifyAuth = new \App\Models\SpotifyAuth();
         // delete all records from the table
         \App\Models\SpotifyAuth::truncate();
