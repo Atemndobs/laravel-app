@@ -303,7 +303,7 @@ class BirdyMatchService
         return $this->songIndex->search('', [
             'filter' => $filter,
             'sort' => ["$attribute:$direction"],
-            'limit' => 10,
+            'limit' => 1000,
             'offset' => 0,
         ]);
     }
