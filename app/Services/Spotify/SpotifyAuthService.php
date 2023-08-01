@@ -21,16 +21,6 @@ class SpotifyAuthService
 //        $spotify_auth = new SpotifyAuth();
 //        $spotify_auth->auth_url = $authUrl;
 //        $spotify_auth->save();
-        $authUrl = json_encode($authUrl, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-       // Http::get('http://directus:8055/webhooks/spotify');
-
-        // $command = "lynx $authUrl" ;  // Command to open URL with lynx and retrieve page content
-        //$command = "python3 auth.py $authUrl" ;  // Command to open URL with lynx and retrieve page content
-        $command = "python3 auth.py $authUrl" ;  // Command to open URL with lynx and retrieve page content
-       // $output = shell_exec($command);  // Execute the command and store the output
-
-        //dd($output);
-
-        return $authUrl;
+        return json_encode($authUrl, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 }

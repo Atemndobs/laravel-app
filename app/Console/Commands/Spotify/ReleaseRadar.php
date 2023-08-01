@@ -48,8 +48,7 @@ class ReleaseRadar extends Command
         $spotifyMusicService = new SpotifyMusicService();
         $songIds = $spotifyMusicService->getRecentlyAddedSongs($time);
         $spotifyMusicService->addSongToReleaseRadar($songIds);
-
-        dd($sonIds);
+        $this->info('Added ' . count($songIds) . ' songs to ATM Release Radar.');
 
         // Run the SpotifyReleasesCommand with the --all option if no playlist is given
         if (!$playlist) {

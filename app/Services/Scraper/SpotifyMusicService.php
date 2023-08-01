@@ -17,9 +17,9 @@ class SpotifyMusicService
     {
         // 11171774669
         $playlists = $this->getMyPlaylistByName($playlistName);
-        if($playlists){
+        if ($playlists) {
             return $playlists;
-        }else{
+        } else {
             return $this->getPlaylistByName($playlistName, $owner);
         }
 
@@ -32,11 +32,11 @@ class SpotifyMusicService
                 'id' => $playlist['id'],
                 'name' => $playlist['name'],
                 'owner' => $playlist['owner'] ?? $playlist['owner']['display_name'],
-                'tracks' => $playlist['tracks']?? $playlist['tracks']['total'],
-                'url' => $playlist['external_urls']?? $playlist['external_urls']['spotify'],
-                'image' => $playlist['images'][0]?? $playlist['images'][0]['url'],
+                'tracks' => $playlist['tracks'] ?? $playlist['tracks']['total'],
+                'url' => $playlist['external_urls'] ?? $playlist['external_urls']['spotify'],
+                'image' => $playlist['images'][0] ?? $playlist['images'][0]['url'],
             ];
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'id' => $playlist['id'],
                 'name' => $playlist['name'],
@@ -49,9 +49,69 @@ class SpotifyMusicService
 
     }
 
-    public function getItemByName($array, $name) {
-        $filteredArray = array_filter($array, function ($item) use ($name) {
-            return $item['name'] === $name;
+    public function getItemByName($array, $name, $songArtist = null)
+    {
+        $filteredArray = array_filter($array, function ($item) use ($name, $songArtist) {
+            // handle both objects and arrays
+            if (is_object($item)) {
+                $item_name = $item->name;
+            }else {
+                $item_name = $item['name'];
+            }
+            // make both lowercase
+            $item_name = strtolower($item_name);
+            $name = strtolower($name);
+            // remove spaces before and after
+            $item_name = trim($item_name);
+            $name = trim($name);
+
+//            // if noe artis given, return item if name matches
+//            if ($songArtist === null) {
+//                return $item_name == $name;
+//            }
+
+            dump([
+                'item_name' => $item_name,
+                'name' => $name,
+            ]);
+            if ($item_name === $name) {
+                // check if fount track belongs to artist
+                if (is_object($item)) {
+                    $artists = $item->artists;
+                }else {
+                    $artists = $item['artists'];
+                }
+                foreach ($artists as $artist) {
+                    if (is_object($artist)) {
+                        $artist_name = $artist->name;
+                    }else {
+                        $artist_name = $artist['name'];
+                    }
+                    $artist_name = strtolower($artist_name);
+                    $artist_name = trim($artist_name);
+
+                    if ($artist_name === $songArtist) {
+                        return true;
+                    }
+                    dump([
+                        'artist_name' => $artist_name,
+                        'song_artist' => $songArtist,
+                    ]);
+
+                    // if lowercase artist name is found in lowercase song artist, return true
+                    if (str_contains(strtolower($songArtist), strtolower($artist_name))) {
+                        dump([
+                            'artist_name' => $artist_name,
+                            'song_artist' => $songArtist,
+                        ]);
+                        return true;
+                    }
+
+                }
+
+            }
+            dump('not found');
+            return $item_name == $name;
         });
 
         // Retrieve the first matching item
@@ -88,7 +148,7 @@ class SpotifyMusicService
 
     public function getPlaylistByName(string $playlistName, string $owner)
     {
-        $playlists =  Spotify::searchPlaylists($playlistName)->get();
+        $playlists = Spotify::searchPlaylists($playlistName)->get();
         $playlists = $playlists['playlists']['items'];
         return $this->getItemByNameAndOwner($playlists, $playlistName, $owner);
     }
@@ -125,7 +185,7 @@ class SpotifyMusicService
     public function prepareTracksTable(array $tracks, string $source = 'playlist'): array
     {
 
-        return array_map(function ($track) use ($source){
+        return array_map(function ($track) use ($source) {
             try {
                 return [
                     'id' => $track['track']['id'],
@@ -137,8 +197,8 @@ class SpotifyMusicService
                     'url' => $track['track']['external_urls']['spotify'],
                     'image' => $track['track']['album']['images'][0]['url'] ?? null,
                 ];
-            }catch (\Exception $e) {
-             //   dump($track);
+            } catch (\Exception $e) {
+                //   dump($track);
             }
         }, $tracks);
     }
@@ -175,7 +235,7 @@ class SpotifyMusicService
             $release->date_created = now();
             $release->date_updated = now();
 
-           $release->save();
+            $release->save();
         } catch (\Throwable $e) {
             dump([
                 'Error' => $e->getMessage(),
@@ -190,7 +250,7 @@ class SpotifyMusicService
         return Spotify::playlistTracks($playlistId)->get()['items'];
     }
 
-    public function playlistExists(string $id): Release | null
+    public function playlistExists(string $id): Release|null
     {
         return Release::query()->where('id', $id)->get()->first();
     }
@@ -207,7 +267,7 @@ class SpotifyMusicService
                 if ($exists->count() > 0) {
                     continue;
                 }
-            }catch (\Exception $e) {
+            } catch (\Exception $e) {
 //                dump([
 //                    'Error' => $e->getMessage(),
 //                    'Playlist' => $playlistSong
@@ -238,7 +298,7 @@ class SpotifyMusicService
         }
     }
 
-    public function playlistSongsExists(array $playlistSongs): array | null
+    public function playlistSongsExists(array $playlistSongs): array|null
     {
         $ids = [];
         foreach ($playlistSongs as $playlistSong) {
@@ -263,7 +323,7 @@ class SpotifyMusicService
 
     public function getMyPlaylistByName(string $playlistName)
     {
-        $playlists  = Spotify::userPlaylists('11171774669')->get()['items'];
+        $playlists = Spotify::userPlaylists('11171774669')->get()['items'];
         if (empty($playlists)) {
             return null;
         }
@@ -272,7 +332,7 @@ class SpotifyMusicService
 
     public function getMyFollowedPlaylistsByName(string $playlistName)
     {
-        $playlists  = Spotify::myPlaylists()->get()['items'];
+        $playlists = Spotify::myPlaylists()->get()['items'];
         return $this->getItemByName($playlists, $playlistName);
     }
 
@@ -291,7 +351,7 @@ class SpotifyMusicService
     /**
      * Process a playlist.
      *
-     * @param array              $playlist
+     * @param array $playlist
      * @param SpotifyMusicService $spotifyService
      */
     public function processPlaylist(array $playlist, SpotifyMusicService $spotifyService): void
@@ -303,7 +363,7 @@ class SpotifyMusicService
             $tracksCount = $playlistExists->tracks;
             try {
                 $playlistTrackCount = $playlist['tracks']['total']['total'] ?? $playlist['tracks']['total'];
-            }catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $playlistTrackCount = $playlist['tracks']->total;
             }
 
@@ -329,7 +389,7 @@ class SpotifyMusicService
     /**
      * Check if playlist songs are the same and save them if necessary.
      *
-     * @param string             $playlistId
+     * @param string $playlistId
      * @param SpotifyMusicService $spotifyService
      */
     protected function checkAndSavePlaylistSongs(string $playlistId, SpotifyMusicService $spotifyService): void
@@ -362,7 +422,7 @@ class SpotifyMusicService
         } else {
             $playlistSongs = SingleRelease::query()->where('added_at', '>=', $formattedDateTime)->get();
         }
-        // collect all song ids into an array and rerurn it
+
         $songIds = [];
         foreach ($playlistSongs as $playlistSong) {
             $songIds[] = $playlistSong->id;
@@ -377,15 +437,43 @@ class SpotifyMusicService
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
         $api->addPlaylistTracks($releaseRadarPlaylistId, $songIds);
-        // get numbe of songs added
         $playlist = $api->getPlaylist($releaseRadarPlaylistId);
         $tracksCount = $playlist->tracks->total;
         $songsAdded = count($songIds);
-        $message  = [
+        $message = [
             'message' => 'Songs added to Release Radar',
             'Songs in Release Radar Playlist' => $tracksCount,
             'Songs Added' => $songsAdded,
         ];
         return json_encode($message, JSON_PRETTY_PRINT);
     }
+
+    public function searchSongByTitleAndArtist(string $title, string $artist)
+    {
+        $accessToken = SpotifyAuth::query()->first()->access_token;
+        $api = new SpotifyWebAPI();
+        $api->setAccessToken($accessToken);
+        $search = $api->search($title, 'track');
+        $tracks = $search->tracks->items;
+        $track = $this->getItemByName($tracks, $title, $artist);
+
+        if (!$track) {
+            return null;
+        }
+        $trackArtist = $track->artists[0]->name;
+
+        if (strtolower($trackArtist) !== strtolower($artist)) {
+            // check if the artist is contained in the track artists
+//            $trackArtist = $this->getItemByName($track->artists, $artist);
+//            if (!$trackArtist) {
+//                if (!$artist) {
+//                    return null;
+//                }
+//            }
+//            return $track->id;
+        }
+         dump($track->external_urls->spotify);
+        return $track->id;
+    }
 }
+

@@ -6,7 +6,6 @@
 
 namespace App\Models\Base;
 
-use App\Models\AdminUser;
 use App\Models\Usage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Song
- *
+ * 
  * @property int $id
  * @property string|null $title
  * @property string|null $author
@@ -36,46 +35,40 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $status
  * @property bool|null $analyzed
  * @property string|null $related_songs
- * @property array|null $genre
+ * @property string|null $genre
  * @property string|null $image
  * @property bool|null $played
  * @property string|null $slug
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property int|null $created_by_id
- * @property int|null $updated_by_id
- * @property array|null $classification_properties
- * @property AdminUser|null $admin_user
+ * @property string|null $classification_properties
+ * @property bool|null $run_analysis
+ * @property string|null $song_id
+ * 
  * @property Collection|Usage[] $usages
+ *
+ * @package App\Models\Base
  */
 class Song extends Model
 {
-    protected $table = 'songs';
+	protected $table = 'songs';
 
-    protected $casts = [
-        'bpm' => 'float',
-        'duration' => 'float',
-        'danceability' => 'float',
-        'happy' => 'float',
-        'sad' => 'float',
-        'relaxed' => 'float',
-        'aggressiveness' => 'float',
-        'energy' => 'float',
-        'analyzed' => 'bool',
-        'genre' => 'json',
-        'played' => 'bool',
-        'created_by_id' => 'int',
-        'updated_by_id' => 'int',
-        'classification_properties' => 'json',
-    ];
+	protected $casts = [
+		'bpm' => 'float',
+		'duration' => 'float',
+		'danceability' => 'float',
+		'happy' => 'float',
+		'sad' => 'float',
+		'relaxed' => 'float',
+		'aggressiveness' => 'float',
+		'energy' => 'float',
+		'analyzed' => 'bool',
+		'played' => 'bool',
+		'run_analysis' => 'bool'
+	];
 
-    public function admin_user()
-    {
-        return $this->belongsTo(AdminUser::class, 'updated_by_id');
-    }
-
-    public function usages()
-    {
-        return $this->belongsToMany(Usage::class, 'usages_songs_links');
-    }
+	public function usages()
+	{
+		return $this->belongsToMany(Usage::class, 'usages_songs_links');
+	}
 }

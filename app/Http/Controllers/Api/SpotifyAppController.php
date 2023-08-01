@@ -17,7 +17,10 @@ class SpotifyAppController extends Controller
         $accessToken = session('spotify_access_token');
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
+        return $api->me();
+
         $spotifyService = new SpotifyMusicService();
+
         $playlists = [];
         $options = [
             'limit' => 1,
