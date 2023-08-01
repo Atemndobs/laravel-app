@@ -12,10 +12,15 @@ class SpotifyAuthController extends Controller
     {
         // clear all sessions
         //session()->flush();
+//        $session = new Session(
+//            env('SPOTIFY_CLIENT_ID'),
+//            env('SPOTIFY_CLIENT_SECRET'),
+//            env('SPOTIFY_REDIRECT_URI')
+//        );
         $session = new Session(
-            env('SPOTIFY_CLIENT_ID'),
-            env('SPOTIFY_CLIENT_SECRET'),
-            env('SPOTIFY_REDIRECT_URI')
+            'b0ba238623c6499b9fab2d7f5c497d8f',
+            '32863d8fb52440fc9d35a654f2cf0df1',
+            'http://core.curator.atemkeng.eu/api/spotify/callback'
         );
 
         $state = $session->generateState();
@@ -41,8 +46,8 @@ class SpotifyAuthController extends Controller
 //            env('SPOTIFY_REDIRECT_URI')
 //        );
         $session = new Session(
-            '2a6ebf75ebb84b258107d56ea4694183',
-            'a01066a74f3b4d3e972b70d94c0189d4',
+            'b0ba238623c6499b9fab2d7f5c497d8f',
+            '32863d8fb52440fc9d35a654f2cf0df1',
             'http://core.curator.atemkeng.eu/api/spotify/callback'
         );
 
