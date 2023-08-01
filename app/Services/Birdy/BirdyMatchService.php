@@ -298,7 +298,7 @@ class BirdyMatchService
         $filter[] = 'analyzed = 1';
         $direction = 'asc';
 
-        Log::info('filter__________________________________');
+        Log::info('filter FOR SIMMILAR SONGS__________________________________#####');
         Log::info((json_encode($filter, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)));
         return $this->songIndex->search('', [
             'filter' => $filter,
@@ -450,7 +450,7 @@ class BirdyMatchService
         $filter = $this->addSlugToFilter($criteria, $song, $filter);
 
         $direction = 'asc';
-        Log::info('filter__________________________________');
+        Log::info('filter including OPTIONS __________________________________*****');
         Log::info((json_encode($filter, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)));
         return $this->songIndex->search('', [
             'filter' => $filter,
