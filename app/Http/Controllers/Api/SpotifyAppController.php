@@ -15,11 +15,8 @@ class SpotifyAppController extends Controller
     public function index(Request $request)
     {
         $accessToken = session('spotify_access_token');
-        $savedToken = SpotifyAuth::query()->first()->access_token;
-        dump([
-            'accessToken' => $accessToken,
-            'savedToken' => $savedToken,
-        ]);
+        //$savedToken = SpotifyAuth::query()->first()->access_token;
+
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
         return $api->me();
