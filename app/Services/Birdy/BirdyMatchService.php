@@ -433,7 +433,7 @@ class BirdyMatchService
             }
             if ($attribute === 'genre') {
                 $genres = $song->genre;
-                $genreFilters = ["genre = 'xxx"];
+                $genreFilters = ["genre = 'xxx'"];
                 foreach ($genres as $genre) {
                     $genreFilters[] = "genre = '{$genre}'";
                 }
