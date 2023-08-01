@@ -35,10 +35,15 @@ class SpotifyAuthController extends Controller
 
     public function callback(Request $request)
     {
+//        $session = new Session(
+//            env('SPOTIFY_CLIENT_ID'),
+//            env('SPOTIFY_CLIENT_SECRET'),
+//            env('SPOTIFY_REDIRECT_URI')
+//        );
         $session = new Session(
-            env('SPOTIFY_CLIENT_ID'),
-            env('SPOTIFY_CLIENT_SECRET'),
-            env('SPOTIFY_REDIRECT_URI')
+            '2a6ebf75ebb84b258107d56ea4694183',
+            'a01066a74f3b4d3e972b70d94c0189d4',
+            'http://core.curator.atemkeng.eu/api/spotify/callback'
         );
 
         $state = $request->input('state');
