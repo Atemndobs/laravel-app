@@ -55,8 +55,10 @@ class SpotifyMusicService
             // handle both objects and arrays
             if (is_object($item)) {
                 $item_name = $item->name;
+                $artists = $item->artists;
             }else {
                 $item_name = $item['name'];
+                $artists = $item['artists'];
             }
             // make both lowercase
             $item_name = strtolower($item_name);
@@ -65,53 +67,33 @@ class SpotifyMusicService
             $item_name = trim($item_name);
             $name = trim($name);
 
-//            // if noe artis given, return item if name matches
-//            if ($songArtist === null) {
-//                return $item_name == $name;
-//            }
+            $artistNames = $this->getArtistNames($artists);
 
-            dump([
-                'item_name' => $item_name,
-                'name' => $name,
-            ]);
             if ($item_name === $name) {
-                // check if fount track belongs to artist
-                if (is_object($item)) {
-                    $artists = $item->artists;
-                }else {
-                    $artists = $item['artists'];
-                }
-                foreach ($artists as $artist) {
-                    if (is_object($artist)) {
-                        $artist_name = $artist->name;
-                    }else {
-                        $artist_name = $artist['name'];
-                    }
-                    $artist_name = strtolower($artist_name);
-                    $artist_name = trim($artist_name);
+//                dump([
+//                    'item_name' => $item_name,
+//                    'name' => $name,
+//                    'song_artist' => $songArtist,
+//                    'artists' => $artistNames,
+//                ]);
 
-                    if ($artist_name === $songArtist) {
+                // check id song_artis is contained in artistNames
+                if ($songArtist) {
+                    if (in_array($songArtist, $artistNames)) {
                         return true;
                     }
-                    dump([
-                        'artist_name' => $artist_name,
-                        'song_artist' => $songArtist,
-                    ]);
-
-                    // if lowercase artist name is found in lowercase song artist, return true
-                    if (str_contains(strtolower($songArtist), strtolower($artist_name))) {
-                        dump([
-                            'artist_name' => $artist_name,
-                            'song_artist' => $songArtist,
-                        ]);
-                        return true;
+                } else {
+                    // check if one of the names in artistNames is contained in songArtist
+                    foreach ($artistNames as $artistName) {
+                        if (str_contains($songArtist, $artistName)) {
+                            return true;
+                        }
                     }
-
                 }
 
             }
-            dump('not found');
-            return $item_name == $name;
+
+            return false;
         });
 
         // Retrieve the first matching item
@@ -453,36 +435,26 @@ class SpotifyMusicService
         $accessToken = SpotifyAuth::query()->first()->access_token;
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
-        try {
-            $search = $api->search($title, 'track');
-        }catch (\Throwable $e){
-           dump([
-               'token' => $accessToken,
-                'title' => $title,
-                'artist' => $artist,
-                'error' => $e->getMessage()
-           ]);
-        }
+        $search = $api->search($title, 'track');
+
         $tracks = $search->tracks->items;
         $track = $this->getItemByName($tracks, $title, $artist);
 
-        if (!$track) {
+
+        if ($track == null) {
             return null;
         }
-        $trackArtist = $track->artists[0]->name;
 
-        if (strtolower($trackArtist) !== strtolower($artist)) {
-            // check if the artist is contained in the track artists
-//            $trackArtist = $this->getItemByName($track->artists, $artist);
-//            if (!$trackArtist) {
-//                if (!$artist) {
-//                    return null;
-//                }
-//            }
-//            return $track->id;
-        }
-         dump($track->external_urls->spotify);
         return $track->id;
+    }
+
+    private function getArtistNames(mixed $artists): array
+    {
+        $artistNames = [];
+        foreach ($artists as $artist) {
+            $artistNames[] = $artist->name;
+        }
+        return $artistNames;
     }
 }
 

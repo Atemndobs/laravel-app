@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $classification_properties
  * @property bool|null $run_analysis
  * @property string|null $song_id
+ * @property string|null $song_url
  * 
  * @property Collection|Usage[] $usages
  *
