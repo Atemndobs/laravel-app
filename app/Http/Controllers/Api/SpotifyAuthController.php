@@ -18,11 +18,11 @@ class SpotifyAuthController extends Controller
             env('http://core.curator.atemkeng.eu/api/spotify/callback')
         );
 
-         $session = new Session(
-            env('SPOTIFY_CLIENT_ID'),
-            env('SPOTIFY_CLIENT_SECRET'),
-            env('SPOTIFY_REDIRECT_URI')
-        );
+//         $session = new Session(
+//            env('SPOTIFY_CLIENT_ID'),
+//            env('SPOTIFY_CLIENT_SECRET'),
+//            env('SPOTIFY_REDIRECT_URI')
+//        );
 
         $state = $session->generateState();
         $options = [
