@@ -15,17 +15,11 @@ class SpotifyAppController extends Controller
     public function index(Request $request)
     {
         $accessToken = session('spotify_access_token');
-        //$savedToken = SpotifyAuth::query()->first()->access_token;
 
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
-        try {
-            return $api->me();
-        }catch (\Exception $e){
-            // redirect to exact path http://mage.tech:8899/api/spotify/app
-            return redirect()->away('http://mage.tech:8899/api/spotify/auth');
+        return $api->me();
 
-        }
 
         $spotifyService = new SpotifyMusicService();
 
