@@ -60,12 +60,20 @@ class SpotifyMusicService
                 $item_name = $item['name'];
                 $artists = $item['artists'];
             }
+
             // make both lowercase
             $item_name = strtolower($item_name);
             $name = strtolower($name);
             // remove spaces before and after
             $item_name = trim($item_name);
             $name = trim($name);
+
+            // trim(strtolower($songArtist)) === trim(strtolower($artists[0]->name))
+            if ($songArtist) {
+                if ($item_name === $name && trim(strtolower($songArtist)) === trim(strtolower($artists[0]->name))) {
+                    return true;
+                }
+            }
 
             $artistNames = $this->getArtistNames($artists);
 
@@ -505,6 +513,50 @@ class SpotifyMusicService
         // return artists as a comma separated string if the array is not empty
         return implode(', ', $artistNames);
 
+    }
+
+    public function searchSong(string $title, string $artist)
+    {
+        $accessToken = SpotifyAuth::query()->first()->access_token;
+        $api = new SpotifyWebAPI();
+        $api->setAccessToken($accessToken);
+        $search = $api->search($title, 'track');
+
+        $tracks = $search->tracks->items;
+
+        if (empty($tracks)) {
+            return null;
+        }
+        if ($artist == null) {
+            $trackResults = [];
+            foreach ($tracks as $track) {
+                if ($track->name == $title) {
+                    $trackResults[] = [
+                        'id' => $track->id,
+                        'title' => $track->name,
+                        'artist' => implode(',', $this->getArtistNames($track->artists)),
+                        'image' => $track->album->images[0]->url,
+                        'genre' => $this->getGenre($track->id),
+                        'url' => $track->external_urls->spotify,
+                        'share_url' => $track->external_urls->spotify,
+                    ];
+                }
+            }
+            return $trackResults;
+        }
+        $track = $this->getItemByName($tracks, $title, $artist);
+        if ($track == null) {
+            return null;
+        }
+        return [
+            'id' => $track->id,
+            'title' => $track->name,
+            'artist' => implode(',', $this->getArtistNames($track->artists)),
+            'image' => $track->album->images[0]->url,
+            'genre' => $this->getGenre($track->id),
+            'url' => $track->external_urls->spotify,
+            'share_url' => $track->external_urls->spotify,
+        ];
     }
 }
 
