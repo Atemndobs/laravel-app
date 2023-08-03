@@ -79,6 +79,8 @@ class SpotifyUpdateSongBySpotifyID extends Command
                     // get title from spotify
                     $title = $spotifyService->getTitle($song_id);
                     $song->title = $title;
+                    $song->song_id = $song_id;
+                    $song->song_url = 'https://open.spotify.com/track/' . $song_id;
                 }
 
             }
@@ -88,8 +90,10 @@ class SpotifyUpdateSongBySpotifyID extends Command
                     $this->error('Song already has author:  ' . $song->author);
                 }else{
                     // get author from spotify
-                    $author = $spotifyService->getAuthor($song_id);
+                    $author = $spotifyService->getArtists($song_id);
                     $song->author = $author;
+                    $song->song_id = $song_id;
+                    $song->song_url = 'https://open.spotify.com/track/' . $song_id;
                 }
             }
             if ($genre) {
@@ -100,6 +104,8 @@ class SpotifyUpdateSongBySpotifyID extends Command
                     // get genre from spotify
                     $genre = $spotifyService->getGenre($song_id);
                     $song->genre = $genre;
+                    $song->song_id = $song_id;
+                    $song->song_url = 'https://open.spotify.com/track/' . $song_id;
                 }
             }
             if ($image) {
@@ -110,11 +116,13 @@ class SpotifyUpdateSongBySpotifyID extends Command
                     // get image from spotify
                     $image = $spotifyService->getImage($song_id);
                     $song->image = $image;
+                    $song->song_id = $song_id;
+                    // add spotify url
+                    $song->song_url = 'https://open.spotify.com/track/' . $song_id;
                 }
 
             }
             $song->save();
         }
-        return;
     }
 }
