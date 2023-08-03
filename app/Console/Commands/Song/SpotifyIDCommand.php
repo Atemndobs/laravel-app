@@ -27,6 +27,7 @@ class SpotifyIDCommand extends Command
     public function handle()
     {
         $songs = \App\Models\Song::query()->whereNull('song_id')
+            ->whereNull('played')
             ->get();
         $spotifyService = new SpotifyMusicService();
 
@@ -51,14 +52,16 @@ class SpotifyIDCommand extends Command
                 $song->song_id = $songId;
                 $song->song_url = 'https://open.spotify.com/track/' . $songId;
                 $song->source = 'spotify';
+                $song->played = true;
                 $song->save();
                 $songsUpdated[] = $songId;
                 $this->info('Found song with ID ' . $songId . ' and saved it to the database.');
-                $this->line('');
             }else{
                 $this->error('Could not find song with title ' . $song->title . ' and artist ' . $song->author);
-                $this->line('');
+                $song->played = true;
+                $song->save();
             }
+            $this->line('');
             $bar->advance();
             $this->line('');
         }
