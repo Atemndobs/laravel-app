@@ -456,5 +456,30 @@ class SpotifyMusicService
         }
         return $artistNames;
     }
+
+    public function getImage(mixed $song_id)
+    {
+        $accessToken = SpotifyAuth::query()->first()->access_token;
+        $api = new SpotifyWebAPI();
+        $api->setAccessToken($accessToken);
+        $track = $api->getTrack($song_id);
+        $images = $track->album->images;
+        return $images[0]->url;
+    }
+
+    public function getGenre(mixed $song_id)
+    {
+        $accessToken = SpotifyAuth::query()->first()->access_token;
+        $api = new SpotifyWebAPI();
+        $api->setAccessToken($accessToken);
+        $track = $api->getTrack($song_id);
+        $album = $api->getAlbum($track->album->id);
+        if (empty($album->genres)) {
+            // get genre from artist
+            $artist = $api->getArtist($track->artists[0]->id);
+            return $artist->genres;
+        }
+        return $album->genres;
+    }
 }
 

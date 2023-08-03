@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Song;
 
+use App\Services\Scraper\SpotifyMusicService;
 use App\Services\Storage\MinioService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -32,88 +33,110 @@ class SpotifyCleanupCommand extends Command
             ->whereNotNull('song_id')
             ->where('source', 'spotify')
             ->get();
+
+        $spotifyService = new SpotifyMusicService();
         // check for duplicate song_ids
-        $songIds = $songs->pluck('song_id')->toArray();
-        $duplicates = array_unique(array_diff_assoc($songIds, array_unique($songIds)));
-        // create a array of content of all duplicates and group them by song_id and include the song title and author
-        $duplicatesContent = [];
-        foreach ($duplicates as $duplicate) {
-            $duplicatesContent[$duplicate] = $songs->filter(function ($song) use ($duplicate) {
-                return $song->song_id === $duplicate;
-            })->map(function ($song) {
-                // return only the title and author of the song
-                return [
-                    'id' => $song->id ?? 'null',
-                    'title' => $song->title ?? 'null',
-                    'author' => $song->author ?? 'null',
-                    'path' => $song->path ?? 'null',
-                    'image' => $song->image ?? 'null',
-                    'genre' => $song->genre ?? 'null',
-                    'bpm' => $song->bpm ?? 'null',
-                ];
-              //  return $song->title . ' by ' . $song->author;
-            })->toArray();
-        }
+//        $songIds = $songs->pluck('song_id')->toArray();
+//        $duplicates = array_unique(array_diff_assoc($songIds, array_unique($songIds)));
+//        // create a array of content of all duplicates and group them by song_id and include the song title and author
+//        $duplicatesContent = [];
+//        foreach ($duplicates as $duplicate) {
+//            $duplicatesContent[$duplicate] = $songs->filter(function ($song) use ($duplicate) {
+//                return $song->song_id === $duplicate;
+//            })->map(function ($song) {
+//                // return only the title and author of the song
+//                return [
+//                    'id' => $song->id ?? 'null',
+//                    'title' => $song->title ?? 'null',
+//                    'author' => $song->author ?? 'null',
+//                    'path' => $song->path ?? 'null',
+//                    'image' => $song->image ?? 'null',
+//                    'genre' => $song->genre ?? 'null',
+//                    'bpm' => $song->bpm ?? 'null',
+//                ];
+//              //  return $song->title . ' by ' . $song->author;
+//            })->toArray();
+//        }
 
-        $deletables = [];
-        $retainables = [];
-        foreach ($duplicatesContent as $key => $duplicates) {
-            // rename the keys of the items in duplicates array to start from 0
-            $duplicates = array_values($duplicates);
-            if (count($duplicates) === 1) {
-                unset($duplicatesContent[$key]);
+//        $deletables = [];
+//        $retainables = [];
+//        foreach ($duplicatesContent as $key => $duplicates) {
+//            // rename the keys of the items in duplicates array to start from 0
+//            $duplicates = array_values($duplicates);
+//            if (count($duplicates) === 1) {
+//                unset($duplicatesContent[$key]);
+//            }
+//            // collect all genres from duplicates into 1 array
+//            $genres = [];
+//
+//            foreach ($duplicates as $duplicateKey => $duplicate) {
+//                if ($duplicateKey === 0) {
+//                    $retainables[] = $duplicate;
+//                }
+//                // add all other duplicates to deletables array
+//                if ($duplicateKey !== 0) {
+//                    $deletables[] = $duplicate;
+//                }
+//
+//                if (is_array($duplicate['genre'])) {
+//                    $genres = array_merge($genres, $duplicate['genre']);
+//                    continue;
+//                }
+//
+//                $genres[] = $duplicate['genre'];
+//            }
+//            $genres = array_unique($genres);
+//            $retainables[0]['genre'] = $genres;
+//
+//            $duplicatesContent[$key] = [
+//                'id' => $key,
+//                'deletables' => $deletables,
+//                'retainables' => $retainables,
+//            ];
+//
+//        }
+//
+//        foreach ($retainables as $retainable) {
+//            $song = \App\Models\Song::find($retainable['id']);
+//            $song->genre = $retainable['genre'];
+//            $song->save();
+//            $this->info('SONG ID ' . $retainable['id'] . ' RETAINED') ;
+//            $this->info('Genre: ' . json_encode($retainable['genre'], JSON_PRETTY_PRINT));
+//        }
+//        foreach ($deletables as $deletable) {
+//            $id = $deletable['id'];
+//            $sql = "DELETE FROM songs WHERE id = $id";
+//            DB::statement($sql);
+//            $this->warn('SONG ID ' . $deletable['id'] . ' DELETED') ;
+//            $this->warn('Deleted song ' . $deletable['title'] . ' by ' . $deletable['author']);
+//        }
+        $missingImages = [];
+        $missingGenres = [];
+        foreach ($songs as $song) {
+            // collect all songs without image
+            if (empty($song->image)) {
+                $missingImages[] = $song->id;
+                // get the image from spotify
+                $image = $spotifyService->getImage($song->song_id);
+                $song->image = $image;
+                $song->save();
+                $this->info('SONG ID ' . $song->id . ' IMAGE ADDED');
             }
-            // collect all genres from duplicates into 1 array
-            $genres = [];
-
-            foreach ($duplicates as $duplicateKey => $duplicate) {
-                if ($duplicateKey === 0) {
-                    $retainables[] = $duplicate;
-                }
-                // add all other duplicates to deletables array
-                if ($duplicateKey !== 0) {
-                    $deletables[] = $duplicate;
-                }
-
-                if (is_array($duplicate['genre'])) {
-                    $genres = array_merge($genres, $duplicate['genre']);
-                    continue;
-                }
-
-                $genres[] = $duplicate['genre'];
+            // collect all songs without genre
+            if (empty($song->genre)) {
+                $missingGenres[] = $song->id;
+                // get the genre from spotify
+                $genre = $spotifyService->getGenre($song->song_id);
+                $song->genre = $genre;
+                $song->save();
+                $this->info('SONG ID ' . $song->id . ' GENRE ADDED');
             }
-            $genres = array_unique($genres);
-            $retainables[0]['genre'] = $genres;
-
-            $duplicatesContent[$key] = [
-                'id' => $key,
-                'deletables' => $deletables,
-                'retainables' => $retainables,
-            ];
-
-        }
-
-        foreach ($retainables as $retainable) {
-            $song = \App\Models\Song::find($retainable['id']);
-            $song->genre = $retainable['genre'];
-            $song->save();
-            $this->info('SONG ID ' . $retainable['id'] . ' RETAINED') ;
-            $this->info('Genre: ' . json_encode($retainable['genre'], JSON_PRETTY_PRINT));
-        }
-        foreach ($deletables as $deletable) {
-            $id = $deletable['id'];
-            $sql = "DELETE FROM songs WHERE id = $id";
-            DB::statement($sql);
-            $this->warn('SONG ID ' . $deletable['id'] . ' DELETED') ;
-            $this->warn('Deleted song ' . $deletable['title'] . ' by ' . $deletable['author']);
         }
 
         dd([
-            'songs_count' => $songs->count(),
-            'duplicate_songs_count' => count($duplicatesContent),
-            'retainables_count' => count($retainables),
-            'deletables_count' => count($deletables),
-           // 'duplicates_content' => $duplicatesContent,
+            'missingImages' => count($missingImages),
+            'missingGenres' => count($missingGenres)
         ]);
+
     }
 }
