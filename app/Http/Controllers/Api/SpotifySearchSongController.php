@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\Scraper\SpotifyMusicService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SpotifySearchSongController extends Controller
 {
@@ -22,6 +23,8 @@ class SpotifySearchSongController extends Controller
         }
         $spotifyService = new SpotifyMusicService();
         $searchResult = $spotifyService->searchSong($title, $artist);
+
+        Log::warning('searchResult', [$searchResult]);
         return response()->json($searchResult);
     }
 }
