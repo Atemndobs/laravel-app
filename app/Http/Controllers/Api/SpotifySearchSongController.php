@@ -24,6 +24,10 @@ class SpotifySearchSongController extends Controller
         $spotifyService = new SpotifyMusicService();
         $searchResult = $spotifyService->searchSong($title, $artist);
 
+        Log::info('search_query', [
+            'artist' => $artist,
+            'title' => $title,
+        ]);
         Log::warning('searchResult', [$searchResult]);
         return response()->json($searchResult);
     }
