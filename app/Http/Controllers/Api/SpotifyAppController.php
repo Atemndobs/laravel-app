@@ -19,7 +19,7 @@ class SpotifyAppController extends Controller
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
 
-        $redirectUri = 'http://curator.atemkeng.eu/app/curator/play-644620a7ea2e4f6c16474ca6?branch=develop&embed=true';
+        $redirectUri = 'http://curator.atemkeng.eu/app/curator/download-64463fb9ea2e4f6c16474cb0?branch=develop&embed=true';
         // redirect to this external url ($redirectUrl)
         return redirect()->to($redirectUri);
 
