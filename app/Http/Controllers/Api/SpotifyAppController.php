@@ -12,18 +12,40 @@ use SpotifyWebAPI\SpotifyWebAPI;
 
 class SpotifyAppController extends Controller
 {
-    public function index(Request $request)
+    public SpotifyWebAPI $api;
+
+    public function __construct()
     {
         $accessToken = session('spotify_access_token');
+        // if access token is not set, get it from database
+        if (!$accessToken) {
+            $spotifyAuth = SpotifyAuth::first();
+            $accessToken = $spotifyAuth->access_token;
+        }
+        // if token is expired, get a new one
 
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
+        $this->api = new SpotifyWebAPI();
+        $this->api->setAccessToken($accessToken);
+    }
 
+
+    /**
+     * @param Request $request
+     */
+    public function index(Request $request)
+    {
+        // save user spotify in session
+        $user = $this->api->me();
+        session(['spotify_user' => $user]);
+//        $spotifyAuth = SpotifyAuth::first();
+//        $spotifyAuth->spotify_id = $user->id;
         $redirectUri = 'http://curator.atemkeng.eu/app/curator/download-64463fb9ea2e4f6c16474cb0?branch=develop&embed=true';
-        // redirect to this external url ($redirectUrl)
         return redirect()->to($redirectUri);
+    }
 
-
+    public function getPlaylists(Request $request)
+    {
+        $api = $this->api;
         $spotifyService = new SpotifyMusicService();
 
         $playlists = [];
@@ -45,7 +67,7 @@ class SpotifyAppController extends Controller
             return $api->getMyPlaylists($options);
         };
         $totalPlaylists = $getPlaylists($options)->total;
-        
+
         // get limit and offset from request
         $limit = $request->get('limit') ?? 2;
         $offset = $request->get('offset') ?? 0;
