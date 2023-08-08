@@ -5,17 +5,33 @@ namespace App\Services\Scraper;
 use Aerni\Spotify\Facades\SpotifyFacade as Spotify;
 use App\Models\Release;
 use App\Models\SingleRelease;
+use App\Models\Song;
 use App\Models\SpotifyAuth;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Log;
+use League\CommonMark\Extension\CommonMark\Node\Block\ThematicBreak;
 use SpotifyWebAPI\SpotifyWebAPI;
 
 class SpotifyMusicService
 {
+    private SpotifyWebAPI $spotify;
+    private User $user;
+    private string $spotifyId;
+
+    public function __construct()
+    {
+        $this->user = (new User())->getLoggedInUser();
+        $this->spotify = new SpotifyWebAPI();
+        $spotifySession  = json_decode($this->user->session, true);
+        $accessToken = $spotifySession['access_token'];
+        $this->spotify->setAccessToken($accessToken);
+        $this->spotifyId = $this->spotify->me()->id;
+    }
 
     public function playlist(string $playlistName, string $owner)
     {
-        // 11171774669
         $playlists = $this->getMyPlaylistByName($playlistName);
         if ($playlists) {
             return $playlists;
@@ -52,7 +68,6 @@ class SpotifyMusicService
     public function getItemByName($array, $name, $songArtist = null)
     {
         $filteredArray = array_filter($array, function ($item) use ($name, $songArtist) {
-            // handle both objects and arrays
             if (is_object($item)) {
                 $item_name = $item->name;
                 $artists = $item->artists;
@@ -61,14 +76,12 @@ class SpotifyMusicService
                 $artists = $item['artists'];
             }
 
-            // make both lowercase
             $item_name = strtolower($item_name);
             $name = strtolower($name);
             // remove spaces before and after
             $item_name = trim($item_name);
             $name = trim($name);
 
-            // trim(strtolower($songArtist)) === trim(strtolower($artists[0]->name))
             if ($songArtist) {
                 if ($item_name === $name && trim(strtolower($songArtist)) === trim(strtolower($artists[0]->name))) {
                     return true;
@@ -78,14 +91,6 @@ class SpotifyMusicService
             $artistNames = $this->getArtistNames($artists);
 
             if ($item_name === $name) {
-//                dump([
-//                    'item_name' => $item_name,
-//                    'name' => $name,
-//                    'song_artist' => $songArtist,
-//                    'artists' => $artistNames,
-//                ]);
-
-                // check id song_artis is contained in artistNames
                 if ($songArtist) {
                     if (in_array($songArtist, $artistNames)) {
                         return true;
@@ -104,9 +109,7 @@ class SpotifyMusicService
             return false;
         });
 
-        // Retrieve the first matching item
         $result = reset($filteredArray);
-
         return $result !== false ? $result : null;
     }
 
@@ -121,12 +124,12 @@ class SpotifyMusicService
 
     public function getAllPlaylists()
     {
-        $total = (int)Spotify::userPlaylists('11171774669')->get()['total'];
+        $total = (int)Spotify::userPlaylists($this->spotifyId)->get()['total'];
         // if total is greater than 50, we need to paginate
         if ($total > 50) {
             $playlists = $this->paginatePlaylists($total);
         } else {
-            $playlists = Spotify::userPlaylists('11171774669')->limit(50)->get()['items'];
+            $playlists = Spotify::userPlaylists($this->spotifyId)->limit(50)->get()['items'];
         }
         return $playlists;
     }
@@ -188,7 +191,12 @@ class SpotifyMusicService
                     'image' => $track['track']['album']['images'][0]['url'] ?? null,
                 ];
             } catch (\Exception $e) {
-                //   dump($track);
+                $error = [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ];
+                Log::error(json_encode($error, JSON_PRETTY_PRINT));
             }
         }, $tracks);
     }
@@ -227,11 +235,12 @@ class SpotifyMusicService
 
             $release->save();
         } catch (\Throwable $e) {
-            dump([
-                'Error' => $e->getMessage(),
-                'Playlist' => $playlist
-            ]);
-            // do nothing
+            $error = [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ];
+            Log::error(json_encode($error, JSON_PRETTY_PRINT));
         }
     }
 
@@ -258,10 +267,12 @@ class SpotifyMusicService
                     continue;
                 }
             } catch (\Exception $e) {
-//                dump([
-//                    'Error' => $e->getMessage(),
-//                    'Playlist' => $playlistSong
-//                ]);
+                $error = [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ];
+                Log::error(json_encode($error, JSON_PRETTY_PRINT));
                 continue;
             }
 
@@ -276,13 +287,14 @@ class SpotifyMusicService
                 $release->added_at = $playlistSong['added_at'];
                 $release->date_created = now();
                 $release->date_updated = now();
-                //dd($release->toArray());
                 $release->save();
             } catch (\Throwable $e) {
-//                dump ([
-//                    'Error' => $e->getMessage(),
-//                    'Playlist' => $playlistSong
-//                ]);
+                $error = [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ];
+                Log::error(json_encode($error, JSON_PRETTY_PRINT));
                 continue;
             }
         }
@@ -305,7 +317,7 @@ class SpotifyMusicService
         $playlists = [];
         $offset = 0;
         while ($offset < $total) {
-            $playlists[] = Spotify::userPlaylists('11171774669')->limit(50)->offset($offset)->get()['items'];
+            $playlists[] = Spotify::userPlaylists($this->spotifyId)->limit(50)->offset($offset)->get()['items'];
             $offset += 50;
         }
         return $playlists[0];
@@ -313,7 +325,7 @@ class SpotifyMusicService
 
     public function getMyPlaylistByName(string $playlistName)
     {
-        $playlists = Spotify::userPlaylists('11171774669')->get()['items'];
+        $playlists = Spotify::userPlaylists($this->spotifyId)->get()['items'];
         if (empty($playlists)) {
             return null;
         }
@@ -420,12 +432,10 @@ class SpotifyMusicService
         return $songIds;
     }
 
-    public function addSongToReleaseRadar(array $songIds)
+    public function addSongToReleaseRadar(array $songIds, string $releaseRadarName = 'ATM Release Radar'): string
     {
-        $releaseRadarPlaylistId = Release::query()->where('name', 'ATM Release Radar')->first()->id;
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
+        $releaseRadarPlaylistId = Release::query()->where('name', $releaseRadarName)->first()->id;
+        $api = $this->spotify;
         $api->addPlaylistTracks($releaseRadarPlaylistId, $songIds);
         $playlist = $api->getPlaylist($releaseRadarPlaylistId);
         $tracksCount = $playlist->tracks->total;
@@ -440,14 +450,10 @@ class SpotifyMusicService
 
     public function searchSongByTitleAndArtist(string $title, string $artist)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
+        $api = $this->spotify;
         $search = $api->search($title, 'track');
-
         $tracks = $search->tracks->items;
         $track = $this->getItemByName($tracks, $title, $artist);
-
 
         if ($track == null) {
             return null;
@@ -467,19 +473,14 @@ class SpotifyMusicService
 
     public function getImage(mixed $song_id)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
-        $track = $api->getTrack($song_id);
+        $track = $this->spotify->getTrack($song_id);
         $images = $track->album->images;
         return $images[0]->url;
     }
 
     public function getGenre(mixed $song_id)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
+        $api = $this->spotify;
         $track = $api->getTrack($song_id);
         $album = $api->getAlbum($track->album->id);
         if (empty($album->genres)) {
@@ -492,19 +493,13 @@ class SpotifyMusicService
 
     public function getTitle(bool|array|string|null $song_id)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
-        $track = $api->getTrack($song_id);
+        $track = $this->spotify->getTrack($song_id);
         return $track->name;
     }
 
     public function getArtists(bool|array|string|null $song_id)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
-        $track = $api->getTrack($song_id);
+        $track = $this->spotify->getTrack($song_id);
         $artists = $track->artists;
         $artistNames = [];
         foreach ($artists as $artist) {
@@ -517,11 +512,7 @@ class SpotifyMusicService
 
     public function searchSong(string $title, string $artist)
     {
-        $accessToken = SpotifyAuth::query()->first()->access_token;
-        $api = new SpotifyWebAPI();
-        $api->setAccessToken($accessToken);
-        $search = $api->search($title, 'track');
-
+        $search = $this->spotify->search($title, 'track');
         $tracks = $search->tracks->items;
 
         if (empty($tracks)) {
@@ -531,15 +522,7 @@ class SpotifyMusicService
             $trackResults = [];
             foreach ($tracks as $track) {
                 if ($track->name == $title) {
-                    $trackResults[] = [
-                        'id' => $track->id,
-                        'title' => $track->name,
-                        'artist' => implode(',', $this->getArtistNames($track->artists)),
-                        'image' => $track->album->images[0]->url,
-                        'genre' => $this->getGenre($track->id),
-                        'url' => $track->external_urls->spotify,
-                        'share_url' => $track->external_urls->spotify,
-                    ];
+                    $trackResults[] = $this->getTrackArray($track);
                 }
             }
             return $trackResults;
@@ -548,6 +531,63 @@ class SpotifyMusicService
         if ($track == null) {
             return null;
         }
+        return $this->getTrackArray($track);
+    }
+
+    public function getLikedSongsIds(int $time , int $limit) : array
+    {
+        $spotifyLikedSongs = [];
+        // search saved tracks since 24 hours ago
+        $since = Carbon::now()->subHours($time);
+        $formattedDateTime = $since->format('Y-m-d\TH:i:s.u\Z');
+
+        // get total liked songs
+        $totalLikedSongs = $this->spotify->getMySavedTracks(['limit' => 1])->total;
+
+        if ($totalLikedSongs > 50 && $limit > 50) {
+            $limit = 50;
+        }
+        $page = 0;
+        // find all liked songs for the total liked songs
+        while ($page * $limit < $totalLikedSongs) {
+            $myLikedSongs = $this->spotify->getMySavedTracks(['limit' => $limit, 'offset' => $page * $limit]);
+
+            $myRecentLikedSongs = collect($myLikedSongs->items)->filter(function ($item) use ($formattedDateTime) {
+                return $item->added_at >= $formattedDateTime;
+            });
+            foreach ($myRecentLikedSongs as $item) {
+                $spotifyLikedSongs[] = $this->getTrackArray($item->track);
+            }
+            if ($myLikedSongs->next == null) {
+                break;
+            }
+            if (count($myRecentLikedSongs) < $limit) {
+                break;
+            }
+
+            $page++;
+        }
+
+        return $spotifyLikedSongs;
+    }
+
+    public function checkIfSongExists(mixed $likedSongId): bool
+    {
+        $song = Song::query()->where('song_id', $likedSongId)
+            ->where('source', 'spotify')
+            ->first();
+        if ($song == null) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param $track
+     * @return array
+     */
+    public function getTrackArray($track): array
+    {
         return [
             'id' => $track->id,
             'title' => $track->name,

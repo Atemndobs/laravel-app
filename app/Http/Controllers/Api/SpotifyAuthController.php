@@ -3,15 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use SpotifyWebAPI\Session;
 
 class SpotifyAuthController extends Controller
 {
+    /**
+     * @var User
+     */
+    public User $user;
+    // crete the constructor and initialize the user
+    public function __construct()
+    {
+        $this->user = (new User())->getLoggedInUser();
+    }
+
     public function login()
     {
-        // clear all sessions
-        session()->flush();
          $session = new Session(
             env('SPOTIFY_CLIENT_ID'),
             env('SPOTIFY_CLIENT_SECRET'),
@@ -25,11 +34,11 @@ class SpotifyAuthController extends Controller
                 'user-read-private',
                 'playlist-modify-public',
                 'playlist-modify-private',
+                'user-library-read',
             ],
             'state' => $state,
         ];
 
-        session(['spotify_auth' => $session->getAuthorizeUrl($options)]);
         return redirect()->away($session->getAuthorizeUrl($options));
     }
 
@@ -40,21 +49,22 @@ class SpotifyAuthController extends Controller
             env('SPOTIFY_CLIENT_SECRET'),
             env('SPOTIFY_REDIRECT_URI')
         );
-        $session->requestAccessToken($request->input('code'));
 
+        $session->requestAccessToken($request->input('code'));
         $accessToken = $session->getAccessToken();
         $refreshToken = $session->getRefreshToken();
         $expires = $session->getTokenExpiration();
-        // Store the access and refresh tokens somewhere (e.g., session or database)
-        session(['spotify_access_token' => $accessToken]);
-        session(['spotify_refresh_token' => $refreshToken]);
-        $spotifyAuth = new \App\Models\SpotifyAuth();
-        // delete all records from the table
-        \App\Models\SpotifyAuth::truncate();
-        $spotifyAuth->access_token = $accessToken;
-        $spotifyAuth->refresh_token = $refreshToken;
-        $spotifyAuth->expires = $expires;
-        $spotifyAuth->save();
+
+        //$spotifyUser = json_decode(json_encode($spotifyUser, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        $spotifySession = [
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires' => $expires,
+        ];
+
+        $this->user->session = $spotifySession;
+        $this->user->save();
 
         return redirect('/api/spotify/app');
     }

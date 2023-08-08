@@ -21,7 +21,7 @@ class ReleaseRadar extends Command
      *
      * @var string
      */
-    protected $signature = 'spotify:release-radar {--t|time=} {--p|playlist=} {--a|all=} {--o|owner=}';
+    protected $signature = 'spotify:release-radar {--t|time=} {--p|playlist=} {--a|all=} {--o|owner=} {--r|release-radar=}';
 
     /**
      * The console command description.
@@ -29,7 +29,7 @@ class ReleaseRadar extends Command
      * @var string
      */
     protected $description = 'Get the latest Releases from all followed Playlists and save them to ATM Release Radar playlist in Spotify. Time is in hours.
-    Options are --time (default 24), --playlist, --all, --owner';
+    Options are --time (default 24), --playlist, --all, --owner --release-radar';
 
     /**
      * Execute the console command.
@@ -40,14 +40,19 @@ class ReleaseRadar extends Command
         $all = $this->option('all');
         $owner = $this->option('owner') ?? "Spotify";
         $time = $this->option('time') ?? 24;
+        $releaseRadar = $this->option('release-radar');
+        if (!$releaseRadar) {
+            $releaseRadar = 'ATM Release Radar';
+        }
         // if time is given in days (input for time contains 'd' at the end), convert it to hours
         if (str_contains($time, 'd')) {
             $time = intval($time) * 24;
         }
 
         $spotifyMusicService = new SpotifyMusicService();
+
         $songIds = $spotifyMusicService->getRecentlyAddedSongs($time);
-        $spotifyMusicService->addSongToReleaseRadar($songIds);
+        $spotifyMusicService->addSongToReleaseRadar($songIds, $releaseRadar);
         $this->info('Added ' . count($songIds) . ' songs to ATM Release Radar.');
 
         // Run the SpotifyReleasesCommand with the --all option if no playlist is given
@@ -81,7 +86,6 @@ class ReleaseRadar extends Command
     {
         $api = new SpotifyWebAPI();
         $api->setAccessToken($accessToken);
-       //  $me = $api->me();
         return $api->getMySavedTracks([
             'limit' => 50,
         ]);

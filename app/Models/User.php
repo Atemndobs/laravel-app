@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Model;
-use TCG\Voyager\Models\User as VoyagerUser;
 
 class User extends Authenticatable
 {
@@ -62,5 +60,21 @@ class User extends Authenticatable
     public function matchCriterion()
     {
         return $this->hasMany(MatchCriterion::class);
+    }
+
+    public function getLoggedInUser() : User
+    {
+        $user = auth()->user();
+        if ($user) {
+            // get first user with admin role
+            /** @var User $user */
+            $user = User::query()->firstWhere('id', $user->getAuthIdentifier());
+        }
+        if (!$user) {
+            // get first user with admin role
+            $user = User::query()->firstWhere('role_id', 1);
+        }
+
+        return $user;
     }
 }

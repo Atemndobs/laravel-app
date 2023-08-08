@@ -82,6 +82,8 @@ Route::get('storage/backup/store', [\App\Http\Controllers\Api\Storage\DatabaseBa
 Route::get('/spotify/app', [\App\Http\Controllers\Api\SpotifyAppController::class, 'index']);
 Route::get('/spotify/auth', [\App\Http\Controllers\Api\SpotifyAuthController::class,'login']);
 Route::get('/spotify/callback', [\App\Http\Controllers\Api\SpotifyAuthController::class, 'callback']);
+// get spotify playlists
+Route::get('/spotify/playlists', [\App\Http\Controllers\Api\SpotifyAppController::class, 'getPlaylists']);
 
 
 // Route for spotifySearchSongsController

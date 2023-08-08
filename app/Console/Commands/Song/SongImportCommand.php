@@ -50,8 +50,7 @@ class SongImportCommand extends Command
         $this->info('Found ' . count($audioFiles) . ' files');
         // call move audio command
        $this->call('move:audio');
-
-        $uploadService = new UploadService();
+       $uploadService = new UploadService();
 
         if ($path) {
             $songPath = "/var/www/html/$path";
