@@ -58,7 +58,7 @@ class SpotifyDownloadCommand extends Command
         $song = new \App\Models\Song();
         // get song local path
         $path = array_unique(explode("Downloaded", $result));
-        dd($path);
+      //  dd($path);
 
         return 0;
     }
