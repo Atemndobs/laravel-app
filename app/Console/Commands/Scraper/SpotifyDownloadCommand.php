@@ -31,7 +31,9 @@ class SpotifyDownloadCommand extends Command
         $this->info('Downloading Playlists...');
         $url = $this->argument('url');
 
-        $shell = shell_exec("spotdl  $url --output /var/www/html/storage/app/public/uploads/audio/");
+        $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/";
+
+        $shell = shell_exec("spotdl  $url --output $songDownloadLocation");
         $this->info($shell);
         Log::info($shell);
         try {
@@ -50,6 +52,13 @@ class SpotifyDownloadCommand extends Command
         }catch (\Exception $e) {
             $this->error($e->getMessage());
         }
+
+        // save to database
+        $this->info('Saving to Database...');
+        $song = new \App\Models\Song();
+        // get song local path
+        $path = array_unique(explode("Downloaded", $result));
+        dd($path);
 
         return 0;
     }

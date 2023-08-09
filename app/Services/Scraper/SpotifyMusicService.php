@@ -329,7 +329,13 @@ class SpotifyMusicService
         if (empty($playlists)) {
             return null;
         }
-        return $this->getItemByName($playlists, $playlistName);
+
+        foreach ($playlists as $playlist) {
+            if (trim($playlist['name']) === $playlistName) {
+                return $playlist;
+            }
+        }
+        return null;
     }
 
     public function getMyFollowedPlaylistsByName(string $playlistName)
@@ -434,7 +440,20 @@ class SpotifyMusicService
 
     public function addSongToReleaseRadar(array $songIds, string $releaseRadarName = 'ATM Release Radar'): string
     {
-        $releaseRadarPlaylistId = Release::query()->where('name', $releaseRadarName)->first()->id;
+        try {
+            $releaseRadarPlaylistId = Release::query()->where('name', $releaseRadarName)->first()->id;
+        }catch (\Throwable $e){
+            $message = [
+                'message' => 'Release Radar Playlist not found-- Getting playlist ID from Spotify',
+            ];
+            Log::warning('Release Radar Playlist not found-- Getting playlist ID from Spotify');
+            // get Playlist by name
+            $playlist = $this->getMyPlaylistByName($releaseRadarName);
+            if ($playlist == null) {
+                return json_encode($message, JSON_PRETTY_PRINT);
+            }
+            $releaseRadarPlaylistId = $playlist['id'];
+        }
         $api = $this->spotify;
         $api->addPlaylistTracks($releaseRadarPlaylistId, $songIds);
         $playlist = $api->getPlaylist($releaseRadarPlaylistId);

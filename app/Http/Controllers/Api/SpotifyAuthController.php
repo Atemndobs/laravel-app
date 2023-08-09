@@ -13,7 +13,7 @@ class SpotifyAuthController extends Controller
      * @var User
      */
     public User $user;
-    // crete the constructor and initialize the user
+
     public function __construct()
     {
         $this->user = (new User())->getLoggedInUser();
@@ -54,8 +54,6 @@ class SpotifyAuthController extends Controller
         $accessToken = $session->getAccessToken();
         $refreshToken = $session->getRefreshToken();
         $expires = $session->getTokenExpiration();
-
-        //$spotifyUser = json_decode(json_encode($spotifyUser, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $spotifySession = [
             'access_token' => $accessToken,
