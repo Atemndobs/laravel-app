@@ -30,6 +30,29 @@ class SpotifyDownloadCommand extends Command
     {
         $this->info('Downloading Playlists...');
         $url = $this->argument('url');
+        $spotifyId = explode("track/", $url);
+        $spotifyId = $spotifyId[1];
+        $spotifyId = explode("?", $spotifyId);
+        $spotifyId = $spotifyId[0];
+        // check if song exists in DB
+        $songExists = \App\Models\Song::where('song_id', $spotifyId)->first();
+        if ($songExists) {
+            $this->error('Song with ID ' . $spotifyId . ' already exists in DB.');
+            $message = [
+                'songExists' => [
+                    'song_id' => $songExists->song_id,
+                    'id' => $songExists->id,
+                    'title' => $songExists->title,
+                    'author' => $songExists->author,
+                    'genre' => $songExists->genre,
+                    'path' => $songExists->path,
+                    'image' => $songExists->image,
+            ]
+            ];
+
+            $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            return 0;
+        }
 
         $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/";
 
