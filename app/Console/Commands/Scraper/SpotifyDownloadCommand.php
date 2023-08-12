@@ -47,7 +47,7 @@ class SpotifyDownloadCommand extends Command
                     'genre' => $songExists->genre,
                     'path' => $songExists->path,
                     'image' => $songExists->image,
-            ]
+                ]
             ];
 
             $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -61,7 +61,6 @@ class SpotifyDownloadCommand extends Command
         Log::info($shell);
         try {
             $outputs = explode("\n", $shell);
-            // search the word "found" from output
             $result = "";
             foreach ($outputs as $output) {
                 if (str_contains($output, 'Downloaded')) {
@@ -72,16 +71,16 @@ class SpotifyDownloadCommand extends Command
             $this->info("Download Completed ... | $result");
             Log::info("Download Completed ... | $result");
 
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->error($e->getMessage());
+            $error = [
+                'error' => "Spotify Download Failed",
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+            Log::error();
         }
-
-        // save to database
-        $this->info('Saving to Database...');
-        $song = new \App\Models\Song();
-        // get song local path
-        $path = array_unique(explode("Downloaded", $result));
-      //  dd($path);
 
         return 0;
     }

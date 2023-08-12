@@ -5,6 +5,7 @@ namespace App\Services\Birdy;
 use App\Jobs\DownloadSpotifyJob;
 use App\Models\Song;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use SpotifyWebAPI\Session;
 use SpotifyWebAPI\SpotifyWebAPI;
 
@@ -14,31 +15,6 @@ class SpotifyService
     public Song $song;
 
     public SpotifyWebAPI $spotify;
-
-    public function __construct()
-    {
-        $session = new Session(
-            env('SPOTIFY_CLIENT_ID'),
-            env('SPOTIFY_CLIENT_SECRET'),
-            env('SPOTIFY_REDIRECT_URI')
-        );
-
-        $state = $session->generateState();
-
-        $options = [
-            'scope' => [
-                'playlist-read-private',
-                'user-read-private',
-                'user-read-email',
-                'playlist-read-collaborative',
-            ],
-            'state' => $state,
-        ];
-
-        header('Location: ' . $session->getAuthorizeUrl($options));
-
-        //dd($this->spotify->getMyDevices());
-    }
 
     public function getArtistGenre(string $artist)
     {
@@ -130,12 +106,6 @@ class SpotifyService
             return [];
         }
 
-        dump([
-            'author' => $author,
-            'searchsong' => $searchSong->title,
-            'genres' => $genres,
-        ]);
-
         if (count($genres) === 1 && isset($genres[0]['name'])) {
             if (str_contains($genres[0]['name'], $author)) {
                 return  $genres[0]['genres'];
@@ -208,6 +178,9 @@ class SpotifyService
      */
     public function findSong(string $query): mixed
     {
+        dump([
+            'query' => $query,
+        ]);
         // artist = first part of query
         $author = explode(' ', $query)[0] ?? $query;
         // title = second part of query
@@ -215,6 +188,11 @@ class SpotifyService
         $spotifyTracks = $this->spotify->search($query, 'track')->tracks->items;
         // find track with title or artist matching search query
 
+        Log::warning([
+            'spotifyTracks' => $spotifyTracks,
+            'query' => $query,
+            'file' => __FILE__,
+        ]);
         if (count($spotifyTracks) < 1) {
             return [];
         }
@@ -233,6 +211,17 @@ class SpotifyService
             }
         }
         return $spotifyTracks[0];
+    }
+
+    public function findSongBySlug(string $slug)
+    {
+        $song = Song::where('slug', $slug)->first();
+        if ($song == null) {
+            return [];
+        }
+        $url = $song->external_urls->spotify;
+        $this->downloadSpotifySong($url);
+        return $song;
     }
 
     public function getGenreFromSong(string $searchQuery) : array
