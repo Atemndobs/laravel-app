@@ -47,11 +47,24 @@ class UploadService
     {
         $slug = $this->getSlugFromFilePath($track);
         $existingSong = $this->getExistingSong($slug);
-        if ($existingSong) {
-            return $existingSong;
-        }
 
-        $song = $this->loadAndSaveSongToDb($track);
+        $song = new Song();
+        $song->slug = $slug;
+        $song->path = $track;
+        if ($existingSong) {
+            $path = $existingSong->path;
+            $path = substr($path, 0, strrpos($path, '/'));
+            $folder =  basename(dirname($track));
+            $localPath = "/var/www/html/storage/app/public/uploads/audio/$folder";
+            $song_path = $localPath . '/' . $slug . '.mp3';
+            if($path !== $localPath) {
+                return $existingSong;
+            }
+            $song = $existingSong;
+            $song->path = $song_path;
+        }
+        // $songID = basename(dirname($track));
+        $song = $this->loadAndSaveSongToDb($song);
 
         if (File::delete($track)){
             $message = [
@@ -138,7 +151,6 @@ class UploadService
         $ext = substr($file, -3);
         $link = 'uploaded';
         $songWithPath->link = $link;
-        $songWithPath->source = $ext;
         $songWithPath->extension = $ext;
         return $songWithPath;
     }
@@ -151,20 +163,21 @@ class UploadService
      */
     protected function getFullSongPath(mixed $file, Song $song): Song
     {
-        $slug = $this->getSlugFromFilePath($file);
         $storageService = new MinioService();
         $storage_path = $storageService->putObject($file);
-
+        $api_url = env('APP_URL').'/api/songs/match/';
+        $song->path = $storage_path;
+        if ($song->slug === null) {
+            $slug = $this->getSlugFromFilePath($file);
+            $song->slug = $slug;
+        }
         $message = [
             'FILE NAME' => $file,
             'FILE CLOUD URL' => $storage_path,
-            'FILE SLUG' => $slug,
+            'FILE SLUG' => $song->slug,
         ];
         Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        $api_url = env('APP_URL').'/api/songs/match/';
-        $song->path = $storage_path;
-        $song->slug = $slug;
-        $song->related_songs = $api_url.$slug;
+        $song->related_songs = $api_url.$song->slug;
         return $song;
     }
 
@@ -243,18 +256,19 @@ class UploadService
     }
 
     /**
-     * @param $file
+     * @param Song $song
      * @return Song
      * @throws \Exception
      */
-    public function loadAndSaveSongToDb($file): Song
+    public function loadAndSaveSongToDb(Song $song): Song
     {
-        $song = new Song();
+        $file = $song->path;
         $songUpdateService = new SongUpdateService();
         $fileInfo = $songUpdateService->getAnalyze($file);
         $songWithInfo = $songUpdateService->getInfoFromId3v2Tags($fileInfo, $song);
         $processedSong = $this->processSong($file, $songWithInfo);
         if ($processedSong->image === null) {
+            // get image from spotify using song ID
             $processedSong = $this->getSongImage($file, $processedSong);
         }
         $processedSong->save();
@@ -352,5 +366,16 @@ class UploadService
         $baseName = basename($path);
         $imageDir = env('IMAGE_PATH') ?? '/var/www/html/storage/app/public/uploads/images';
         return $imageDir . '/' . $baseName;
+    }
+
+    private function getSongID(string $track)
+    {
+        $trackSplits = explode('/', $track);
+        dd([
+            'track' => $track,
+            'trackSplits' => $trackSplits,
+            'trackSplitsCount' => count($trackSplits),
+            'trackSplitsLast' => $trackSplits[count($trackSplits) - 1],
+        ]);
     }
 }

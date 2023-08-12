@@ -35,9 +35,8 @@ class AudioFileWatcherCommand extends Command
     {
         $this->info('Watching Audio Directory for New Files...');
         $destination = 'audio';
-
-        $dir = storage_path('app/public/audio');
-        $this->watchFolder($dir, $destination);
+//        $dir = storage_path('/var/www/html/storage/app/public/uploads/audio');
+//        $this->watchFolder($dir, $destination);
         return 0;
     }
 }

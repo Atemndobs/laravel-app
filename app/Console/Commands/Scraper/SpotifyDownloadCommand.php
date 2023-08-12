@@ -55,31 +55,33 @@ class SpotifyDownloadCommand extends Command
             return 0;
         }
 
-        $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/";
+        $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/$spotifyId/";
+       // $shell = shell_exec("spotdl  $url --output $songDownloadLocation --overwrite force");
+        $shell = shell_exec("spotdl  $url --output $songDownloadLocation ");
+        $this->info($shell);
+        Log::info($shell);
 
-        $shell = shell_exec("spotdl  $url --output $songDownloadLocation");
-//        $this->info($shell);
-//        Log::info($shell);
         try {
             $outputs = explode("\n", $shell);
             $result = "";
             $filepath = "";
             $fileName = "";
+
             foreach ($outputs as $output) {
                 if (str_contains($output, 'Downloaded')) {
                     $result = $output;
                     $this->info("Raw Results : " . $result);
                     $output = str_replace("Downloaded \"", "", $output);
-                    $output = explode("\": ", $output);
-                    $result = $output[0];
+                    $output_song = explode("\": ", $output);
+                    $result = $output_song[0];
                     $fileName = $result;
                 }
                 if (str_contains($output, 'file already exists')) {
                     $result = $output;
                     $this->info("Raw Results _existing file: " . $result);
                     $output = str_replace("Skipping ", "", $output);
-                    $output = explode("(file already exists)", $output);
-                    $result = $output[0];
+                    $output_song = explode("(file already exists)", $output);
+                    $result = $output_song[0];
                     $fileName = $result;
                 }
             }
@@ -94,36 +96,42 @@ class SpotifyDownloadCommand extends Command
             Log::error(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
+
         $folderContents = array_values(array_diff(scandir($songDownloadLocation), array('..', '.')));
-        if ($folderContents < 1) {
-            $this->error('No files found in ' . $songDownloadLocation);
-            return 0;
-        }
-        foreach ($folderContents as $folderContent) {
-            // remove rile extension
-            $folderContentCheck = trim(str_replace(".mp3", "", $folderContent));
-            $fileName = trim($fileName);
-            if (str_contains($folderContentCheck, $fileName)) {
-                $this->info('File with name ' . $folderContent . ' has been saved in  ' . $songDownloadLocation);
-                $filepath = $songDownloadLocation . $folderContent;
-            }
-        }
-        if ($filepath == "") {
+        if (count($folderContents) < 1) {
+            $this->warn('No files found in ' . $songDownloadLocation);
             $message = [
-                'message' => 'File not found in ' . $songDownloadLocation,
+                'message' => 'song with ID ' . $spotifyId . ' has not been downloaded',
+                'error ' => $outputs,
                 'folderContents' => $folderContents,
-                'fileName' => $fileName,
-                'filepath' => $filepath,
+                'songDownloadLocation' => $songDownloadLocation,
             ];
             $this->error(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             return 0;
         }
 
-        $title = explode(" - ", $result)[1];
-        $author = explode(" - ", $result)[0];
+        $folderContent = $folderContents[0];
+        $folderContentCheck = trim(str_replace(".mp3", "", $folderContent));
+        $title = explode(" - ", $folderContentCheck)[1];
+        $author = explode(" - ", $folderContentCheck)[0];
+        $slug = Str::slug($folderContentCheck, '_');
         $song_id = $spotifyId;
         $song_url = $url;
-        $slug = Str::slug($result, '_');
+        $filepath = $songDownloadLocation . $folderContent;
+
+        $logInfo = [
+            'result' => $result,
+            'fileName' => $fileName,
+            'songDownloadLocation' => $songDownloadLocation,
+            'filepath' => $filepath,
+            'title' => $title,
+            'author' => $author,
+            'song_id' => $song_id,
+            'song_url' => $song_url,
+            'slug' => $slug,
+        ];
+        $this->info(json_encode($logInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         //  save new song to DB
         $song = new \App\Models\Song();
         $song->title = $title;
@@ -132,6 +140,7 @@ class SpotifyDownloadCommand extends Command
         $song->song_id = $song_id;
         $song->slug = $slug;
         $song->path = $filepath;
+        $song->source = "spotify";
         try {
             $song->save();
             $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
@@ -145,18 +154,6 @@ class SpotifyDownloadCommand extends Command
             Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
-        $logInfo = [
-            'result' => $result,
-            'fileName' => $fileName,
-            'songDownloadLocation' => $songDownloadLocation,
-            'filepath' => $filepath,
-            'title' => $title,
-            'author' => $author,
-            'song_id' => $song_id,
-            'song_url' => $song_url,
-            'slug' => $slug,
-        ];
-        Log::info(json_encode($logInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return 0;
     }
 }

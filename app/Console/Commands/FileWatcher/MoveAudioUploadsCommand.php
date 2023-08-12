@@ -30,7 +30,10 @@ class MoveAudioUploadsCommand extends Command
     public function handle()
     {
         // Check files
-        $files = glob(storage_path('app/public/uploads/audio/*'));
+        $audioFiles = glob('/var/www/html/storage/app/public/uploads/audio/*');
+        $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*'));
+        $files = array_filter($audioFiles, 'is_file');
+        $this->info('Found ' . count($audioFiles) . ' files');
         if (!$files) {
             $this->info('No files to move from uploads folder');
             Log::info('No files to move from uploads folder');
@@ -56,10 +59,11 @@ class MoveAudioUploadsCommand extends Command
     {
         foreach ($files as $file) {
             $fileName = basename($file);
+            $folder = basename(dirname($file));
             $fileName = str_replace('.mp3', '', $fileName);
             $fileName = Str::slug($fileName, '_');
             $fileName = $fileName . '.mp3';
-            $destination = storage_path('app/public/uploads/audio/' . $fileName);
+            $destination = "/var/www/html/storage/app/public/uploads/audio/" .  $folder . '/' . $fileName;
             if (!file_exists($destination)) {
                 rename($file, $destination);
                 Log::info('Moved ' . $file . ' to ' . $destination);

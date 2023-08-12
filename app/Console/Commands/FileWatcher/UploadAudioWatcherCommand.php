@@ -33,10 +33,10 @@ class UploadAudioWatcherCommand extends Command
      */
     public function handle()
     {
-        $this->info('Watching Audio Directory [app/public/storage/app/public/uploads/audio] ');
-        $dir = storage_path('app/public/storage/app/public/uploads/audio');
-        $destination = 'audio';
-        $this->watchFolder($dir, $destination);
+        $this->info('Watching Audio Directory [/var/www/html/storage/app/public/uploads/audio] ');
+        $dir = storage_path('/var/www/html/storage/app/public/uploads/audio');
+//        $destination = 'audio';
+//        $this->watchFolder($dir, $destination);
         return 0;
     }
 }

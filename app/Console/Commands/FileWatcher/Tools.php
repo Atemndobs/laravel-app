@@ -17,17 +17,27 @@ trait Tools
         try {
             Watch::path($dir)
                 ->onFileCreated(function (string $path) use ($destination) {
+                    $fileName = basename($path);
                     sleep(2);
+                    if (!is_file($path)) {
+                        $folder = basename(dirname($path));
+                        $audioPath = storage_path('app/public/audio/' . $folder . '/' . $fileName);
+                    }
                     if (str_contains($path, '.mp3') || str_contains($path, '.wav')) {
-                        $fileName = basename($path);
+
                         $ext = pathinfo($path, PATHINFO_EXTENSION);
                         $fileName = substr($fileName, 0, -4);
                         $fileName = Str::slug($fileName, '_');
                         $fileName = $fileName . '.' . $ext;
-//                        $this->call('song:import');
-//                        sleep(2);
                         $audioPath = "/var/www/html/storage/app/public/audio/$destination/".$fileName;
-                        rename($path, $audioPath);
+
+                        dd([
+                            'path' => $path,
+                            'audioPath' => $audioPath,
+                            'fileName' => $fileName,
+                            'ext' => $ext,
+                        ]);
+                       // rename($path, $audioPath);
                         $this->line("<fg=magenta>Song Imported | $path</>");
                     }
                 })
