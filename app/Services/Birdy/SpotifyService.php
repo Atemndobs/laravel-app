@@ -20,10 +20,10 @@ class SpotifyService
     {
         $client_id = env('SPOTIFY_CLIENT_ID');
         $client_secret = env('SPOTIFY_CLIENT_SECRET');
-        $url = 'http://dejavu.atmkng.de/';
+        $url = env('SPOTIFY_REDIRECT_URI');
         $session = new Session(
-            'c60869065e4c4a298aaf489700602182',
-            '5548d231e4f74c07964d5d675a587c44',
+            $client_id,
+            $client_secret,
             $url
         );
         $session->requestCredentialsToken();
@@ -204,11 +204,6 @@ class SpotifyService
         $spotifyTracks = $this->spotify->search($query, 'track')->tracks->items;
         // find track with title or artist matching search query
 
-        Log::warning([
-            'spotifyTracks' => $spotifyTracks,
-            'query' => $query,
-            'file' => __FILE__,
-        ]);
         if (count($spotifyTracks) < 1) {
             return [];
         }
