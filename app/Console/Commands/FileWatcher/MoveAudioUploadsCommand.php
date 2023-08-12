@@ -63,7 +63,10 @@ class MoveAudioUploadsCommand extends Command
             $fileName = str_replace('.mp3', '', $fileName);
             $fileName = Str::slug($fileName, '_');
             $fileName = $fileName . '.mp3';
-            $destination = "/var/www/html/storage/app/public/uploads/audio/" .  $folder . '/' . $fileName;
+            $destination = "/var/www/html/storage/app/public/uploads/" .  $folder . '/' . $fileName;
+            if ($folder !== 'audio') {
+                $destination = "/var/www/html/storage/app/public/uploads/audio/" .  $folder . '/' . $fileName;
+            }
             if (!file_exists($destination)) {
                 rename($file, $destination);
                 Log::info('Moved ' . $file . ' to ' . $destination);
