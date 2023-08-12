@@ -16,6 +16,22 @@ class SpotifyService
 
     public SpotifyWebAPI $spotify;
 
+    public function __construct()
+    {
+        $client_id = env('SPOTIFY_CLIENT_ID');
+        $client_secret = env('SPOTIFY_CLIENT_SECRET');
+        $url = 'http://dejavu.atmkng.de/';
+        $session = new Session(
+            'c60869065e4c4a298aaf489700602182',
+            '5548d231e4f74c07964d5d675a587c44',
+            $url
+        );
+        $session->requestCredentialsToken();
+        $accessToken = $session->getAccessToken();
+        $this->spotify = new SpotifyWebAPI();
+        $this->spotify->setAccessToken($accessToken);
+    }
+
     public function getArtistGenre(string $artist)
     {
         try {
