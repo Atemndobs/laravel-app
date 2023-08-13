@@ -131,7 +131,10 @@ class SpotifyMusicService
         } else {
             $playlists = Spotify::userPlaylists($this->spotifyId)->limit(50)->get()['items'];
         }
-        return $playlists;
+        // remove playlists named 'Remixers' and 'ATM Release Radar'
+        return array_filter($playlists, function ($playlist) {
+            return $playlist['name'] !== 'Remixers' && $playlist['name'] !== 'ATM Release Radar';
+        });
     }
 
     public function getPlaylistSongs(string $playlistId)

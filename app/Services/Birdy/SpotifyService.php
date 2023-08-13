@@ -194,9 +194,6 @@ class SpotifyService
      */
     public function findSong(string $query): mixed
     {
-        dump([
-            'query' => $query,
-        ]);
         // artist = first part of query
         $author = explode(' ', $query)[0] ?? $query;
         // title = second part of query
