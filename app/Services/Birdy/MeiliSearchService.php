@@ -79,6 +79,7 @@ class MeiliSearchService
         try {
             $meiliSearch->createIndex("songs");
             $meiliSearch->index("songs")->updateSearchableAttributes([
+                'id', // 'id' is the primary key of the table
                 "title",
                 "author",
                 "bpm",
@@ -99,6 +100,7 @@ class MeiliSearchService
                 "genre",
             ]);
             $meiliSearch->index("songs")->updateFilterableAttributes([
+                'id', // 'id' is the primary key of the table
                 "title",
                 "bpm",
                 "key",
@@ -115,6 +117,7 @@ class MeiliSearchService
                 "genre"
             ]);
             $meiliSearch->index("songs")->updateSortableAttributes([
+                'id', // 'id' is the primary key of the table
                 "title",
                 "bpm",
                 "key",

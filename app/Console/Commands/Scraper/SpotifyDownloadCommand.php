@@ -55,6 +55,8 @@ class SpotifyDownloadCommand extends Command
             return 0;
         }
 
+        shell_exec("pwd");
+
         $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/$spotifyId/";
        // $shell = shell_exec("spotdl  $url --output $songDownloadLocation --overwrite force");
         $shell = shell_exec("spotdl  $url --output $songDownloadLocation ");

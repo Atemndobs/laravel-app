@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Storage\AwsS3Service;
 use App\Websockets\SocketHandler\UpdateSongSocketHandler;
 use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,15 @@ use App\Http\Controllers\SpotifyController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+//Route::get('/upload', function (AwsS3Service $s3Service) {
+//    $filePath = public_path('storage/Kali_Uchis-Telepatia.mp3');
+//    $bucket = env('AWS_BUCKET', 'curators3');
+//    $key = 'music/Kali_Uchis-Telepatia.mp3';
+//
+//    return $s3Service->uploadFile($filePath, $bucket, $key);
+//});
+
 
 Route::get('/', function () {
 

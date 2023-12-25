@@ -25,6 +25,7 @@ class MinioStoreFileCommand extends Command
 
     /**
      * Execute the console command.
+     * @throws \Exception
      */
     public function handle(): void
     {
@@ -63,7 +64,12 @@ class MinioStoreFileCommand extends Command
             }
         } else {
             $this->info("Uploading $content");
-            $minioService->putObject($content, $dir);
+           // dd($content);
+            //$minioService->putObject($content, $dir);
+            $all = $minioService->putObject($content, $dir);
+
+            dd(is_file($content));
+            dd($all);
             $filename = basename($content);
             $this->info("File $filename uploaded to Minio S3");
         }

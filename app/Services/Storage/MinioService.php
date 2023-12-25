@@ -5,6 +5,8 @@ namespace App\Services\Storage;
 use AllowDynamicProperties;
 use App\Services\UploadService;
 use Aws\S3\S3Client as Client;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -51,7 +53,7 @@ use Illuminate\Support\Facades\Storage;
      */
     public function getAllAudios(string $dir = 'music'): array
     {
-        return $this->getAllObjects($dir);
+       return $this->getAllObjects($dir);
     }
 
     /**
@@ -84,7 +86,9 @@ use Illuminate\Support\Facades\Storage;
         $path = $dir . '/' . basename($contents);
         $filename = basename($contents);
         try {
-            $this->disk->put($path, file_get_contents($contents), 'public');
+
+           $result =  $this->disk->put($path, file_get_contents($contents), 'public');
+            Log::info($result);
         }catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -94,7 +98,6 @@ use Illuminate\Support\Facades\Storage;
     public function putObjectWithFileName(string $contents, string $dir, string $filename): string
     {
         $path = $dir . '/' . $filename;
-
         try {
             $this->disk->put($path, file_get_contents($contents), 'public');
         }catch (\Exception $e) {
@@ -137,6 +140,9 @@ use Illuminate\Support\Facades\Storage;
         );
     }
 
+    /**
+     * @throws \Exception
+     */
     public function checkMusicExists(string $url): string
     {
         $fileName = basename($url);

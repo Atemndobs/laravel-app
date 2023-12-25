@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use Abbasudo\Purity\Traits\Filterable;
 use Backpack\CRUD\app\Library\CrudPanel\Traits\Search;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Carbon\Carbon;
@@ -56,7 +57,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class Song extends \App\Models\Base\Song
 {
-    use CrudTrait, HasRoles, Search, Searchable, HasApiTokens, HasFactory, Notifiable, Markable;
+    use CrudTrait, HasRoles, Search, Searchable, HasApiTokens, HasFactory, Notifiable, Markable, Filterable;
 
     protected $table = 'songs';
 

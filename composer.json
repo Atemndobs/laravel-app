@@ -13,6 +13,7 @@
         "ext-libxml": "*",
         "ext-pdo": "*",
         "ext-zip": "*",
+        "abbasudo/laravel-purity": "^2.0",
         "aerni/laravel-spotify": "^2.1",
         "backpack/crud": "^5.5",
         "beyondcode/laravel-websockets": "*",
@@ -31,7 +32,7 @@
         "laravel/sanctum": "^3.2.1",
         "laravel/scout": "^9.4",
         "laravel/tinker": "^2.7",
-        "league/flysystem-aws-s3-v3": "^3.5",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "league/flysystem-ftp": "^3.0",
         "league/flysystem-sftp-v3": "^3.0",
         "maatwebsite/excel": "^3.1",
@@ -64,7 +65,7 @@
         "symfony/polyfill-php82": "^1.27",
         "symfony/process": "^6.1",
         "tailflow/laravel-orion": "^2.11",
-        "tcg/voyager": "dev-1.6-l10",
+        "tcg/voyager": "*",
         "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
     },
     "require-dev": {

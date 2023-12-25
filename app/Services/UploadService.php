@@ -2,21 +2,12 @@
 
 namespace App\Services;
 
-use App\Jobs\ClassifySongJob;
 use App\Models\Song;
 use App\Services\Birdy\SpotifyService;
-use App\Services\Storage\MinioService;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Log\Logger;
+use App\Services\Storage\AwsS3Service;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use function Amp\ByteStream\buffer;
-use function Clue\StreamFilter\remove;
 
 class UploadService
 {
@@ -163,7 +154,7 @@ class UploadService
      */
     protected function getFullSongPath(mixed $file, Song $song): Song
     {
-        $storageService = new MinioService();
+        $storageService = new AwsS3Service();
         $storage_path = $storageService->putObject($file);
         $api_url = env('APP_URL').'/api/songs/match/';
         $song->path = $storage_path;
@@ -290,7 +281,7 @@ class UploadService
 
         $audioPath = $this->getTempAudioPath($path);
         if (str_contains($name, ' ')) {
-            $storageService = new MinioService();
+            $storageService = new AwsS3Service();
             $storageService->deleteMusic($name);
             $errorMassage = [
                 'message' => 'File name contains spaces',

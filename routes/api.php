@@ -52,9 +52,10 @@ Route::post('songs/upload', [\App\Http\Controllers\Api\SongUploadController::cla
 Route::post('songs/match', [\App\Http\Controllers\Api\MatchSongController::class, 'getSongMatch']);
 Route::get('songs/match/criteria/get', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'getCriteria']);
 Route::post('songs/match/criteria/set', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'setCriteria']);
-// cleat match criteria
+// match criteria
 Route::post('songs/match/criteria/clear', [\App\Http\Controllers\Api\MatchCriteriaController::class, 'clearCriteria']);
 Route::get('search/songs', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'getSongs']);
+Route::get('search/clean', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'getCleanedUpSongs']);
 Route::post('ping', [\App\Http\Controllers\Api\MeilesearchSongController::class, 'ping']);
 //Route::get('songs/match/{title}/{$attribute}', [\App\Http\Controllers\Api\MatchSongController::class, 'matchByAttribute']);
 Route::get('songs/search/{term}', [\App\Http\Controllers\Api\SongSearchController::class, 'searchSong']);
@@ -96,7 +97,10 @@ Route::get('song/keys', [\App\Http\Controllers\Api\SongKeyController::class, 'ge
 // Routes for songGenreController
 Route::get('songgenres', [\App\Http\Controllers\Api\SongGenreController::class, 'index']);
 Route::get('song/genres', [\App\Http\Controllers\Api\SongGenreController::class, 'getSongGenres']);
+Route::get('song/clean', [\App\Http\Controllers\Api\SongCleanUpController::class, 'getCleanedUpSongs']);
 
+// Route for songRecommendationController
+Route::get('songs/recommendation/{songId}', [\App\Http\Controllers\Api\SongRecommendationController::class, 'getRecommendation']);
 // webhooks
 Route::webhooks('/webhooks/songs');
 

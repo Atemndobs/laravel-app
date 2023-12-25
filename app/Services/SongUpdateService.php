@@ -3,11 +3,8 @@
 namespace App\Services;
 
 use App\Models\Song;
-use App\Services\Birdy\SpotifyService;
 use App\Services\Scraper\SoundcloudService;
-use App\Services\Storage\MinioService;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Arr;
+use App\Services\Storage\AwsS3Service;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -16,7 +13,6 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JetBrains\PhpStorm\ArrayShape;
-use const FlixTech\AvroSerializer\Serialize\readDatum;
 
 class SongUpdateService
 {
@@ -262,7 +258,7 @@ class SongUpdateService
             $imageName = $song->slug . '.jpeg';
             $image = "storage/app/public/images/$imageName";
             file_put_contents($image, $data);
-            $storageService = new MinioService();
+            $storageService = new AwsS3Service();
             $imagePath = $storageService->putObject($image, 'images');
             $song->image = $imagePath;
         }
@@ -420,7 +416,7 @@ class SongUpdateService
         }
 
         try {
-            $storageService = new MinioService();
+            $storageService = new AwsS3Service();
             $imagePath = $storageService->putObject($localImage, 'images');
             // check if image has successfully uploaded
             $imageCheck = Http::get($imagePath);
