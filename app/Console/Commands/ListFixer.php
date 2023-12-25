@@ -54,7 +54,6 @@ class ListFixer extends Command
             $this->info("Fixed $countFixed songs");
             $this->warn("Fixed {$song->slug}");
             $bar->advance();
-            dd('PAUSE');
         });
         $bar->finish();
         $message = [
