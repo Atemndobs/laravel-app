@@ -14,7 +14,7 @@ class Image extends Command
      *
      * @var string
      */
-    protected $signature = 'image:fix  {--p|path=} {all?}';
+    protected $signature = 'image:fix  {--p|path=} {--a|all}';
 
     /**
      * The console command description.
@@ -33,7 +33,7 @@ class Image extends Command
      */
     public function handle()
     {
-        $all = $this->argument('all');
+        $all = $this->option('all');
         $path = $this->option('path');
         $songsWithImage = [];
         $songsWithoutImage = [];

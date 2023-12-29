@@ -84,4 +84,18 @@ class AwsS3Service
             Log::error('Error deleting file: ' . $e->getMessage());
         }
     }
+
+    // function to get all files in a directory
+    public function getFiles(string $dir = 'music'): array
+    {
+        $files = [];
+        $objects = $this->s3Client->getIterator('ListObjects', [
+            'Bucket' => env('AWS_BUCKET'),
+            'Prefix' => $dir . '/',
+        ]);
+        foreach ($objects as $object) {
+            $files[] = $object['Key'];
+        }
+        return $files;
+    }
 }
