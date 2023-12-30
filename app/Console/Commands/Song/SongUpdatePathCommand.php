@@ -6,6 +6,7 @@ use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Psy\Util\Str;
 use function example\int;
@@ -117,7 +118,13 @@ class SongUpdatePathCommand extends Command
         foreach ($songs as $song) {
             $fileName = basename($song->path);
             if ($dir === 'music') {
-                $songPath = Storage::cloud()->url("curator/$dir/" . $fileName);
+                $songPath = Storage::cloud()->url("$dir/" . $fileName);
+                $req = Http::get($songPath);
+                if (!$req->successful()) {
+                    $this->error("No Song found for  | " . $fileName);
+                    $missingSongs[] = $song->title ." | " .  $fileName;
+                    continue;
+                }
                 $this->info("new path | " . $songPath);
                 $song->path = $songPath;
                 $song->save();
@@ -128,9 +135,7 @@ class SongUpdatePathCommand extends Command
 
                 $imageName = \Illuminate\Support\Str::slug($fileName , '_');
                 $imageName = $imageName. '.jpeg';
-
-
-                $songPath = Storage::cloud()->url("curator/$dir/" . $imageName);
+                $songPath = Storage::cloud()->url("$dir/" . $imageName);
                 $this->info("Uploading Image for | " . $songPath);
 
                 $req = Http::get($songPath);
@@ -147,11 +152,10 @@ class SongUpdatePathCommand extends Command
             }
 
         }
-        dump($missingSongs);
-        dump([
+        Log::info(json_encode([
             'allSongs' => $songs->count(),
-            'missingSongs' => count($missingSongs),
-        ]);
+            'missingSongs' => count($missingSongs)
+        ] , JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         info(json_encode($missingSongs));
 
         return 0;
