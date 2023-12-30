@@ -680,7 +680,7 @@ class SpotifyMusicService
         return [
             'spotifyIds' => $spotifyIds,
             'total_songs' => $totalSongs,
-            'url' => $playlist['external_urls']['spotify'],
+            'url' => $this->spotify->getPlaylist($playlistId)->external_urls->spotify,
         ];
     }
 }
