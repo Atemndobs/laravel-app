@@ -663,11 +663,13 @@ class SpotifyMusicService
         $totalSongs = $this->spotify->getPlaylist($playlistId)->tracks->total;
         Log::info('Total songs in playlist: ' . $totalSongs);
         $spotifyIds = [];
+        $skippedSongs = [];
         foreach ($playlistSongs as $playlistSong) {
             $songExists = Song::query()->where('song_id', $playlistSong['track']['id'])->first();
             if ($songExists) {
                 Log::warning('Song with ID ' . $playlistSong['track']['id'] . ' already exists in DB.');
                 dump('Song with ID ' . $playlistSong['track']['id'] . ' already exists in DB.');
+                $skippedSongs[] = $playlistSong['track']['id'];
                 continue;
             }
             $spotifyIds[] = $playlistSong['track']['id'];
@@ -680,6 +682,7 @@ class SpotifyMusicService
         return [
             'spotifyIds' => $spotifyIds,
             'total_songs' => $totalSongs,
+            'skipped_songs' => count($skippedSongs),
             'url' => $this->spotify->getPlaylist($playlistId)->external_urls->spotify,
         ];
     }
