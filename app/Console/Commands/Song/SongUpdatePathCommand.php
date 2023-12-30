@@ -118,37 +118,48 @@ class SongUpdatePathCommand extends Command
         foreach ($songs as $song) {
             $fileName = basename($song->path);
             if ($dir === 'music') {
+                $songUrlCheck = Http::get($song->path);
+                if ($songUrlCheck->successful()) {
+                    $this->info("Song is good : Skipping | " . $song->path);
+                    continue;
+                }
                 $songPath = Storage::cloud()->url("$dir/" . $fileName);
                 $req = Http::get($songPath);
                 if (!$req->successful()) {
                     $this->error("No Song found for  | " . $fileName);
+//                    $song->path = '';
+//                    $song->save();
                     $missingSongs[] = $song->title ." | " .  $fileName;
+                }else{
+                    $this->info("Path is good | " . $songPath);
+                    $song->path = $songPath;
+                    $song->save();
                     continue;
                 }
-                $this->info("new path | " . $songPath);
-                $song->path = $songPath;
-                $song->save();
-                continue;
             }
 
             if ($dir === 'images') {
 
+                $imageUrlCheck = Http::get($song->image);
+                if ($imageUrlCheck->successful()) {
+                    $this->info("Image is good | " . $song->image);
+                    continue;
+                }
                 $imageName = \Illuminate\Support\Str::slug($fileName , '_');
                 $imageName = $imageName. '.jpeg';
                 $songPath = Storage::cloud()->url("$dir/" . $imageName);
                 $this->info("Uploading Image for | " . $songPath);
-
                 $req = Http::get($songPath);
-                // check if image exists
                 if (!$req->successful()) {
                     $this->error("No Image found for  | " . $fileName);
                     $missingSongs[] = $song->title ." | " .  $fileName;
-                    $song->image = null;
+//                    $song->image = null;
+//                    $song->save();
+                }else{
+                    $this->info("Image is good | " . $songPath);
+                    $song->image = $songPath;
                     $song->save();
-                    continue;
                 }
-                $song->image = $songPath;
-                $song->save();
             }
 
         }
