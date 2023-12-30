@@ -4,6 +4,8 @@ namespace App\Services\Storage;
 
 use Aws\S3\S3Client;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AwsS3Service
 {
@@ -97,5 +99,26 @@ class AwsS3Service
             $files[] = $object['Key'];
         }
         return $files;
+    }
+
+    public function getUnsortedSongs()
+    {
+        $unsortedFiles = [];
+        // get unsorted files from /var/www/html/storage/app/public/uploads/audio/ or any subfolder
+        $audioFiles = Storage::disk('public')->allFiles('uploads/audio');
+        $audioFiles_before = $audioFiles;
+        $audioFiles = array_merge($audioFiles, Storage::disk('public')->allFiles('uploads/audio/*'));
+        $audioFiles = array_filter($audioFiles, function ($file) {
+            // only get files that end with mp3 and are not less than 1MB
+//            if (Storage::disk('public')->size($file) < 1000000) {
+//                return false;
+//            }
+            return Str::endsWith($file, 'mp3');
+        });
+
+        dd([
+            'audioFiles' => count($audioFiles),
+            '$audioFiles_before' => count($audioFiles_before),
+        ]);
     }
 }

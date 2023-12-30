@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Song;
 
+use App\Services\Storage\AwsS3Service;
 use App\Services\Storage\MinioService;
 use App\Services\UploadService;
 use Illuminate\Console\Command;
@@ -30,11 +31,18 @@ class SongImportUnsortedS3Command extends Command
      */
     public function handle()
     {
-        $minioService = new MinioService();
+        $minioService = new AwsS3Service();
         $files = $minioService->getUnsortedSongs();
         $bar = $this->output->createProgressBar(count($files));
         $uploadService = new UploadService();
         $uploadedSongs = [];
+
+
+        dd([
+            'files' => $files,
+            'count' => count($files),
+            'uploadedSongs' => $uploadedSongs
+        ]);
         foreach ($files as $file) {
             $filepath = $minioService->downloadSong($file);
             $uploadedSong = $uploadService->uploadSong($filepath);

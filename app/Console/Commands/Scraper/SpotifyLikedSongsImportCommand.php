@@ -4,6 +4,7 @@ namespace App\Console\Commands\Scraper;
 
 use Aerni\Spotify\SpotifyAuth;
 use App\Services\Birdy\SpotifyService;
+use App\Services\Scraper\SpotifyMusicService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use function example\ask;
@@ -15,7 +16,7 @@ class SpotifyLikedSongsImportCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'spotify:import {playlist?}';
+    protected $signature = 'spotify:import {playlist?} {--o|offset=} {--l|limit=}';
 
     /**
      * The console command description.
@@ -29,13 +30,56 @@ class SpotifyLikedSongsImportCommand extends Command
      */
     public function handle()
     {
+        $offset = $this->option('offset');
+        $limit = $this->option('limit');
         $playlist = $this->argument('playlist');
+        Log::warning('Importing Spotify playlist: ' . $playlist );
+        $this->info('Importing Spotify playlist: ' . $playlist );
         if ($playlist === null) {
+            $this->info('No playlist provided, using default playlist : Liked Songs');
+            Log::info('No playlist provided, using default playlist : Liked Songs');
             $playlist = 'https://open.spotify.com/playlist/6L395PhP6WoQIotqLYg7lQ?si=02eee911d5f046c8';
         }
-        $likedSongs = shell_exec("spotdl $playlist");
-        $songs = explode("\n", $likedSongs);
+
+        $spotifyService = new SpotifyMusicService();
+        try {
+            $playlistData = $spotifyService->getSpotifyIdsFromPlaylist($playlist, $offset, $limit);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->error($e->getMessage());
+            $this->line("<fg=bright-magenta>Please provide a valid Spotify playlist URL</>");
+            return 0;
+        }
+
+          $this->info('Importing ' . count($playlistData) . ' songs from Spotify playlist: ' . $playlist );
+        $spotifyIds = $playlistData['spotifyIds'];
+        // $url = $playlistData['url'];
+
+        $songs = [];
+        foreach ($spotifyIds as $spotifyId) {
+            $songUrl = 'https://open.spotify.com/track/' . $spotifyId;
+            try {
+                $this->call('spotify', [
+                    'url' => $songUrl
+                ]);
+            }catch (\Exception $e) {
+                Log::error($e->getMessage());
+                $this->error($e->getMessage());
+                $this->line("<fg=bright-magenta>We shall retry downloading $spotifyId after 30 seconds</>");
+                sleep(30);
+                $this->call('spotify', [
+                    'url' => $songUrl
+                ]);
+                return 0;
+            }
+            $songs[] = $spotifyId;
+            $this->info('Song with ID ' . $spotifyId . ' has successfully downloaded.');
+        }
+
         Log::info(json_encode(['songs' => $songs],
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+
+        return 0;
     }
 }

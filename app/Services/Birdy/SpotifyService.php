@@ -300,4 +300,30 @@ class SpotifyService
         return $user->id;
     }
 
+    public function getSpotifyIdsFromPlaylist(bool|array|string|null $playlist)
+    {
+        $spotifyIds = [];
+        if ($playlist === null) {
+            return [];
+        }
+        if (is_array($playlist)) {
+            foreach ($playlist as $item) {
+                $spotifyIds[] = $item->track->id;
+            }
+        }
+        if (is_string($playlist)) {
+            $playlist = $this->spotify->getPlaylistTracks($playlist);
+            foreach ($playlist->items as $item) {
+                $spotifyIds[] = $item->track->id;
+            }
+        }
+        if (is_bool($playlist)) {
+            $playlist = $this->spotify->getPlaylistTracks($this->getPlaylist('Liked Songs')->id);
+            foreach ($playlist->items as $item) {
+                $spotifyIds[] = $item->track->id;
+            }
+        }
+        return $spotifyIds;
+    }
+
 }

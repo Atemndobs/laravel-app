@@ -144,6 +144,10 @@ class SpotifyMusicService
 
     public function getPlaylistByName(string $playlistName, string $owner)
     {
+        dump([
+            'playlistName' => $playlistName,
+            'owner' => $owner,
+        ]);
         $playlists = Spotify::searchPlaylists($playlistName)->get();
         $playlists = $playlists['playlists']['items'];
         return $this->getItemByNameAndOwner($playlists, $playlistName, $owner);
@@ -247,10 +251,11 @@ class SpotifyMusicService
         }
     }
 
-    public function getPlaylistSongsByPlaylistId(string $playlistId)
+    public function getPlaylistSongsByPlaylistId(string $playlistId, int $offset = 0, int $limit = 100)
     {
-        return Spotify::playlistTracks($playlistId)->get()['items'];
+        return Spotify::playlistTracks($playlistId)->limit($limit)->offset($offset)->get()['items'];
     }
+
 
     public function playlistExists(string $id): Release|null
     {
@@ -618,6 +623,62 @@ class SpotifyMusicService
             'genre' => $this->getGenre($track->id),
             'url' => $track->external_urls->spotify,
             'share_url' => $track->external_urls->spotify,
+        ];
+    }
+    public function fetchSongsInRange(string $playlistId, int $start, int $end)
+    {
+        $limit = $end - $start + 1;
+        $offset = $start - 1;
+
+        // Fetch the songs from the specified range
+        $songs = $this->getPlaylistSongsByPlaylistId($playlistId, $offset, $limit);
+
+        // Process the songs as needed
+        // ...
+
+        return $songs;
+    }
+    public function getSpotifyIdsFromPlaylist(string $playlist, int $offset, int $limit)
+    {
+        if (str_contains($playlist, 'playlist')) {
+            $playlistId = explode("playlist/", $playlist);
+            $playlistId = $playlistId[1];
+            $playlistId = explode("?", $playlistId);
+            $playlistId = $playlistId[0];
+        } else {
+            // if $playlist looks like 6L395PhP6WoQIotqLYg7lQ then its a playlist id
+            if (strlen($playlist) == 22) {
+                $playlistId = $playlist;
+            } else {
+                try {
+                    $playlist = $this->getMyPlaylistByName($playlist);
+                    $playlistId = $playlist['id'];
+                } catch (\Exception $e) {
+                    throw new \Exception('Playlist not found in your Spotify account. IT should be a playlist URL or a playlist ID.');
+                }
+            }
+        }
+        $playlistSongs = $this->getPlaylistSongsByPlaylistId($playlistId, $offset, $limit);
+        // count all songs in playlist
+        $totalSongs = $this->spotify->getPlaylist($playlistId)->tracks->total;
+        Log::info('Total songs in playlist: ' . $totalSongs);
+        $spotifyIds = [];
+        foreach ($playlistSongs as $playlistSong) {
+            $songExists = Song::query()->where('song_id', $playlistSong['track']['id'])->first();
+            if ($songExists) {
+                Log::warning('Song with ID ' . $playlistSong['track']['id'] . ' already exists in DB.');
+                dump('Song with ID ' . $playlistSong['track']['id'] . ' already exists in DB.');
+                continue;
+            }
+            $spotifyIds[] = $playlistSong['track']['id'];
+        }
+        if (empty($spotifyIds)) {
+            Log::warning('All songs in playlist already exist in DB.');
+            throw new \Exception('All songs in playlist already exist in DB.');
+        }
+        return [
+            'spotifyIds' => $spotifyIds,
+            'url' => $playlist['external_urls']['spotify'],
         ];
     }
 }

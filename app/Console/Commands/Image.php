@@ -35,6 +35,14 @@ class Image extends Command
     {
         $all = $this->option('all');
         $path = $this->option('path');
+        // if path is not provided, create a folder in root directory called fixed
+        if ($path === null) {
+            $path = 'fixed';
+        }
+    
+        // log out the full path
+        $fullPath = base_path($path);
+        $this->info("Full path: $fullPath");
         $songsWithImage = [];
         $songsWithoutImage = [];
 
