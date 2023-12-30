@@ -51,11 +51,18 @@ class SpotifyLikedSongsImportCommand extends Command
             return 0;
         }
 
-          $this->info('Importing ' . count($playlistData) . ' songs from Spotify playlist: ' . $playlist );
+        $this->info('Importing ' . count($playlistData) . ' songs from Spotify playlist: ' . $playlist );
         $spotifyIds = $playlistData['spotifyIds'];
-        // $url = $playlistData['url'];
-
+        $url = $playlistData['url'];
+        $spotifyIngo = [
+            'url ' => $url,
+            'total_songs' => $playlistData['total_songs'],
+            ];
+        Log::info(json_encode($spotifyIngo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->info(json_encode($spotifyIngo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         $songs = [];
+
+        $this->warn("Found Spotify IDs: " . count($spotifyIds));
         foreach ($spotifyIds as $spotifyId) {
             $songUrl = 'https://open.spotify.com/track/' . $spotifyId;
             try {

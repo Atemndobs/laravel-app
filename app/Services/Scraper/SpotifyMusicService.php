@@ -672,12 +672,14 @@ class SpotifyMusicService
             }
             $spotifyIds[] = $playlistSong['track']['id'];
         }
+
         if (empty($spotifyIds)) {
             Log::warning('All songs in playlist already exist in DB.');
             throw new \Exception('All songs in playlist already exist in DB.');
         }
         return [
             'spotifyIds' => $spotifyIds,
+            'total_songs' => $totalSongs,
             'url' => $playlist['external_urls']['spotify'],
         ];
     }
