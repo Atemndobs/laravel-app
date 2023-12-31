@@ -83,7 +83,9 @@ class SpotifyLikedSongsImportCommand extends Command
                 Log::error($e->getMessage());
                 $this->error($e->getMessage());
                 $this->line("<fg=bright-magenta>We shall retry downloading $spotifyId after 30 seconds</>");
-                $this->warn("Elapsed time: " . (microtime(true) - $startTime) . " seconds"    );
+                // elapsed time in mins
+                $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
+                $this->warn("Elapsed time: " . $elapsedTime . " seconds"    );
                 Log::info("We shall retry downloading $spotifyId after 30 seconds");
                 sleep(30);
                 Log::info("Retrying $spotifyId");
@@ -96,10 +98,11 @@ class SpotifyLikedSongsImportCommand extends Command
             }
             $songs[] = $spotifyId;
             $this->info('Song with ID ' . $spotifyId . ' has successfully downloaded.');
+            $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
             $spotifyInfo = [
                 'downloaded_songs' => count($songs),
                 'songs_left' => count($spotifyIds) - count($songs),
-                'elapsed_time' => microtime(true) - $startTime,
+                'elapsed_time' => $elapsedTime . " mins"
             ];
             $this->info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             Log::warning(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
@@ -107,10 +110,11 @@ class SpotifyLikedSongsImportCommand extends Command
         $this->line('');
         $bar->finish();
 
+        $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
         $completeInfo = [
             'downloaded_songs' => count($songs),
             'songs_left' => count($spotifyIds) - count($songs),
-            'elapsed_time' => microtime(true) - $startTime,
+            'elapsed_time' => $elapsedTime
         ];
         Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         $this->info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
