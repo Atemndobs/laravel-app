@@ -83,6 +83,7 @@ class SpotifyLikedSongsImportCommand extends Command
                 Log::error($e->getMessage());
                 $this->error($e->getMessage());
                 $this->line("<fg=bright-magenta>We shall retry downloading $spotifyId after 30 seconds</>");
+                $this->warn("Elapsed time: " . (microtime(true) - $startTime) . " seconds"    );
                 Log::info("We shall retry downloading $spotifyId after 30 seconds");
                 sleep(30);
                 Log::info("Retrying $spotifyId");
