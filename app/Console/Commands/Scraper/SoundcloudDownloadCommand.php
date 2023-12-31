@@ -193,7 +193,7 @@ class SoundcloudDownloadCommand extends Command
                 'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
                 'songs_left' => count($downloadLinks) - count($downloadLinks),
                 'estimated_time_left' => (count($downloadLinks) - count($downloadLinks)) * 12 / 60 . ' mins', // 12 seconds per song
-                's3_path' => $s3Path,
+                's3_path' => "https://curators3.s3.amazonaws.com/music/$slug.mp3",
                 'originally_estimated_time' => $estimatedTime,
             ];
             Log::info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
