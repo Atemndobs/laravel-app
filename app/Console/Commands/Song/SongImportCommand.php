@@ -43,23 +43,47 @@ class SongImportCommand extends Command
     {
         $source = $this->argument('source');
         $path = $this->option('path');
-
+        $uploadService = new UploadService();
         $unClassified = [];
         $data = [];
-        $audioFiles = glob('/var/www/html/storage/app/public/uploads/audio/*');
-        $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*'));
+        $audioFiles = glob('/var/www/html/storage/app/public/uploads/audio/*.mp3');
+        $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*.mp3'));
+        $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*/*.mp3'));
         $audioFiles = array_filter($audioFiles, 'is_file');
         $this->info('Found ' . count($audioFiles) . ' files');
         // call move audio command
        $this->call('move:audio');
-       $uploadService = new UploadService();
 
         if ($path) {
-            $songPath = "/var/www/html/$path";
-            $uploadService->uploadSong($songPath);
-
+            // if path does not start with "/var/www/html/" add it
+            if (strpos($path, '/var/www/html/') === false) {
+                $path = '/var/www/html/' . $path;
+            }
+            try {
+                // check if file exists
+                if (!File::exists($path)) {
+                    $this->error("File does not exist: $path");
+                    return 0;
+                }
+                $uploadService->uploadSong($path);
+            } catch (\Exception $e) {
+                $this->warn($e->getMessage());
+                return 0;
+            }
+            $baseName = basename($path);
+            // delete file
+            File::delete($path);
+            $message = json_encode([
+                'message' => 'File uploaded & deleted',
+                'file' => $path,
+                's3_path' => "https://curators3.s3.amazonaws.com/music/$baseName",
+                'Command' => 'song:import, line: ' . __LINE__,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            Log::info($message);
+            $this->line("<fg=bright-magenta>". $message ."</>");
             return 0;
         }
+
         $this->output->progressStart(count($audioFiles));
         foreach ($audioFiles as $file) {
             $this->output->write("\n");

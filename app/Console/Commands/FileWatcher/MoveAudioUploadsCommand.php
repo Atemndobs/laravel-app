@@ -32,6 +32,7 @@ class MoveAudioUploadsCommand extends Command
         // Check files
         $audioFiles = glob('/var/www/html/storage/app/public/uploads/audio/*.mp3');
         $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*.mp3'));
+        $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*/*.mp3'));
         $files = array_filter($audioFiles, 'is_file');
         $this->info('Found ' . count($audioFiles) . ' files');
         if (!$files) {
@@ -52,14 +53,15 @@ class MoveAudioUploadsCommand extends Command
     {
         foreach ($files as $file) {
             $fileName = basename($file);
-            $folder = basename(dirname($file));
+            //$folder = basename(dirname($file));
+            $folder = 'audio';
             $fileName = str_replace('.mp3', '', $fileName);
             $fileName = Str::slug($fileName, '_');
             $fileName = $fileName . '.mp3';
             $destination = "/var/www/html/storage/app/public/uploads/" .  $folder . '/' . $fileName;
-            if ($folder !== 'audio') {
-                $destination = "/var/www/html/storage/app/public/uploads/audio/" .  $folder . '/' . $fileName;
-            }
+//            if ($folder !== 'audio') {
+//                $destination = "/var/www/html/storage/app/public/uploads/audio/" .  $folder . '/' . $fileName;
+//            }
             if (!file_exists($destination)) {
                 rename($file, $destination);
                 Log::info('Moved ' . $file . ' to ' . $destination);

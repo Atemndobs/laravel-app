@@ -52,12 +52,16 @@ class SpotifyDownloadCommand extends Command
             ];
 
             $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            return 0;
+          //  return 0;
         }
 
         shell_exec("pwd");
 
-        $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/$spotifyId/";
+        $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/spotify/$spotifyId/";
+        // if folder does not exist create it
+        if (!file_exists('/var/www/html/storage/app/public/uploads/audio/spotify')) {
+            mkdir('/var/www/html/storage/app/public/uploads/audio/spotify/', 0777, true);
+        }
        // $shell = shell_exec("spotdl  $url --output $songDownloadLocation --overwrite force");
         $shell = shell_exec("spotdl  $url --output $songDownloadLocation ");
         $this->info($shell);
@@ -156,6 +160,9 @@ class SpotifyDownloadCommand extends Command
             Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
+        $this->call('song:import', [
+            '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
+        ]);
         return 0;
     }
 }
