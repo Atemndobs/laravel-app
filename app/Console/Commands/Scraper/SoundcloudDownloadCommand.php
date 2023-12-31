@@ -17,7 +17,7 @@ class SoundcloudDownloadCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'scrape:sc {--l|link=null} {--a|artist=null} {--p|playlist=null} {--t|title=null} {--m|mixtape=null}';
+    protected $signature = 'scrape:sc {--l|link=null} {--a|artist=null} {--p|playlist=null} {--t|title=null} {--m|mixtape=null} {--f|file=null}';
 
     /**
      * The console command description.
@@ -38,6 +38,7 @@ class SoundcloudDownloadCommand extends Command
         $title = $this->option('title');
         $playlist = $this->option('playlist');
         $mixtape = $this->option('mixtape');
+        $file = $this->option('file');
 
         if ((string)$link !== 'null') {
             $this->info('Downloading from link: ' . $link);
@@ -65,7 +66,12 @@ class SoundcloudDownloadCommand extends Command
             $url = $mixtape;
         }
         $soundcloudService = new SoundCloudDownloadService();
-        $downloadLinks = $soundcloudService->prepareSongLinksFromFile()['links'];
+        if ($file !== 'null') {
+            $downloadLinks = $soundcloudService->prepareSongLinksFromFile($file)['links'];
+        }else {
+            $downloadLinks = $soundcloudService->prepareSongLinksFromFile()['links'];
+        }
+
         $this->warn("Found Soundcloud links: " . count($downloadLinks));
         // Start progress bar
         $bar = $this->output->createProgressBar(count($downloadLinks));
@@ -188,8 +194,15 @@ class SoundcloudDownloadCommand extends Command
                     'file' => $e->getFile(),
                 ];
                 Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                $this->line("<fg=red>". json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ."</>");
+                // sleep for 20 seconds
                 $missingSongs[] = $downloadLink;
+                //save missing songs in a file
+                $missingSongsFile = "missing_soundCloud_songs.txt";
+                file_put_contents($missingSongsFile, implode("\n", $missingSongs));
+                $this->line("<fg=cyan>We save this for next retry:  $downloadLink </>");
+                $this->line("<fg=cyan> == Sleep 20 seconds and continue == </>");
+                sleep(20);
             }
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
