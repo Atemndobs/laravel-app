@@ -69,7 +69,7 @@ class SpotifyLikedSongsImportCommand extends Command
         $bar = $this->output->createProgressBar(count($spotifyIds));
         // start timer
         $startTime = microtime(true);
-        $originalEstimatedTime = count($spotifyIds) * 20 / 60 . " mins";
+        $originalEstimatedTime = count($spotifyIds) * 30 / 60 . " mins";
         foreach ($spotifyIds as $spotifyId) {
             $this->line('');
             $bar->advance();
