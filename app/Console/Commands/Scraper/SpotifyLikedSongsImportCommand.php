@@ -122,8 +122,8 @@ class SpotifyLikedSongsImportCommand extends Command
             'originally_estimated_time' => $originalEstimatedTime
         ];
         Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        $this->line("<fg=bright-green> ================ Download Successfully completed Completed ============================= </>");
-        $this->line("<fg=bright-green>". json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)." </>");
+        $this->line("<fg=bright-white> ================ Download Successfully completed Completed ============================= </>");
+        $this->line("<fg=bright-cyan>". json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)." </>");
         return 0;
     }
 }
