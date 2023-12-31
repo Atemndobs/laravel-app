@@ -85,7 +85,6 @@ class SoundcloudDownloadCommand extends Command
                 $songExists = \App\Models\Song::where('song_id', $soundcloudSongId)->first();
                 if ($songExists) {
                     // check path , if path starts with /var/html/www/ then change it to the s3 oath
-                    dump($songExists->path);
                     if (strpos($songExists->path, '/var/www/html/') !== false) {
                         $songExists->path = "https://curators3.s3.amazonaws.com/music/" . basename($songExists->path);
                         $songExists->save();
@@ -181,9 +180,9 @@ class SoundcloudDownloadCommand extends Command
                     ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 }
 
-                $this->call('song:import', [
-                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
-                ]);
+//                $this->call('song:import', [
+//                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
+//                ]);
             }catch (\Exception $e) {
                 $this->error($e->getMessage());
                 $missingSongs[] = $downloadLink;
@@ -191,9 +190,6 @@ class SoundcloudDownloadCommand extends Command
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
                 'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
-                'songs_left' => count($downloadLinks) - count($downloadLinks),
-                'estimated_time_left' => (count($downloadLinks) - count($downloadLinks)) * 12 / 60 . ' mins', // 12 seconds per song
-                's3_path' => "https://curators3.s3.amazonaws.com/music/$slug.mp3",
                 'originally_estimated_time' => $estimatedTime,
             ];
             Log::info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
