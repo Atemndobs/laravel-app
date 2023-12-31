@@ -139,13 +139,14 @@ class SpotifyDownloadCommand extends Command
         ];
         $this->info(json_encode($logInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         //  save new song to DB
+        $s3Path = "https://curators3.s3.amazonaws.com/music/$slug.mp3";
         $song = new \App\Models\Song();
         $song->title = $title;
         $song->author = $author;
         $song->song_url = $song_url;
         $song->song_id = $song_id;
         $song->slug = $slug;
-        $song->path = $filepath;
+        $song->path = $s3Path;
         $song->source = "spotify";
         try {
             $song->save();

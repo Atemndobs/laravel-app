@@ -72,9 +72,9 @@ class SongImportCommand extends Command
             }
             $baseName = basename($path);
             // delete file
-            File::delete($path);
+            //File::delete($path);
             $message = json_encode([
-                'message' => 'File uploaded & deleted',
+                'message' => 'File uploaded & not deleted',
                 'file' => $path,
                 's3_path' => "https://curators3.s3.amazonaws.com/music/$baseName",
                 'Command' => 'song:import, line: ' . __LINE__,

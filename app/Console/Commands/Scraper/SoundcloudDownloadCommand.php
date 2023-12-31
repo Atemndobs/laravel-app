@@ -5,6 +5,7 @@ namespace App\Console\Commands\Scraper;
 use App\Models\Song;
 use App\Services\Scraper\SoundcloudService;
 use App\Services\Soundcloud\SoundCloudDownloadService;
+use App\Services\Storage\AwsS3Service;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -73,6 +74,7 @@ class SoundcloudDownloadCommand extends Command
         // calculate estimated time as 30 seconds per song
         $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
         $this->line("<fg=bright-magenta>Estimated time: $estimatedTime</>");
+        $missingSongs = [];
         foreach ($downloadLinks as $downloadLink) {
             $bar->advance();
             $this->line('');
@@ -82,6 +84,12 @@ class SoundcloudDownloadCommand extends Command
                 // check if song exists in DB by song_id
                 $songExists = \App\Models\Song::where('song_id', $soundcloudSongId)->first();
                 if ($songExists) {
+                    // check path , if path starts with /var/html/www/ then change it to the s3 oath
+                    dump($songExists->path);
+                    if (strpos($songExists->path, '/var/www/html/') !== false) {
+                        $songExists->path = "https://curators3.s3.amazonaws.com/music/" . basename($songExists->path);
+                        $songExists->save();
+                    }
                     $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
                     $message = [
                         'songExists' => [
@@ -144,6 +152,7 @@ class SoundcloudDownloadCommand extends Command
                 Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 
+                $s3Path = "https://curators3.s3.amazonaws.com/music/$slug.mp3";
                 //  save new song to DB
                 $song = new \App\Models\Song();
                 $song->title = $title;
@@ -151,7 +160,7 @@ class SoundcloudDownloadCommand extends Command
                 $song->song_url = $song_url;
                 $song->song_id = $song_id;
                 $song->slug = $slug;
-                $song->path = $filepath;
+                $song->path = $s3Path;
                 $song->source = "spotify";
                 try {
                     $song->save();
@@ -164,6 +173,12 @@ class SoundcloudDownloadCommand extends Command
                         'file' => $e->getFile(),
                     ];
                     Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                    $this->warn(json_encode([
+                        'error' => "Song Already Exists in DB",
+                        'message' => $e->getMessage(),
+                        'line' => $e->getLine(),
+                        'file' => $e->getFile(),
+                    ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 }
 
                 $this->call('song:import', [
@@ -171,11 +186,14 @@ class SoundcloudDownloadCommand extends Command
                 ]);
             }catch (\Exception $e) {
                 $this->error($e->getMessage());
-                dd($e->getMessage());
+                $missingSongs[] = $downloadLink;
             }
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
                 'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
+                'songs_left' => count($downloadLinks) - count($downloadLinks),
+                'estimated_time_left' => (count($downloadLinks) - count($downloadLinks)) * 12 / 60 . ' mins', // 12 seconds per song
+                's3_path' => $s3Path,
                 'originally_estimated_time' => $estimatedTime,
             ];
             Log::info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
@@ -185,10 +203,26 @@ class SoundcloudDownloadCommand extends Command
         $bar->finish();
         $this->line('');
         $this->info('Download completed');
+
+        // put missing songs in txt name missing_soundCloud_songs.txt (each son in a new line) and sore in s3
+        $missingSongs = array_unique($missingSongs);
+        $missingSongs = array_values($missingSongs);
+        // create file missing_soundCloud_songs.txt
+        $missingSongsFile = fopen("missing_soundCloud_songs.txt", "w");
+        foreach ($missingSongs as $missingSong) {
+            fwrite($missingSongsFile, $missingSong . "\n");
+        }
+        fclose($missingSongsFile);
+        // upload file to s3
+        $awsService = new AwsS3Service();
+        $awsService->putObject("missing_soundCloud_songs.txt", "assets");
+
         $completeMessage = [
             'downloaded_songs' => count($downloadLinks),
             'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
             'originally_estimated_time' => $estimatedTime,
+            'missing_songs' => count($missingSongs),
+            'missing_songs_file' => "https://curators3.s3.amazonaws.com/assets/missing_soundCloud_songs.txt",
         ];
         Log::info(json_encode($completeMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $this->line("<fg=bright-cyan>" . json_encode($completeMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
