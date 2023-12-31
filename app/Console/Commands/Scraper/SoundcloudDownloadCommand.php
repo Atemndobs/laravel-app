@@ -79,6 +79,24 @@ class SoundcloudDownloadCommand extends Command
             try {
                 $filename = $this->extractTrackNameFromLink($downloadLink);
                 $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink); // Function to extract the ID
+                // check if song exists in DB by song_id
+                $songExists = \App\Models\Song::where('song_id', $soundcloudSongId)->first();
+                if ($songExists) {
+                    $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
+                    $message = [
+                        'songExists' => [
+                            'song_id' => $songExists->song_id,
+                            'id' => $songExists->id,
+                            'title' => $songExists->title,
+                            'author' => $songExists->author,
+                            'genre' => $songExists->genre,
+                            'path' => $songExists->path,
+                            'image' => $songExists->image,
+                        ]
+                    ];
+                    Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                    continue;
+                }
                 // create the path to the song
                 $path = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
                 // make sure the directory exists if not create it
@@ -86,28 +104,13 @@ class SoundcloudDownloadCommand extends Command
                     mkdir($path, 0777, true);
                 }
                 $downloadPath = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
-                // output the shell command to the console
                 $shell = shell_exec("scdl -l $downloadLink --path $downloadPath  2>&1");
-              //  dump(shell_exec("ls -la /var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId"));
-                // get the file and get its name
                 $file = glob("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId/*.mp3");
                 $fileName = basename($file[0]);
                 $fileName = str_replace('.mp3', '', $fileName);
                 $slug = Str::slug($fileName, '_');
 
-                // here is the shell output pattern below, From th 3rd line (pattern Author - Track, Extract the track name and the author
-                // Soundcloud Downloader
-                //Found a track
-                //Downloading 1da Banton - African Woman
-                //Setting tags...
-                //1da Banton - African Woman.mp3 Downloaded.
-
-                dump($shell);
                 $shellOutput = explode("\n", $shell);
-                dump([
-                    'shellOutput' => $shellOutput,
-                    'count' => count($shellOutput),
-                ]);
                 $shellOutput = array_filter($shellOutput);
                 $shellOutput = array_values($shellOutput);
                 $trackName = $shellOutput[2];
