@@ -40,7 +40,6 @@ class SpotifyLikedSongsImportCommand extends Command
             Log::info('No playlist provided, using default playlist : Liked Songs');
             $playlist = 'https://open.spotify.com/playlist/6L395PhP6WoQIotqLYg7lQ?si=02eee911d5f046c8';
         }
-
         $spotifyService = new SpotifyMusicService();
         try {
             $playlistData = $spotifyService->getSpotifyIdsFromPlaylist($playlist, $offset, $limit);
@@ -85,7 +84,9 @@ class SpotifyLikedSongsImportCommand extends Command
                 $this->line("<fg=bright-magenta>We shall retry downloading $spotifyId after 30 seconds</>");
                 // elapsed time in mins
                 $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
+                $stimatedTime = (count($spotifyIds) - count($songs)) * 20 / 60 . " mins";
                 $this->warn("Elapsed time: " . $elapsedTime );
+                $this->warn("Estimated time: " . $stimatedTime );
                 Log::info("We shall retry downloading $spotifyId after 30 seconds");
                 sleep(30);
                 Log::info("Retrying $spotifyId");
@@ -99,12 +100,14 @@ class SpotifyLikedSongsImportCommand extends Command
             $songs[] = $spotifyId;
             $this->info('Song with ID ' . $spotifyId . ' has successfully downloaded.');
             $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
+            $estimatedTime = (count($spotifyIds) - count($songs)) * 20 / 60 . " mins";
             $spotifyInfo = [
                 'downloaded_songs' => count($songs),
                 'songs_left' => count($spotifyIds) - count($songs),
-                'elapsed_time' => $elapsedTime
+                'elapsed_time' => $elapsedTime,
+                'estimated_time' => $estimatedTime,
             ];
-            $this->info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $this->line("<fg=bright-cyan>Downloaded songs: " . json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "</>");
             Log::warning(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         }
         $this->line('');
