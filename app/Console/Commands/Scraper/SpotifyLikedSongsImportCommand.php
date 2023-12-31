@@ -68,6 +68,8 @@ class SpotifyLikedSongsImportCommand extends Command
         $this->warn("Found Spotify IDs: " . count($spotifyIds));
         // Start progress bar
         $bar = $this->output->createProgressBar(count($spotifyIds));
+        // start timer
+        $startTime = microtime(true);
         foreach ($spotifyIds as $spotifyId) {
             $this->line('');
             $bar->advance();
@@ -96,16 +98,21 @@ class SpotifyLikedSongsImportCommand extends Command
             $spotifyInfo = [
                 'downloaded_songs' => count($songs),
                 'songs_left' => count($spotifyIds) - count($songs),
+                'elapsed_time' => microtime(true) - $startTime,
             ];
             $this->info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             Log::warning(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         }
         $this->line('');
         $bar->finish();
-        Log::info(json_encode(['songs' => $songs],
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-        );
 
+        $completeInfo = [
+            'downloaded_songs' => count($songs),
+            'songs_left' => count($spotifyIds) - count($songs),
+            'elapsed_time' => microtime(true) - $startTime,
+        ];
+        Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         return 0;
     }
 }
