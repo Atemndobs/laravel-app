@@ -85,7 +85,7 @@ class SpotifyLikedSongsImportCommand extends Command
                 $this->line("<fg=bright-magenta>We shall retry downloading $spotifyId after 30 seconds</>");
                 // elapsed time in mins
                 $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
-                $this->warn("Elapsed time: " . $elapsedTime . " seconds"    );
+                $this->warn("Elapsed time: " . $elapsedTime );
                 Log::info("We shall retry downloading $spotifyId after 30 seconds");
                 sleep(30);
                 Log::info("Retrying $spotifyId");
@@ -102,7 +102,7 @@ class SpotifyLikedSongsImportCommand extends Command
             $spotifyInfo = [
                 'downloaded_songs' => count($songs),
                 'songs_left' => count($spotifyIds) - count($songs),
-                'elapsed_time' => $elapsedTime . " mins"
+                'elapsed_time' => $elapsedTime
             ];
             $this->info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             Log::warning(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
