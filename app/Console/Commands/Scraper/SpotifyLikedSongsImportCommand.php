@@ -69,6 +69,7 @@ class SpotifyLikedSongsImportCommand extends Command
         $bar = $this->output->createProgressBar(count($spotifyIds));
         // start timer
         $startTime = microtime(true);
+        $originalEstimatedTime = count($spotifyIds) * 20 / 60 . " mins";
         foreach ($spotifyIds as $spotifyId) {
             $this->line('');
             $bar->advance();
@@ -115,12 +116,14 @@ class SpotifyLikedSongsImportCommand extends Command
 
         $elapsedTime = (microtime(true) - $startTime) / 60 . " mins";
         $completeInfo = [
+            'stats' => 'Completed',
             'downloaded_songs' => count($songs),
-            'songs_left' => count($spotifyIds) - count($songs),
-            'elapsed_time' => $elapsedTime
+            'elapsed_time' => $elapsedTime,
+            'originally_estimated_time' => $originalEstimatedTime
         ];
         Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        $this->info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->line("<fg=bright-green> ================ Download Successfully completed Completed ============================= </>");
+        $this->line("<fg=bright-green>". json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)." </>");
         return 0;
     }
 }
