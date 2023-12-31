@@ -186,6 +186,7 @@ class SoundcloudDownloadCommand extends Command
 //                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
 //                ]);
             }catch (\Exception $e) {
+                $sleepTime = 5;
                 $error = [
                     'error' => "Download Failed",
                     'link' => $downloadLink,
@@ -201,8 +202,8 @@ class SoundcloudDownloadCommand extends Command
                 $missingSongsFile = "missing_soundCloud_songs.txt";
                 file_put_contents($missingSongsFile, implode("\n", $missingSongs));
                 $this->line("<fg=cyan>We save this for next retry:  $downloadLink </>");
-                $this->line("<fg=cyan> == Sleep 20 seconds and continue == </>");
-                sleep(20);
+                $this->line("<fg=cyan> == Sleep $sleepTime seconds and continue == </>");
+                sleep($sleepTime);
             }
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
