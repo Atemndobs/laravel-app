@@ -167,24 +167,28 @@ class SoundcloudDownloadCommand extends Command
                 } catch (\Exception $e) {
                     $error = [
                         'error' => "Song Already Exists in DB",
+                        'link' => $downloadLink,
                         'message' => $e->getMessage(),
                         'line' => $e->getLine(),
                         'file' => $e->getFile(),
                     ];
                     Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                    $this->warn(json_encode([
-                        'error' => "Song Already Exists in DB",
-                        'message' => $e->getMessage(),
-                        'line' => $e->getLine(),
-                        'file' => $e->getFile(),
-                    ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                    $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 }
 
 //                $this->call('song:import', [
 //                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
 //                ]);
             }catch (\Exception $e) {
-                $this->error($e->getMessage());
+                $error = [
+                    'error' => "Download Failed",
+                    'link' => $downloadLink,
+                    'message' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ];
+                Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                 $missingSongs[] = $downloadLink;
             }
             $souncdlInfo = [
