@@ -164,25 +164,13 @@ class SoundcloudDownloadCommand extends Command
         $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink);
         $author = $this->extractAuthorFromLink($downloadLink);
         /** @var  Song $songExists */
-        $songExists = Song::query()->where('song_id', $soundcloudSongId)->first();
+        $songExists = $this->checkSongExist($soundcloudSongId);
         if ($songExists) {
             $songExists->author = $author;
             $songExists->source = 'soundcloud';
             $songExists->save();
-            $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
-            $message = [
-                'songExists' => [
-                    'song_id' => $songExists->song_id,
-                    'id' => $songExists->id,
-                    'title' => $songExists->title,
-                    'author' => $songExists->author,
-                    'genre' => $songExists->genre,
-                    'path' => $songExists->path,
-                    'image' => $songExists->image,
-                ]
-            ];
-            Log::channel('soundcloud')->warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));                // log to a file called soundcloud
-            $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB. - Source Updated');
+            $this->songExistError($songExists);
             return 0;
         }
 
@@ -196,6 +184,17 @@ class SoundcloudDownloadCommand extends Command
         $fileName = basename($file[0]);
         $fileName = str_replace('.mp3', '', $fileName);
         $slug = Str::slug($fileName, '_');
+
+        // check if slug exists in DB
+        /** @var  Song $songExists */
+        $songExists = Song::query()->where('slug', $slug)->first();
+        if ($songExists) {
+            $songExists->song_id ??= $soundcloudSongId;
+            $songExists->save();
+            $this->error('Song with Slug ' . $slug . ' already exists in DB. - song ID updated:' . $songExists->song_id);
+            $this->songExistError($songExists);
+            return 0;
+        }
 
         $trackName = $this->extractTrackInfoFromShellOutput($shell);
         $title = explode(' - ', $trackName)[0];
@@ -231,6 +230,7 @@ class SoundcloudDownloadCommand extends Command
         $song->path = $s3Path;
         $song->source = "soundcloud";
         try {
+
             $song->save();
             $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
         } catch (\Exception $e) {
@@ -263,17 +263,9 @@ class SoundcloudDownloadCommand extends Command
 
     private function extractSoundCloudSongId($url)
     {
-        // Use parse_url to get the path component of the URL
         $path = parse_url($url, PHP_URL_PATH);
-
-        // Remove the leading slash
         $path = ltrim($path, '/');
-
-        // Replace slashes with underscores or another separator
-        // This creates a unique identifier based on the username and song title
-        $id = str_replace('/', '_', $path);
-
-        return $id;
+        return str_replace('/', '_', $path);
     }
 
     /**
@@ -334,6 +326,37 @@ class SoundcloudDownloadCommand extends Command
         ];
         $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         Log::channel('soundcloud')->info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * @param array|false|int|string|null $soundcloudSongId
+     * @return \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Model|object|null
+     */
+    public function checkSongExist(array|false|int|string|null $soundcloudSongId)
+    {
+        return Song::query()->where('song_id', $soundcloudSongId)->first();
+    }
+
+    /**
+     * @param Song $songExists
+     * @return void
+     */
+    public function songExistError(Song $songExists): void
+    {
+        $message = [
+            'songExists' => [
+                'song_id' => $songExists->song_id,
+                'slug' => $songExists->slug,
+                'id' => $songExists->id,
+                'title' => $songExists->title,
+                'author' => $songExists->author,
+                'genre' => $songExists->genre,
+                'path' => $songExists->path,
+                'image' => $songExists->image,
+            ]
+        ];
+        Log::channel('soundcloud')->warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));                // log to a file called soundcloud
+        $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
 }
