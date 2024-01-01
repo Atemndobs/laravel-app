@@ -181,7 +181,7 @@ class SoundcloudDownloadCommand extends Command
         $downloadPath = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
         $shell = shell_exec("scdl -l $downloadLink --path $downloadPath  2>&1");
         $file = glob("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId/*.mp3");
-        $fileName = basename($file[0]);
+        $fileName = $this->getFileName($file, $shell);
         $fileName = str_replace('.mp3', '', $fileName);
         $slug = Str::slug($fileName, '_');
 
@@ -359,4 +359,25 @@ class SoundcloudDownloadCommand extends Command
         $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
+
+    /**
+     * @param $file
+     * @param $shell
+     * @return string
+     * @throws \Exception
+     */
+    public function getFileName($file, $shell): string
+    {
+        try {
+            return basename($file[0]);
+        } catch (\Exception $e) {
+            $shellOutput = explode("\n", $shell);
+            $shellOutput[4] =  [
+                '1. This track is not available in Germany',
+                '2. Track has been removed from soundcloud',
+            ];
+            $this->line("<fg=bright-blue>Shell Output: " . json_encode($shellOutput, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
+            throw new \Exception($e->getMessage());
+        }
+    }
 }
