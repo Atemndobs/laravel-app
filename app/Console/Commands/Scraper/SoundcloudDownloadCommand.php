@@ -17,7 +17,8 @@ class SoundcloudDownloadCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'scrape:sc {--l|link=null} {--a|artist=null} {--p|playlist=null} {--t|title=null} {--m|mixtape=null} {--f|file=null}';
+    protected $signature = 'scrape:sc {--l|link=null} {--a|artist=null} {--p|playlist=null} {--t|title=null} 
+    {--m|mixtape=null} {--f|file=null} {--c|continue=null}';
 
     /**
      * The console command description.
@@ -39,6 +40,7 @@ class SoundcloudDownloadCommand extends Command
         $playlist = $this->option('playlist');
         $mixtape = $this->option('mixtape');
         $file = $this->option('file');
+        $continue = $this->option('continue');
 
         if ((string)$link !== 'null') {
             $this->info('Downloading from link: ' . $link);
@@ -64,6 +66,16 @@ class SoundcloudDownloadCommand extends Command
             $this->info('Downloading from mixtape: ' . $mixtape);
             $option = '-m';
             $url = $mixtape;
+        }
+        if ($file !== 'null') {
+            $this->info('Downloading from file: ' . $file);
+            $option = '-f';
+            $url = $file;
+        }
+        if ($continue !== 'null') {
+            $this->info('Downloading from continue: ' . $continue);
+            $this->forceDownload($link);
+            return 0;
         }
         $soundcloudService = new SoundCloudDownloadService();
 
@@ -245,6 +257,26 @@ class SoundcloudDownloadCommand extends Command
             $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         }
 
+        return 0;
+    }
+
+    /**
+     * @param string $downloadLink
+     * @return int
+     * @throws \Exception
+     */
+    public function forceDownload(string $downloadLink)
+    {
+        $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink);
+        $path = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+        $downloadPath = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
+        $shell = shell_exec("scdl -l $downloadLink --path $downloadPath -c 2>&1");
+        $file = glob("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId/*.mp3");
+        $this->info("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId");
+        $this->getFileName($file, $shell);
         return 0;
     }
 
