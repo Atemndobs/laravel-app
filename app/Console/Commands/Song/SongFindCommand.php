@@ -137,7 +137,7 @@ class SongFindCommand extends Command
             $this->table($header, $songs);
             return 0;
         }
-        $reducedHeader = ['id','title', 'slug', 'bpm', 'scale', 'key', 'genre'];
+        $reducedHeader = ['id','author','title', 'slug', 'bpm', 'scale', 'key', 'genre'];
 
         foreach ($songs as $key => $value) {
             $songs[$key] = Arr::only($value, $reducedHeader );

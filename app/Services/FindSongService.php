@@ -10,6 +10,7 @@ class FindSongService
 {
     public const ATTRIBUTES = [
         'id',
+        'author',
         'title',
         'slug',
         'bpm',

@@ -66,9 +66,13 @@ class SoundcloudDownloadCommand extends Command
             $url = $mixtape;
         }
         $soundcloudService = new SoundCloudDownloadService();
-        if ($file !== 'null') {
+
+        $downloadLinks = [];
+        if ($link !== 'null') {
+            $downloadLinks[] = $link;
+        } elseif ($file !== 'null') {
             $downloadLinks = $soundcloudService->prepareSongLinksFromFile($file)['links'];
-        }else {
+        } else {
             $downloadLinks = $soundcloudService->prepareSongLinksFromFile()['links'];
         }
 
@@ -85,107 +89,11 @@ class SoundcloudDownloadCommand extends Command
             $bar->advance();
             $this->line('');
             try {
-                $filename = $this->extractTrackNameFromLink($downloadLink);
-                $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink); // Function to extract the ID
-                // check if song exists in DB by song_id
-                $songExists = \App\Models\Song::where('song_id', $soundcloudSongId)->first();
-                if ($songExists) {
-                    // check path , if path starts with /var/html/www/ then change it to the s3 oath
-                    if (strpos($songExists->path, '/var/www/html/') !== false) {
-                        $songExists->path = "https://curators3.s3.amazonaws.com/music/" . basename($songExists->path);
-                        $songExists->save();
-                    }
-                    $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
-                    $message = [
-                        'songExists' => [
-                            'song_id' => $songExists->song_id,
-                            'id' => $songExists->id,
-                            'title' => $songExists->title,
-                            'author' => $songExists->author,
-                            'genre' => $songExists->genre,
-                            'path' => $songExists->path,
-                            'image' => $songExists->image,
-                        ]
-                    ];
-                    Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                    continue;
-                }
-                // create the path to the song
-                $path = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
-                // make sure the directory exists if not create it
-                if (!file_exists($path)) {
-                    mkdir($path, 0777, true);
-                }
-                $downloadPath = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
-                $shell = shell_exec("scdl -l $downloadLink --path $downloadPath  2>&1");
-                $file = glob("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId/*.mp3");
-                $fileName = basename($file[0]);
-                $fileName = str_replace('.mp3', '', $fileName);
-                $slug = Str::slug($fileName, '_');
-
-                $shellOutput = explode("\n", $shell);
-                $shellOutput = array_filter($shellOutput);
-                $shellOutput = array_values($shellOutput);
-                $trackName = $shellOutput[2];
-                $trackName = str_replace('Downloading ', '', $trackName);
-                $trackName = str_replace('.mp3 Downloaded.', '', $trackName);
-
-
-                $author = explode(' - ', $trackName)[0];
-                $title = explode(' - ', $trackName)[1];
-                $title = str_replace('_', ' ', $title);
-
-                $song_url = $downloadLink;
-                $song_id = $soundcloudSongId;
-                $filepath = $path . '/' . $slug . '.mp3';
-                $message = [
-                    'downloadLink' => $downloadLink,
-                    'filename' => $filename,
-                    'soundcloudSongId' => $soundcloudSongId,
-                    'downloadPath' => $downloadPath,
-                    'elapsed_time_secs' => (microtime(true) - $startTime)  . ' secs', // in 2 dp
-                    'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
-                    'title' => $title,
-                    'author' => $author,
-                    'song_url' => $song_url,
-                    'song_id' => $song_id,
-                    'slug' => $slug,
-                    'filepath' => $filepath,
-                    'source' => 'soundcloud',
-                ];
-
-                Log::info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-                $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-
-                $s3Path = "https://curators3.s3.amazonaws.com/music/$slug.mp3";
-                //  save new song to DB
-                $song = new \App\Models\Song();
-                $song->title = $title;
-                $song->author = $author;
-                $song->song_url = $song_url;
-                $song->song_id = $song_id;
-                $song->slug = $slug;
-                $song->path = $s3Path;
-                $song->source = "spotify";
-                try {
-                    $song->save();
-                    $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
-                } catch (\Exception $e) {
-                    $error = [
-                        'error' => "Song Already Exists in DB",
-                        'link' => $downloadLink,
-                        'message' => $e->getMessage(),
-                        'line' => $e->getLine(),
-                        'file' => $e->getFile(),
-                    ];
-                    Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                    $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-                }
-
+                $this->processDownloadLink($downloadLink, $startTime);
 //                $this->call('song:import', [
 //                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
 //                ]);
-            }catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $sleepTime = 5;
                 $error = [
                     'error' => "Download Failed",
@@ -193,9 +101,10 @@ class SoundcloudDownloadCommand extends Command
                     'message' => $e->getMessage(),
                     'line' => $e->getLine(),
                     'file' => $e->getFile(),
+                    'method' => "processDownloadLink",
                 ];
-                Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                $this->line("<fg=red>". json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ."</>");
+                Log::channel('soundcloud')->warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                $this->line("<fg=red>" . json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
                 // sleep for 20 seconds
                 $missingSongs[] = $downloadLink;
                 //save missing songs in a file
@@ -203,14 +112,14 @@ class SoundcloudDownloadCommand extends Command
                 file_put_contents($missingSongsFile, implode("\n", $missingSongs));
                 $this->line("<fg=cyan>We save this for next retry:  $downloadLink </>");
                 $this->line("<fg=cyan> == Sleep $sleepTime seconds and continue == </>");
-               // sleep($sleepTime);
+                // sleep($sleepTime);
             }
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
-                'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
+                'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
                 'originally_estimated_time' => $estimatedTime,
             ];
-            Log::info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            Log::channel('soundcloud')->info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
             $this->line("<fg=bright-cyan>" . json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
 
         }
@@ -233,14 +142,122 @@ class SoundcloudDownloadCommand extends Command
 
         $completeMessage = [
             'downloaded_songs' => count($downloadLinks),
-            'elapsed_time' => microtime(true) - $startTime / 60 . ' mins',
+            'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
             'originally_estimated_time' => $estimatedTime,
             'missing_songs' => count($missingSongs),
             'missing_songs_file' => "https://curators3.s3.amazonaws.com/assets/missing_soundCloud_songs.txt",
         ];
-        Log::info(json_encode($completeMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        Log::channel('soundcloud')->info(json_encode($completeMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $this->line("<fg=bright-cyan>" . json_encode($completeMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
         return 0;
+    }
+
+    /**
+     * Process the download link and save the song to the database.
+     *
+     * @param string $downloadLink The download link of the song.
+     * @return int
+     */
+    private function processDownloadLink(string $downloadLink, $startTime)
+    {
+        $filename = $this->extractTrackNameFromLink($downloadLink);
+        $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink);
+        $author = $this->extractAuthorFromLink($downloadLink);
+        /** @var  Song $songExists */
+        $songExists = Song::query()->where('song_id', $soundcloudSongId)->first();
+        if ($songExists) {
+            $songExists->author = $author;
+            $songExists->save();
+            $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
+            $message = [
+                'songExists' => [
+                    'song_id' => $songExists->song_id,
+                    'id' => $songExists->id,
+                    'title' => $songExists->title,
+                    'author' => $songExists->author,
+                    'genre' => $songExists->genre,
+                    'path' => $songExists->path,
+                    'image' => $songExists->image,
+                ]
+            ];
+            Log::channel('soundcloud')->warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));                // log to a file called soundcloud
+            $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            return 0;
+        }
+
+        $path = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+        $downloadPath = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
+        $shell = shell_exec("scdl -l $downloadLink --path $downloadPath  2>&1");
+        $file = glob("/var/www/html/storage/app/public/uploads/audio/soundcloud/$soundcloudSongId/*.mp3");
+        $fileName = basename($file[0]);
+        $fileName = str_replace('.mp3', '', $fileName);
+        $slug = Str::slug($fileName, '_');
+
+        $trackName = $this->extractTrackInfoFromShellOutput($shell);
+        $title = explode(' - ', $trackName)[0];
+        $song_url = $downloadLink;
+        $song_id = $soundcloudSongId;
+        $filepath = $path . '/' . $slug . '.mp3';
+        $message = [
+            'downloadLink' => $downloadLink,
+            'filename' => $filename,
+            'soundcloudSongId' => $soundcloudSongId,
+            'downloadPath' => $downloadPath,
+            'elapsed_time_secs' => (microtime(true) - $startTime) . ' secs', // in 2 dp
+            'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
+            'title' => $title,
+            'author' => $author,
+            'song_url' => $song_url,
+            'song_id' => $song_id,
+            'slug' => $slug,
+            'filepath' => $filepath,
+            'source' => 'soundcloud',
+        ];
+
+        Log::channel('soundcloud')->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
+        $s3Path = "https://curators3.s3.amazonaws.com/music/$slug.mp3";
+        $song = new Song();
+        $song->title = $title;
+        $song->author = $author;
+        $song->song_url = $song_url;
+        $song->song_id = $song_id;
+        $song->slug = $slug;
+        $song->path = $s3Path;
+        $song->source = "spotify";
+        try {
+            $song->save();
+            $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
+        } catch (\Exception $e) {
+            $error = [
+                'error' => "Song Already Exists in DB",
+                'link' => $downloadLink,
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+            Log::channel('soundcloud')->warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->warn(json_encode($error, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        }
+
+        return 0;
+    }
+
+    public function extractTrackNameFromLink(string $link)
+    {
+        $link = explode('/', $link);
+        $n = count($link);
+        $trackName = '';
+        foreach ($link as $i => $iValue) {
+            if ($i === $n - 1) {
+                $trackName = $iValue;
+            }
+        }
+        return $trackName;
     }
 
     private function extractSoundCloudSongId($url)
@@ -258,17 +275,41 @@ class SoundcloudDownloadCommand extends Command
         return $id;
     }
 
-    public function extractTrackNameFromLink(string $link)
+    /**
+     * @param string $downloadLink
+     * @return string
+     */
+    private function extractAuthorFromLink(string $downloadLink): string
     {
-        $link = explode('/', $link);
-        $n = count($link);
-        $trackName = '';
-        foreach ($link as $i => $iValue) {
-            if ($i === $n - 1) {
-                $trackName = $iValue;
-            }
+        $soundcloudService = new SoundcloudService();
+        $authorLink = explode('/', $downloadLink);
+        $n = count($authorLink);
+        unset($authorLink[$n - 1]);
+        $authorLink = implode('/', $authorLink);
+        return $soundcloudService->extractAuthorFromLink($authorLink);
+    }
+
+    /**
+     * @param false|string|null $shell
+     * @return array|string|string[]|null
+     */
+    public function extractTrackInfoFromShellOutput(false|string|null $shell): string|array
+    {
+        // Check if track already exist by searching for the string "already exists!"
+        if (str_contains($shell, 'already exists!')) {
+            $shellOutput = explode("\n", $shell);
+            $shellOutput = array_filter($shellOutput);
+            $shellOutput = array_values($shellOutput);
+            $trackName = $shellOutput[2];
+            $trackName = str_replace('Downloading ', '', $trackName);
+            return str_replace('.mp3 already exists!', '', $trackName);
         }
-        return $trackName;
+        $shellOutput = explode("\n", $shell);
+        $shellOutput = array_filter($shellOutput);
+        $shellOutput = array_values($shellOutput);
+        $trackName = $shellOutput[2];
+        $trackName = str_replace('Downloading ', '', $trackName);
+        return str_replace('.mp3 Downloaded.', '', $trackName);
     }
 
     /**
@@ -291,7 +332,7 @@ class SoundcloudDownloadCommand extends Command
             'path' => $song->path,
         ];
         $this->info(json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        Log::info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        Log::channel('soundcloud')->info(json_encode(['song_data' => $message], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
 
 }

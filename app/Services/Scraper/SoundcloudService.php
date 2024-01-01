@@ -202,4 +202,15 @@ class SoundcloudService
 
         return $this->downloadSong($song);
     }
+
+    /**
+     * @param string $authorLink
+     * @return string
+     */
+    public function extractAuthorFromLink(string $authorLink): string
+    {
+        $authorData = $this->client->request('GET', $authorLink);
+        return $authorData->filter('h1')->text();
+    }
+
 }
