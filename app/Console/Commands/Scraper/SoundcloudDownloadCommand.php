@@ -203,7 +203,7 @@ class SoundcloudDownloadCommand extends Command
                 file_put_contents($missingSongsFile, implode("\n", $missingSongs));
                 $this->line("<fg=cyan>We save this for next retry:  $downloadLink </>");
                 $this->line("<fg=cyan> == Sleep $sleepTime seconds and continue == </>");
-                sleep($sleepTime);
+               // sleep($sleepTime);
             }
             $souncdlInfo = [
                 'downloaded_songs' => count($downloadLinks),
