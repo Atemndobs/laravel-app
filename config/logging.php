@@ -48,6 +48,42 @@ return [
     */
 
     'channels' => [
+        'soundcloud' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/soundcloud.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
+        'spotify' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/spotify.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
+        'import' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/import.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
+        'analyze' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/analyze.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
+        'download' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/download.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
+        's3' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/s3.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+        ],
         'stack' => [
             'driver' => 'stack',
             'channels' => ['daily'],
