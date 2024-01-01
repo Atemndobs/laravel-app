@@ -77,22 +77,39 @@ class MatchSongController extends Controller
 
         $range = $this->request->range ?? 1;
         $limit = $this->request->limit ?? 10;
-        $search = $this->birdyMatchService->getSongMatch(
-            $slug,
-            $key,
-            $mood,
-            $bpm,
-            $bpmMin,
-            $bpmMax,
-            $happy,
-            $sad,
-            $energy,
-            $danceability,
-            $range,
-            $id,
-            $options,
-            $limit
-        );
+
+        try {
+            $search = $this->birdyMatchService->getSongMatch(
+                $slug,
+                $key,
+                $mood,
+                $bpm,
+                $bpmMin,
+                $bpmMax,
+                $happy,
+                $sad,
+                $energy,
+                $danceability,
+                $range,
+                $id,
+                $options,
+                $limit
+            );
+        }catch (\Exception $e) {
+            Log::error(json_encode([
+                'method' => 'MatchSongController@getSongMatch',
+                'position' => 'Before Try Catch',
+                'limit' => $limit,
+                'error' => $e->getMessage(),
+            ]));
+            return response([
+                'hits' => [],
+                'hit_count' => 0,
+                "excluded_count" => 0,
+                "limit" =>  0,
+
+            ], 400);
+        }
 
         Log::info(json_encode([
             'method' => 'MatchSongController@getSongsMatch',

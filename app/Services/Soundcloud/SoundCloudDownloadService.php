@@ -19,10 +19,6 @@ class SoundCloudDownloadService
         $initialCount = count($file);
 
         $file = array_filter($file, function ($line) {
-            // remove lines starting with https://soundcloud.com/tags
-            // remove all lines starting with https://soundcloud.com/you
-            // remove all lines starting with https://soundcloud.com/pages
-            // remove all lines starting with https://soundcloud.com/charts
             return !preg_match("/^https:\/\/soundcloud\.com\/tags/", $line)
                 && !preg_match("/^https:\/\/soundcloud\.com\/you/", $line)
                 && !preg_match("/^https:\/\/soundcloud\.com\/pages/", $line)
@@ -45,10 +41,7 @@ class SoundCloudDownloadService
     function filterSoundCloudSongLinks($links) {
         $filteredLinks = [];
         foreach ($links as $link) {
-            // Check if the link is a song link and not a profile or comments link
             if (preg_match("/^https:\/\/soundcloud\.com\/[\w-]+\/[\w-]+$/", $link)) {
-                // Check if the link works
-                // $filteredLinks = $this->getLinks($link);
                 $filteredLinks[] = $link;
             }
 

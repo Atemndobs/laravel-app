@@ -66,10 +66,8 @@ class BirdyMatchService
         try {
             $song = $this->getExistingSong($slug);
         }catch (\Exception $e){
-            return [
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ];
+            Log::error($e->getMessage());
+            throw new \Exception("Song with slug $slug not found");
         }
         if (! $this->checkAnalyzedSong($song)) {
             return ['status' => 'not analyzed'];
@@ -121,7 +119,12 @@ class BirdyMatchService
      */
     public function getExistingSong($slug): Song
     {
-        return Song::where('slug', '=', $slug)->first();
+        try {
+            return Song::where('slug', '=', $slug)->firstOrFail();
+        }catch (\Exception $e){
+            Log::error($e->getMessage());
+            throw new \Exception("Song with slug $slug not found");
+        }
     }
 
     /**

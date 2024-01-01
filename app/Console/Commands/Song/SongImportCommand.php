@@ -51,8 +51,7 @@ class SongImportCommand extends Command
         $audioFiles = array_merge($audioFiles, glob('/var/www/html/storage/app/public/uploads/audio/*/*/*.mp3'));
         $audioFiles = array_filter($audioFiles, 'is_file');
         $this->info('Found ' . count($audioFiles) . ' files');
-        // call move audio command
-       $this->call('move:audio');
+        $this->call('move:audio');
 
         if ($path) {
             // if path does not start with "/var/www/html/" add it
