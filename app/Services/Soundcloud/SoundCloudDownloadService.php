@@ -17,9 +17,16 @@ class SoundCloudDownloadService
         $file = array_unique($file);
         $file = array_values($file);
         $initialCount = count($file);
-        // remove all lines starting with https://soundcloud.com/you
+
         $file = array_filter($file, function ($line) {
-            return !Str::startsWith($line, 'https://soundcloud.com/you');
+            // remove lines starting with https://soundcloud.com/tags
+            // remove all lines starting with https://soundcloud.com/you
+            // remove all lines starting with https://soundcloud.com/pages
+            // remove all lines starting with https://soundcloud.com/charts
+            return !preg_match("/^https:\/\/soundcloud\.com\/tags/", $line)
+                && !preg_match("/^https:\/\/soundcloud\.com\/you/", $line)
+                && !preg_match("/^https:\/\/soundcloud\.com\/pages/", $line)
+                && !preg_match("/^https:\/\/soundcloud\.com\/charts/", $line);
         });
         $links = $this->filterSoundCloudSongLinks($file);
         // save all filtered links in a file
