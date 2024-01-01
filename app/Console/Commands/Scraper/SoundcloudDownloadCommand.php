@@ -170,7 +170,7 @@ class SoundcloudDownloadCommand extends Command
             $songExists->source = 'soundcloud';
             $songExists->save();
             $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB. - Source Updated');
-            $this->songExistError($songExists);
+            $this->songExistError($songExists, $downloadLink);
             return 0;
         }
 
@@ -192,7 +192,7 @@ class SoundcloudDownloadCommand extends Command
             $songExists->song_id ??= $soundcloudSongId;
             $songExists->save();
             $this->error('Song with Slug ' . $slug . ' already exists in DB. - song ID updated:' . $songExists->song_id);
-            $this->songExistError($songExists);
+            $this->songExistError($songExists, $downloadLink);
             return 0;
         }
 
@@ -341,7 +341,7 @@ class SoundcloudDownloadCommand extends Command
      * @param Song $songExists
      * @return void
      */
-    public function songExistError(Song $songExists): void
+    public function songExistError(Song $songExists, string $downloadLink): void
     {
         $message = [
             'songExists' => [
@@ -353,6 +353,7 @@ class SoundcloudDownloadCommand extends Command
                 'genre' => $songExists->genre,
                 'path' => $songExists->path,
                 'image' => $songExists->image,
+                'downloadLink' => $downloadLink,
             ]
         ];
         Log::channel('soundcloud')->warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));                // log to a file called soundcloud
