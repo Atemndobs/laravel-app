@@ -167,6 +167,7 @@ class SoundcloudDownloadCommand extends Command
         $songExists = Song::query()->where('song_id', $soundcloudSongId)->first();
         if ($songExists) {
             $songExists->author = $author;
+            $songExists->source = 'soundcloud';
             $songExists->save();
             $this->error('Song with ID ' . $soundcloudSongId . ' already exists in DB.');
             $message = [
@@ -228,7 +229,7 @@ class SoundcloudDownloadCommand extends Command
         $song->song_id = $song_id;
         $song->slug = $slug;
         $song->path = $s3Path;
-        $song->source = "spotify";
+        $song->source = "soundcloud";
         try {
             $song->save();
             $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
