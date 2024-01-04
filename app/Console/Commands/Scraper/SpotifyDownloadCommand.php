@@ -148,6 +148,7 @@ class SpotifyDownloadCommand extends Command
         $song->slug = $slug;
         $song->path = $s3Path;
         $song->source = "spotify";
+
         try {
             $song->save();
             $this->info('Song with ID ' . $song_id . ' has been saved to DB.');
@@ -161,9 +162,9 @@ class SpotifyDownloadCommand extends Command
             Log::warning(json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
-        $this->call('song:import', [
-            '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
-        ]);
+//        $this->call('song:import', [
+//            '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
+//        ]);
         return 0;
     }
 }
