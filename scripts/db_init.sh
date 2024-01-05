@@ -19,22 +19,29 @@ FLUSH PRIVILEGES;
 CREATE USER 'mage'@'%' IDENTIFIED BY 'mage';
 GRANT ALL PRIVILEGES ON * . * TO 'mage'@'%';
 FLUSH PRIVILEGES;
-SET character_set_server = utf8;
-SET collation_server = utf8mb3_general_ci;
+SET character_set_server = utf8mb4;
+SET collation_server = utf8mb4_unicode_ci;
 "
 
 
 /usr/bin/mysql --database=mage --user=mage -pmage --host=maxscale-masteronly.curator.svc.cluster.local --port=3306 <  /var/www/html/storage/app/backups/latest/db-dumps/mysql-mage.sql
 
 
-echo "Update Paths, images and related_songs for Songs"
+echo "Checking Update Paths, images and related_songs for Songs : DRY RUN"
 php artisan song:path -f related_songs -i mage --dry-run
 
-php artisan song:path -d music
-php artisan song:path -d images
-php artisan song:path -f related_songs -i mage
+#php artisan song:path -d music
+#php artisan song:path -d images
+#php artisan song:path -f related_songs -i mage
 
-echo "Update Paths, images and related_songs for Songs"
+echo "To update Paths, images and related_songs for Songs"
+echo "php artisan song:path -d music"
+echo "php artisan song:path -d images"
+echo "php artisan song:path -f related_songs -i mage"
 
 # remove all log files
+echo "remove all log files"
 rm -rf /var/www/html/storage/logs/*
+
+echo "chmod for storage folder"
+chmod -R 777 /var/www/html/storage
