@@ -544,7 +544,7 @@ class SongUpdateService
      * @param mixed $res
      * @return null
      */
-    public function getArtist(mixed $res): null
+    public function getArtist(mixed $res)
     {
         try {
             return $res->metadata->tags->artist[0] ?? null;
