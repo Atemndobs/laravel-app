@@ -562,7 +562,7 @@ class SongUpdateService
     public function dumpErrorMessage($res, \Exception $e): void
     {
         dump([
-            'song' => $res->metadata ?? $res->metadata->tags,
+         //   'song' => $res->metadata ?? $res->metadata->tags,
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
