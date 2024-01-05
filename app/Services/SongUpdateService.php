@@ -178,8 +178,9 @@ class SongUpdateService
             dump($analysed);
         }
 
-        $key = $res->tonal->key_key;;
-        $chords_scale = $res->tonal->chords_scale;
+        $key = $this->getKey($res);
+        $chords_scale = $this->getScale($res);
+
 
         $energy = $res->lowlevel->spectral_energy->max;
         $bpm = round($res->rhythm->bpm * 2) / 2;
@@ -477,6 +478,39 @@ class SongUpdateService
         } catch (\Exception $e) {
             Log::critical("Failed Update Song Duration: $songPath" . $e->getMessage());
             dump("Failed Update Song Duration: $songPath" . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param mixed $res
+     * @return mixed
+     */
+    public function getKey(mixed $res): mixed
+    {
+        return $this->getTonal($res)->key_key;
+    }
+
+    /**
+     * @param mixed $res
+     * @return mixed
+     */
+    public function getScale(mixed $res): mixed
+    {
+        return $this->getTonal($res)->chords_scale;
+    }
+
+    /**
+     * @param mixed $res
+     * @return mixed
+     */
+    public function getTonal(mixed $res): mixed
+    {
+        try {
+            return $res->tonal;
+        } catch (\Exception $e) {
+            dump($res);
+            dump($e->getMessage());
+            return null;
         }
     }
 }
