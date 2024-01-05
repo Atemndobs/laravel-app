@@ -183,7 +183,7 @@ class SongUpdateService
 
 
         $energy = $this->getEnergy($res);
-        $bpm = round($res->rhythm->bpm * 2) / 2;
+        $bpm = $this->getBpm($res);
         $author = $this->getArtist($res);
 
         return [$chords_scale, $energy, $bpm, $author, $key];
@@ -569,5 +569,19 @@ class SongUpdateService
             'class::method' => $e->getTrace()[0]['class'] . '::' . $e->getTrace()[0]['function'],
             'location' => __FILE__ . '::' . __CLASS__ . '::' . __METHOD__,
         ]);
+    }
+
+    /**
+     * @param mixed $res
+     * @return float|int
+     */
+    public function getBpm(mixed $res): int|float
+    {
+        try {
+            return round($res->rhythm->bpm * 2) / 2;
+        } catch (\Exception $e) {
+            $this->dumpErrorMessage($res, $e);
+            return 0;
+        }
     }
 }
