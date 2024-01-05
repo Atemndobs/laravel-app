@@ -5,14 +5,14 @@ namespace App\Console\Commands\Storage;
 use Illuminate\Console\Command;
 use App\Services\Storage\AwsS3Service;
 
-class AwsS3GetCommand extends Command
+class AwsS3StatsCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 's3:get {--d|dir=} {--f|file=} {--a|all}';
+    protected $signature = 's3:stat {--d|dir=} {--a|all}';
 
     /**
      * The console command description.
@@ -37,49 +37,46 @@ class AwsS3GetCommand extends Command
     {
         // get all files in music folder and images folder from s3 bucket and count them
         $dir = $this->option('dir');
-        $file = $this->option('file');
         $all = $this->option('all');
         $options = ([
             'dir' => $dir,
-            'file' => $file,
             'all' => $all,
+            'null' => $dir === null,
+            'false' => $dir === 'false',
+            'string' => $dir === 'null',
         ]);
-
-        // if file is not provided, return error and exit
-        if ($file === null) {
-            $this->error('Please provide a file name');
-            return;
-        }
         $this->warn(json_encode(['options' => $options], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         if ($dir !== null) {
-            try {
-                $object = $this->s3Service->getObject($dir, $file);
-            } catch (\Exception $e) {
-                $this->line("<fg=red>{$e->getMessage()}</>");
-                return;
-            }
+            $files = $this->s3Service->getFiles($dir);
+            $countFiles = count($files);
             $message = [
+                $dir => $files,
                 'stats' => [
+                    'count' => $countFiles,
                     'directory' => $dir,
                     'bucket' => 'curators3',
-                    's3_url' => $object,
+                    'message' => "Found {$countFiles} files in the s3 bucket"
                 ]
             ];
             $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             return;
         }
-        try {
-            $object = $this->s3Service->getObject($dir, $file);
-        } catch (\Exception $e) {;
-            $this->line("<fg=red>{$e->getMessage()}</>");
-            return;
-        }
+        $musicFiles = $this->s3Service->getFiles('music');
+        $imagesFiles = $this->s3Service->getFiles('images');
+        $backupFiles = $this->s3Service->getFiles('backups');
+        $assetsFiles = $this->s3Service->getFiles('assets');
+
+        $countMusicFiles = count($musicFiles);
+        $countImagesFiles = count($imagesFiles);
 
         $message = [
-            'directory' => $dir,
-            'bucket' => 'curators3',
-            's3_url' => $object,
+            'music' => $countMusicFiles,
+            'images' => $countImagesFiles,
+            'backups' => count($backupFiles),
+            'assets' => count($assetsFiles),
+            'stats' => "Found {$countMusicFiles} music files and {$countImagesFiles} images files in the s3 bucket"
         ];
         $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
     }
 }

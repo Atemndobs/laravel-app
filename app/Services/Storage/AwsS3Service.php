@@ -127,4 +127,30 @@ class AwsS3Service
         $key = $dir . '/' . $filename;
         return $this->uploadFile($file, env('AWS_BUCKET'), $key);
     }
+
+    public function getObject(string $dir, string $file)
+    {
+        $key = $dir . '/' . $file;
+        $checkFile = $this->s3Client->doesObjectExist(env('AWS_BUCKET'), $key);
+        // if file exists, get the file info
+        if ($checkFile) {
+            $fileInfo = $this->s3Client->headObject([
+                'Bucket' => env('AWS_BUCKET'),
+                'Key' => $key,
+            ]);
+            // if file exists, get the file info
+            if ($fileInfo) {
+                $url = $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
+                $message = [
+                    'status' => 'File already exists in ' . env('AWS_BUCKET') . '/' . $key,
+                    'url' => $url,
+                ];
+                Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
+                return $url;
+            }
+        }
+        Log::error('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
+        throw new \Exception('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
+       // return 'File does not exist in ' . env('AWS_BUCKET') . '/' . $key;
+    }
 }
