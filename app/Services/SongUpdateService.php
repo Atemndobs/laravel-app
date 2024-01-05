@@ -182,9 +182,9 @@ class SongUpdateService
         $chords_scale = $this->getScale($res);
 
 
-        $energy = $res->lowlevel->spectral_energy->max;
+        $energy = $this->getEnergy($res);
         $bpm = round($res->rhythm->bpm * 2) / 2;
-        $author = $res->metadata->tags->artist ?? null;
+        $author = $this->getArtist($res);
 
         return [$chords_scale, $energy, $bpm, $author, $key];
     }
@@ -491,8 +491,7 @@ class SongUpdateService
         try {
             return $this->getTonal($res)->key_key ?? $this->getTonal($res)->chords_key;
         } catch (\Exception $e) {
-            dump($res);
-            dump($e->getMessage());
+            $this->dumpErrorMessage($res, $e);
             return null;
         }
     }
@@ -525,5 +524,50 @@ class SongUpdateService
             dump($e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * @param mixed $res
+     * @return mixed
+     */
+    public function getEnergy(mixed $res): mixed
+    {
+        try {
+            return $res->lowlevel->spectral_energy->max;
+        } catch (\Exception $e) {
+            $this->dumpErrorMessage($res, $e);
+            return null;
+        }
+    }
+
+    /**
+     * @param mixed $res
+     * @return null
+     */
+    public function getArtist(mixed $res): null
+    {
+        try {
+            return $res->metadata->tags->artist[0] ?? null;
+        } catch (\Exception $e) {
+            $this->dumpErrorMessage($res, $e);
+            return null;
+        }
+    }
+
+    /**
+     * @param $res
+     * @param \Exception $e
+     * @return void
+     */
+    public function dumpErrorMessage($res, \Exception $e): void
+    {
+        dump([
+            'song' => $res->metadata ?? $res->metadata->tags,
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'class::method' => $e->getTrace()[0]['class'] . '::' . $e->getTrace()[0]['function'],
+            'location' => __FILE__ . '::' . __CLASS__ . '::' . __METHOD__,
+        ]);
     }
 }
