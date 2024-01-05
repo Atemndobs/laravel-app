@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Api\Storage;
 
 use App\Http\Controllers\Controller;
 use App\Services\Storage\AwsS3Service;
-use App\Services\Storage\MinioService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
@@ -30,7 +28,7 @@ class DatabaseBackupStorageController extends Controller
      */
     public function storeBackup(): JsonResponse
     {
-        // store file to minio storage
+        // store file to AWS S3 storage
         // use Date and time as filename
         $date = date('Y-m-d');
         $time = date('H:i:s');
