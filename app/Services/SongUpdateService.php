@@ -479,6 +479,7 @@ class SongUpdateService
             Log::critical("Failed Update Song Duration: $songPath" . $e->getMessage());
             dump("Failed Update Song Duration: $songPath" . $e->getMessage());
         }
+        return $song;
     }
 
     /**
@@ -487,7 +488,13 @@ class SongUpdateService
      */
     public function getKey(mixed $res): mixed
     {
-        return $this->getTonal($res)->key_key;
+        try {
+            return $this->getTonal($res)->key_key ?? $this->getTonal($res)->chords_key;
+        } catch (\Exception $e) {
+            dump($res);
+            dump($e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -496,7 +503,13 @@ class SongUpdateService
      */
     public function getScale(mixed $res): mixed
     {
-        return $this->getTonal($res)->chords_scale;
+        try {
+            return $this->getTonal($res)->key_scale ?? $this->getTonal($res)->chords_scale;
+        } catch (\Exception $e) {
+            dump($res);
+            dump($e->getMessage());
+            return null;
+        }
     }
 
     /**
