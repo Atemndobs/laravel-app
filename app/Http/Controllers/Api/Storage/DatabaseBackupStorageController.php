@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Storage;
 
 use App\Http\Controllers\Controller;
+use App\Services\Storage\AwsS3Service;
 use App\Services\Storage\MinioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,8 +38,8 @@ class DatabaseBackupStorageController extends Controller
         $file = storage_path('app/backups/latest/db-dumps/mysql-mage.sql');
 
 
-        $minioService = new MinioService();
-        $fileLink = $minioService->putObjectWithFileName($file, "backups", $filename);
+        $s3Service = new AwsS3Service();
+        $fileLink = $s3Service->putObjectWithFileName($file, "backups", $filename);
         return response()->json([
             'message' => 'SUCCESS',
             'file_link' => $fileLink

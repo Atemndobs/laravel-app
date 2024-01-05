@@ -121,4 +121,10 @@ class AwsS3Service
             '$audioFiles_before' => count($audioFiles_before),
         ]);
     }
+
+    public function putObjectWithFileName(string $file, string $dir, string $filename)
+    {
+        $key = $dir . '/' . $filename;
+        return $this->uploadFile($file, env('AWS_BUCKET'), $key);
+    }
 }
