@@ -54,6 +54,7 @@ class AwsS3GetCommand extends Command
         if ($dir !== null) {
             try {
                 $object = $this->s3Service->getObject($dir, $file);
+                $this->downloadBackup($object, $dir);
             } catch (\Exception $e) {
                 $this->line("<fg=red>{$e->getMessage()}</>");
                 return;
@@ -82,4 +83,44 @@ class AwsS3GetCommand extends Command
         ];
         $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
+
+    private function downloadBackup(string $object, string $dir = 'backups'): void
+    {
+        $fileName = basename($object);
+        $path = storage_path("app/$dir/" . $fileName);
+        $this->downloadFile($object, $path, $dir);
+    }
+
+    public function downloadObject(string $object, string $dir = 'music'): void
+    {
+        $dir = $dir === 'music' ? 'audio' : $dir;
+        $fileName = basename($object);
+        $path = storage_path("app/public/uploads/$dir/" . $fileName);
+        $this->downloadFile($object, $path, $dir);
+    }
+
+    /**
+     * @param string $object
+     * @param string $path
+     * @param string $dir
+     * @return void
+     */
+    public function downloadFile(string $object, string $path, string $dir): void
+    {
+        $this->info('Downloading file...');
+        $file = file_get_contents($object);
+        $this->info('File downloaded successfully');
+        $this->info('Writing file to disk...');
+
+        file_put_contents($path, $file);
+        $this->info('File written to disk successfully');
+        $this->info('File path: ' . $path);
+        $message = [
+            'directory' => $dir,
+            'file_name' => $object,
+            'file_path' => $path,
+        ];
+        $this->line("<fg=bright-magenta>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+    }
+
 }

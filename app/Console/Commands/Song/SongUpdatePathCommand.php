@@ -53,6 +53,7 @@ class SongUpdatePathCommand extends Command
         } else {
             $songs = Song::query()->where('slug', '=', "$slug")->get();
         }
+
         $dir = $dir ?? 'music';
         $identifier = $identifier ?? 'mage.tech:8899';
         $base_url = env('APP_ENV') == 'local' ? 'http://mage.tech:8899' : env('APP_URL');
@@ -70,7 +71,7 @@ class SongUpdatePathCommand extends Command
                     'dir' => $dir,
                 ]
             ]);
-
+            
             return 0;
         }
 
@@ -124,6 +125,7 @@ class SongUpdatePathCommand extends Command
                     continue;
                 }
                 $songPath = Storage::cloud()->url("$dir/" . $fileName);
+                dd($songPath);
                 $req = Http::get($songPath);
                 if (!$req->successful()) {
                     $this->error("No Song found for  | " . $fileName);

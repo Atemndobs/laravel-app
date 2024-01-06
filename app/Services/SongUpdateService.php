@@ -35,7 +35,22 @@ class SongUpdateService
         $song->save();
 
         $slug = $song->slug;
-        shell_exec("rm storage/app/public/$slug.json");
+        try {
+            dump("========REMOVE FILE========");
+           shell_exec("rm storage/app/public/$slug.json");
+        }catch (\Exception $e) {
+            Log::error($e->getMessage());
+            // dump error | delete song failed
+            //           // collect song detaild and mark song as missing
+            // save missing songs in an array
+
+            dd([
+                'file' => __FILE__ . ' | ' . __LINE__,
+                'song' => $song->slug,
+                'path' => $song->path,
+                'slug' => $slug,
+            ]);
+        }
 
         return [
             'slug' => $slug,
@@ -128,10 +143,29 @@ class SongUpdateService
                 if (!File::exists($localFilePath)) {
                     Log::error("Audio File not found for song $song->slug");
                     dump("Audio File not found for song $song->slug");
+                    // Song Download Failed
+                    // Collect song details and mark song as missing
+                    // save missing songs in an array
+                    // mark the song to be downloaded
+                    // $this->getSongDetailsFromSoundCloud($song);
+
+                    dump([
+                        'song' => $song->slug,
+                        'path' => $song->path,
+                        'file' => $localFilePath,
+                    ]);
                     return null;
                 }
             }catch (\Exception $e){
                 Log::error($e->getMessage());
+                dump([
+                    'song' => $song->slug,
+                    'path' => $song->path,
+                    'source' => $song->song_url,
+                    'file' => $localFilePath,
+                ]);
+                // write song details to file (Id, song_url, song_id, title, author, path, slug) and mark song as missing save to root folder
+                $this->addToMissingSongsFile($song);
                 return null;
             }
         }
@@ -205,7 +239,20 @@ class SongUpdateService
             $song->author = $author;
         }
         $slug = $song->slug;
-        shell_exec("rm storage/app/public/$slug.json");
+        try {
+             shell_exec("rm storage/app/public/$slug.json");
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            // dump error | delete song failed
+            //           // collect song detaild and mark song as missing
+            // save missing songs in an array
+// mark the song to be downloaded
+            dd([
+                'song' => $song->slug,
+                'path' => $song->path,
+                'file' => $slug,
+            ]);
+        }
 
         return $song;
     }
@@ -583,5 +630,27 @@ class SongUpdateService
             $this->dumpErrorMessage($res, $e);
             return 0;
         }
+    }
+
+    /**
+     * @param Song $song
+     * @return void
+     */
+    public function addToMissingSongsFile(Song $song): void
+    {
+        $songDetails = [
+            'id' => $song->id,
+            'song_url' => $song->song_url,
+            'song_id' => $song->song_id,
+            'title' => $song->title,
+            'author' => $song->author,
+            'path' => $song->path,
+            'slug' => $song->slug,
+        ];
+        $songDetails = json_encode($songDetails, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        dump($songDetails);
+        $missingSongs = fopen('missing_songs.txt', 'a');
+        fwrite($missingSongs, $songDetails);
+        fclose($missingSongs);
     }
 }
