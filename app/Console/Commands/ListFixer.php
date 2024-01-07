@@ -89,7 +89,10 @@ class ListFixer extends Command
         $this->info("Found $count files");
         $bar = $this->output->createProgressBar(count($files));
         $slugs = [];
-        dd();
+        dump([
+            'files' => $files,
+            'count' => $count,
+        ]);
         foreach ($files as $file) {
             // make the files this format: /var/www/html/storage/app/public/audio/015b_not_bad_feat_dawon.mp3
             $file = '/var/www/html/storage/app/public/' . $file;
