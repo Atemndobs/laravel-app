@@ -6,6 +6,7 @@ use App\Models\Song;
 use Illuminate\Console\Command;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use const Widmogrod\Monad\Writer\log;
 
 class SongAudioFixCommand extends Command
@@ -40,7 +41,65 @@ class SongAudioFixCommand extends Command
         $skip = $this->option('skip');
 
 
-        $songs = Song::query()->get();
+        $songs = Song::query()->whereNot('path', 'like', 'https://%')->get();
+          $songsCount = $songs->count();
+            $this->info("Found $songsCount songs to fix");
+            dump([
+               // 'PATHS TO FIX' => $songs->pluck('path')->toArray(),
+                'songsCount' => $songsCount,
+            ]);
+            // for each of the songs, get their slug and  find all sungs with the same slug
+            $bar = $this->output->createProgressBar(count($songs));
+            $bar->start();
+            $this->line("");
+            foreach ($songs as $song) {
+                $slug = $song->slug;
+                $songsWithSameSlug = Song::query()->where('slug', '=', $slug)->get();
+                $songsWithSameSlugCount = $songsWithSameSlug->count();
+                $this->warn("SONG ID {$song->id} | Found $songsWithSameSlugCount songs with the same slug");
+                $this->info("Found $songsWithSameSlugCount songs with the same slug");
+                // for each of the songs with the same slug, update the path to point to the new storage
+                /** @var Song $songWithSameSlug */
+                foreach ($songsWithSameSlug as $songWithSameSlug) {
+                    dump([
+                        'slug' => $songWithSameSlug->slug,
+                        'path' => $songWithSameSlug->path,
+                        'song_id' => $songWithSameSlug->song_id,
+                        'song_url' => $songWithSameSlug->song_url,
+                        'source' => $songWithSameSlug->source,
+                    ]);
+                  //  if the song path starts with https, its the song to keep., If the path starts with /var/www/html/storage its the song to delete
+                    if (Str::startsWith($songWithSameSlug->path, 'https://')) {
+                        $songToKeep = $songWithSameSlug;
+                    }
+                    if (Str::startsWith($songWithSameSlug->path, '/var/www/html/storage')) {
+                        $songToDelete = $songWithSameSlug;
+                    }
+
+                    // Update the song to keep with song_id, song_url, source, from song to delete and delete the song to delete
+                    if (isset($songToKeep) && isset($songToDelete)) {
+                        $songToKeep->song_id = $songToDelete->song_id;
+                        $songToKeep->song_url = $songToDelete->song_url;
+                        $songToKeep->source = $songToDelete->source;
+                        $songToKeep->save();
+                      // $songToDelete->forceDelete();
+                        $this->info("Updated song to keep with song_id, song_url, source, from song to delete and deleted the song to delete");
+                        dump([
+                            'id' => $songToKeep->id,
+                            'slug' => $songToKeep->slug,
+                            'path' => $songToKeep->path,
+                            'song_id' => $songToKeep->song_id,
+                            'song_url' => $songToKeep->song_url,
+                            'source' => $songToKeep->source,
+                        ]);
+                    }
+                }
+                $bar->advance();
+              //  dd("STOP_1");
+            }
+
+
+
         if ($file !== null) {
             $songsWithAudio = file_get_contents($file);
             $songsWithAudio = explode("\n", $songsWithAudio);
@@ -54,9 +113,13 @@ class SongAudioFixCommand extends Command
 
             // find the missing songs and update the song
             // Get the song from the database and update the song
+
+
+            return 0;
         }
 
 
+        dd("STOP");
 
 
 
