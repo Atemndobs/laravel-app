@@ -107,14 +107,12 @@ class SongAudioFixCommand extends Command
         $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         // for all songs, check if the path url is working in batches of 100
 
-
-        dump([
-            'Songs To check' => $songsCount,
-        ]);
         $bar = $this->output->createProgressBar(count($songs));
         $bar->start();
+        $this->line("");
         foreach ($songs as $song) {
             $bar->advance();
+            $this->line("");
             $url = $song->path;
             $this->info("Checking $url");
             $response = Http::get($url);
@@ -127,7 +125,7 @@ class SongAudioFixCommand extends Command
                 fclose($file);
 
             } else {
-                $this->info("Song $url is not working");
+                $this->line("<fg=red> $url is not working</>");
                 $songsWithoutAudio[] = $song;
                 // write or add the song to a file named songsWithoutAudio.txt
                 $file = fopen("songsWithoutAudio.txt", 'a');
@@ -141,8 +139,10 @@ class SongAudioFixCommand extends Command
                 $this->info("All songs have been checked");
                 break;
             }
+            
         }
         $bar->finish();
+        $this->line("");
         // log out the number of songs with audio and without audio
         $songsWithAudioCount = count($songsWithAudio);
         $songsWithoutAudioCount = $songsCount - $songsWithAudioCount;
