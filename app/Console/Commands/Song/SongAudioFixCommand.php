@@ -49,9 +49,6 @@ class SongAudioFixCommand extends Command
         if ($file !== null) {
             $songsWithoutAudio = file_get_contents($file);
             $songsWithoutAudio = explode("\n", $songsWithoutAudio);
-            dump([
-                'count' => count($songsWithoutAudio),
-            ]);
             $songsWithoutAudio = array_filter($songsWithoutAudio);
             $songsWithoutAudio = array_unique($songsWithoutAudio);
             $songsWithoutAudioCount = count($songsWithoutAudio);
@@ -63,6 +60,7 @@ class SongAudioFixCommand extends Command
                 // left ?
                 $this->info("Processing song with slug $slug");
                 $songs = Song::query()->where('slug', $slug)->get();
+
                 if ($songs->count() === 0) {
                     $this->warn("Song with slug $slug not found");
                     continue;
@@ -112,6 +110,12 @@ class SongAudioFixCommand extends Command
                 $this->info("Song id: {$song->id}");
                 $source = $song->source;
                 $songUrl = $song->song_url;
+
+                // if song url is null skip
+                if ($songUrl === null) {
+                    $this->warn("Song url is null");
+                    continue;
+                }
                 if ($source === 'soundcloud') {
 
                     $this->info("Song source is soundcloud");
@@ -129,7 +133,8 @@ class SongAudioFixCommand extends Command
                             '--continue' => true,
                         ]);
                     }catch (\Exception $e){
-                        $this->error($e->getMessage());
+                        $this->error("SOUNDCLOUD ERROR: ");
+                        $this->line("<fg=red>".json_encode($e->getMessage(),JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )."</>");
                     }
                 }
 
@@ -150,7 +155,8 @@ class SongAudioFixCommand extends Command
                             '--force' => true,
                         ]);
                     }catch (\Exception $e){
-                        $this->error($e->getMessage());
+                        $this->error("SPOTIFY ERROR: ");
+                        $this->line("<fg=red>".json_encode($e->getMessage(),JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )."</>");
                     }
                 }
                 $bar->advance();
@@ -160,6 +166,12 @@ class SongAudioFixCommand extends Command
                 fwrite($file, $slug . "\n");
                 fclose($file);
             }
+
+            $message = [
+                'processed' => count($processed),
+                'total' => $songsWithoutAudioCount,
+            ];
+            $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             $bar->finish();
         }
 
