@@ -58,6 +58,7 @@ class SongAudioFixCommand extends Command
             $this->info("Found $songsWithoutAudioCount songs without audio");
             $bar = $this->output->createProgressBar($songsWithoutAudioCount);
             $bar->start();
+            $processed = [];
             foreach ($songsWithoutAudio as $slug) {
                 // left ?
                 $this->info("Processing song with slug $slug");
@@ -122,10 +123,14 @@ class SongAudioFixCommand extends Command
                         'path' => $song->path,
                        // 'song_id' => $song->toArray()
                     ]);
-                    $this->call('scrape:sc', [
-                        '--link' => $songUrl,
-                        '--continue' => true,
-                    ]);
+                    try {
+                        $this->call('scrape:sc', [
+                            '--link' => $songUrl,
+                            '--continue' => true,
+                        ]);
+                    }catch (\Exception $e){
+                        $this->error($e->getMessage());
+                    }
                 }
 
                 if ($source === 'spotify') {
@@ -139,12 +144,21 @@ class SongAudioFixCommand extends Command
                         'path' => $song->path,
                      //   'song_id' => $song->toArray()
                     ]);
-                    $this->call('spotify', [
-                        'url' => $songUrl,
-                        '--force' => true,
-                    ]);
+                    try {
+                        $this->call('spotify', [
+                            'url' => $songUrl,
+                            '--force' => true,
+                        ]);
+                    }catch (\Exception $e){
+                        $this->error($e->getMessage());
+                    }
                 }
                 $bar->advance();
+                $processed[] = $slug;
+                // write / add processed  slugs to file processed.txt
+                $file = fopen("processed.txt", 'a');
+                fwrite($file, $slug . "\n");
+                fclose($file);
             }
             $bar->finish();
         }
