@@ -55,16 +55,14 @@ class Image extends Command
             'songsWithImagesCount' => $songsWithImagesCount,
             'songsWithoutImagesCount' => $songsWithoutImagesCount,
         ];
-        info(json_encode($stats));
+        $this->info(json_encode($stats));
 
         if ($all !== null) {
             $this->info('Processing all images');
             Song::all()->each(function ($song) use (&$songsWithImage, &$songsWithoutImage) {
                 if ($song->image !== null && $song->image !== '') {
-                    $imageUrl = str_replace('.mp3', '.jpeg', $song->image);
-
-                 //   dd($imageUrl);
-
+                  //  $imageUrl = str_replace('.mp3', '.jpeg', $song->image);
+                    $imageUrl = $song->image;
                     try {
                         $this->info('Processing song: ' . $song->title);
                         $req = Http::get($imageUrl);
@@ -78,7 +76,11 @@ class Image extends Command
                                 'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
-                            dump($songsWithImage);
+                            // writ / add to file songs with image
+                            $file = fopen("songsWithImage.txt", 'a');
+                            fwrite($file, $song->slug . "\n");
+                            fclose($file);
+                           // dump($songsWithImage);
                         } else {
                             $this->error($req->status());
                             $this->error('Image is not valid');
@@ -89,6 +91,10 @@ class Image extends Command
                                 'image' => $imageUrl,
                                 'path' => $song->path,
                             ];
+                            // write / add to file songs without image
+                            $file = fopen("songsWithoutImage.txt", 'a');
+                            fwrite($file, $song->slug . "\n");
+                            fclose($file);
                         }
                     } catch (\Exception $e) {
                         $this->error('Error: ' . $e->getMessage());
@@ -127,8 +133,8 @@ class Image extends Command
 
 
         dump([
-            'songsWithImage' => $songsWithImage,
-            'songsWithoutImage' => $songsWithoutImage
+            'songsWithImage' => count($songsWithImage),
+            'songsWithoutImage' => count($songsWithoutImage),
         ]);
         return 0;
     }

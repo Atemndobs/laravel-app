@@ -71,7 +71,7 @@ class SongUpdatePathCommand extends Command
                     'dir' => $dir,
                 ]
             ]);
-            
+
             return 0;
         }
 
