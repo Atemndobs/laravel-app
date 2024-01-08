@@ -41,125 +41,126 @@ class SongAudioFixCommand extends Command
         $skip = $this->option('skip');
 
 
-        $songs = Song::query()->whereNot('path', 'like', 'https://%')->get();
-          $songsCount = $songs->count();
-            $this->info("Found $songsCount songs to fix");
-            dump([
-               // 'PATHS TO FIX' => $songs->pluck('path')->toArray(),
-                'songsCount' => $songsCount,
-            ]);
-            // for each of the songs, get their slug and  find all sungs with the same slug
-            $bar = $this->output->createProgressBar(count($songs));
-            $bar->start();
-            $this->line("");
-            foreach ($songs as $song) {
-                $slug = $song->slug;
-                $songsWithSameSlug = Song::query()->where('slug', '=', $slug)->get();
-                $songsWithSameSlugCount = $songsWithSameSlug->count();
-                $this->warn("SONG ID {$song->id} | Found $songsWithSameSlugCount songs with the same slug");
-                $this->info("Found $songsWithSameSlugCount songs with the same slug");
-                // for each of the songs with the same slug, update the path to point to the new storage
-                /** @var Song $songWithSameSlug */
-                foreach ($songsWithSameSlug as $songWithSameSlug) {
-                    dump([
-                        'slug' => $songWithSameSlug->slug,
-                        'path' => $songWithSameSlug->path,
-                        'song_id' => $songWithSameSlug->song_id,
-                        'song_url' => $songWithSameSlug->song_url,
-                        'source' => $songWithSameSlug->source,
-                    ]);
-                  //  if the song path starts with https, its the song to keep., If the path starts with /var/www/html/storage its the song to delete
-                    if (Str::startsWith($songWithSameSlug->path, 'https://')) {
-                        $songToKeep = $songWithSameSlug;
-                    }
-                    if (Str::startsWith($songWithSameSlug->path, '/var/www/html/storage')) {
-                        $songToDelete = $songWithSameSlug;
-                    }
-
-                    // Update the song to keep with song_id, song_url, source, from song to delete and delete the song to delete
-                    if (isset($songToKeep) && isset($songToDelete)) {
-                        $songToKeep->song_id = $songToDelete->song_id;
-                        $songToKeep->song_url = $songToDelete->song_url;
-                        $songToKeep->source = $songToDelete->source;
-                        $songToKeep->save();
-                      // $songToDelete->forceDelete();
-                        $this->info("Updated song to keep with song_id, song_url, source, from song to delete and deleted the song to delete");
-                        dump([
-                            'id' => $songToKeep->id,
-                            'slug' => $songToKeep->slug,
-                            'path' => $songToKeep->path,
-                            'song_id' => $songToKeep->song_id,
-                            'song_url' => $songToKeep->song_url,
-                            'source' => $songToKeep->source,
-                        ]);
-                    }
-                }
-                $bar->advance();
-              //  dd("STOP_1");
-            }
 
 
+
+        $songsWithoutAudio = [];
 
         if ($file !== null) {
-            $songsWithAudio = file_get_contents($file);
-            $songsWithAudio = explode("\n", $songsWithAudio);
-            $songsWithAudio = array_filter($songsWithAudio);
-            $songsWithAudio = array_unique($songsWithAudio);
-            $songsWithAudioCount = count($songsWithAudio);
-            $this->info("Found $songsWithAudioCount songs with audio");
-            $songs = Song::query()->whereNotIn('slug', $songsWithAudio)->get();
-            $songsCount = $songs->count();
-            $this->info("Found $songsCount songs to fix");
+            $songsWithoutAudio = file_get_contents($file);
+            $songsWithoutAudio = explode("\n", $songsWithoutAudio);
+            dump([
+                'count' => count($songsWithoutAudio),
+            ]);
+            $songsWithoutAudio = array_filter($songsWithoutAudio);
+            $songsWithoutAudio = array_unique($songsWithoutAudio);
+            $songsWithoutAudioCount = count($songsWithoutAudio);
+            $this->info("Found $songsWithoutAudioCount songs without audio");
+            $bar = $this->output->createProgressBar($songsWithoutAudioCount);
+            // each line is a slug. for each slug, get the song and based on its source, get the audio and upload it to aws s3 bucket
 
-            // find the missing songs and update the song
-            // Get the song from the database and update the song
+            foreach ($songsWithoutAudio as $slug) {
+
+                $songs = Song::query()->where('slug', $slug)->get();
+                if ($songs->count() === 0) {
+                    $this->warn("Song with slug $slug not found");
+                    continue;
+                }
+                if ($songs->count() > 1) {
+                    $this->warn("Song with slug $slug has more than one entry");
+
+                    dump([
+                        'candidates' => [
+                            $songs->pluck('id')->toArray(),
+                            $songs->pluck('song_id')->toArray(),
+                            $songs->pluck('source')->toArray(),
+                            $songs->pluck('song_url')->toArray(),
+                        ],
+                    ]);
+
+                    /** @var Song $song */
+                    foreach ($songs as $song) {
+                        $this->warn($song->id);
+                        $songToDelete = null;
+                        $songToKeep = null;
+                        dump([
+                            'song' => [
+                                'id' => $song->id,
+                                'song_id' => $song->song_id,
+                                'song_url' => $song->song_url,
+                                'source' => $song->source,
+                            ],
+                        ]);
+                        // the song to keep is the first song with song_id, song_url and source
+                        if ($song->song_id !== null && $song->song_url !== null && $song->source !== null) {
+                            $this->warn("Song to keep: {$song->id}");
+                            $songToKeep = $song;
+                        }else{
+                            $this->warn("Song to delete: {$song->id}");
+                            $songToDelete = $song;
+                            $song->status = "duplicate";
+                            $song->save();
+                            // $song->delete();
+                        }
+                        dump([
+                            'songToKeep' => [
+                                'id' => $songToKeep? $songToKeep->id : null,
+                                'song_id' => $songToKeep? $songToKeep->song_id : null,
+                                'song_url' => $songToKeep? $songToKeep->song_url : null,
+                                'source' => $songToKeep? $songToKeep->source : null,
+                                'status' => $songToKeep? $songToKeep->status : null,
+
+                            ],
+                            'songToDelete' => [
+                                'id' => $songToDelete? $songToDelete->id : null,
+                                'song_id' => $songToDelete? $songToDelete->song_id : null,
+                                'song_url' => $songToDelete? $songToDelete->song_url : null,
+                                'source' => $songToDelete? $songToDelete->source : null,
+                                'status' => $songToDelete? $songToDelete->status : null,
+                            ]
+                        ]);
+                    }
+                    continue;
+                }
+                /** @var Song $song */
+                $song = $songs->first();
+                $this->info("Processing song with slug $slug");
+                $this->info("Song id: {$song->id}");
+                $source = $song->source;
+                $songUrl = $song->song_url;
+//                if ($source === 'soundcloud') {
+//
+//                    $this->info("Song source is soundcloud");
+//                    // call soundcloud  download command using laravel process
+//                    // scrape:sc -l https://soundcloud.com/poorthomas/poor-thomas-gypsy-woman-x-pony-final -c
+//                    $process = new \Symfony\Component\Process\Process(['php', 'artisan', 'scrape:sc', '--link', $songUrl, '-c']);
+//                    $process->run();
+//
+//                    dd($process->getOutput());
+//                    $this->call('scrape:sc', [
+//                        '--link' => $songUrl,
+//                        '--check' => true,
+//                    ]);
+//                }
+//
+//                if ($source === 'spotify') {
+//                    $this->info("Song source is spotify");
+//                    // call spotify command spotify $url
+//                    $process = new \Symfony\Component\Process\Process(['php', 'artisan', 'spotify', $songUrl]);
+//                    $process->run();
+//                    dd($process->getOutput());
+//                    $this->call('spotify', [
+//                        '--slug' => $slug,
+//                    ]);
+//
+//                }
+            }
 
 
             return 0;
         }
-
-
-        dd("STOP");
-
-
-
-        // log out the full path
-        $fullPath = base_path($path);
-        $this->info("Full path: $fullPath");
-        $songsWithAudio = [];
-        $songsWithoutAudio = [];
-        // get all songs
-        $totalSongs = Song::query()->get();
-        $totalSongsCount = Song::query()->count();
-        $songsCount = count($songs);
-
-        $info = [
-            'totalSongsCount' => $songsCount,
-            'songsCount' => $songsCount,
-            'batch' => $batch,
-            'path' => $path,
-        ];
-        $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        // for all songs, check if the path url is working in batches of 100
-
-        $bar = $this->output->createProgressBar(count($songs));
-        $bar->start();
-        $this->line("");
-        foreach ($songs as $song) {
-
-
-        }
-        $bar->finish();
-        $this->line("");
-        // log out the number of songs with audio and without audio
-        $songsWithAudioCount = count($songsWithAudio);
-        $songsWithoutAudioCount = $songsCount - $songsWithAudioCount;
-        $stats = [
-            'songsCount' => $songsCount,
-            'songsWithAudioCount' => $songsWithAudioCount,
-            'songsWithoutAudioCount' => $songsWithoutAudioCount,
-        ];
-        $this->info(json_encode($stats, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        
         return 0;
     }
+
 }
