@@ -8,14 +8,14 @@ use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
 use const Widmogrod\Monad\Writer\log;
 
-class SongAudioFixCommand extends Command
+class SongAudioCheckCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'audio:fix  {--p|path=} {--a|all} {--d|dry-run} {--b|batch=} {--f|file=} {--s|skip=}';
+    protected $signature = 'audio:check  {--p|path=} {--a|all} {--d|dry-run} {--b|batch=} {--f|file=} {--s|skip=}';
 
     /**
      * The console command description.
@@ -38,7 +38,21 @@ class SongAudioFixCommand extends Command
         $batch = $this->option('batch');
         $file = $this->option('file');
         $skip = $this->option('skip');
+        // if path is not provided, create a folder in root directory called fixed
+        if ($path === null) {
+            $path = 'fixed';
+        }
+        if ($batch === null) {
+            $batch = 100;
+        }
+//        if ($file === null) {
+//            $file = 'songsWithAudio.txt';
+//        }
+//        if ($skip === null) {
+//            $skip = 'songsWithoutAudio.txt';
+//        }
 
+        // If file is given then read the file and get the songs from the file using the slug. All these songs should have audio therefore they should be skipped
 
         $songs = Song::query()->get();
         if ($file !== null) {
@@ -51,11 +65,25 @@ class SongAudioFixCommand extends Command
             $songs = Song::query()->whereNotIn('slug', $songsWithAudio)->get();
             $songsCount = $songs->count();
             $this->info("Found $songsCount songs to fix");
-
-            // find the missing songs and update the song
-            // Get the song from the database and update the song
+           // return 0;
         }
 
+
+
+        // if skip is given then read the file and get the songs from the file using the slug
+        if ($skip !== null) {
+            $songsWithoutAudio = file_get_contents($skip);
+            $songsWithoutAudio = explode("\n", $songsWithoutAudio);
+            $songsWithoutAudio = array_filter($songsWithoutAudio);
+            $songsWithoutAudio = array_map('trim', $songsWithoutAudio);
+            $songsWithoutAudio = array_unique($songsWithoutAudio);
+            $songsWithoutAudioCount = count($songsWithoutAudio);
+            $this->info("Found $songsWithoutAudioCount songs without audio");
+            $songs = Song::query()->whereIn('slug', $songsWithoutAudio)->get();
+            $songsCount = $songs->count();
+            $this->info("Found $songsCount songs to fix");
+            return 0;
+        }
 
 
 
@@ -83,7 +111,34 @@ class SongAudioFixCommand extends Command
         $bar->start();
         $this->line("");
         foreach ($songs as $song) {
+            $bar->advance();
+            $this->line("");
+            $url = $song->path;
+            $this->info("Checking $url");
+            $response = Http::get($url);
+            if ($response->successful()) {
+                $this->info("Song $url is working");
+                $songsWithAudio[] = $song;
+                // write or add the song to a file named songsWithAudio.txt
+                $file = fopen("songsWithAudio.txt", 'a');
+                fwrite($file, $song->slug . "\n");
+                fclose($file);
 
+            } else {
+                $this->line("<fg=red> $url is not working</>");
+                $songsWithoutAudio[] = $song;
+                // write or add the song to a file named songsWithoutAudio.txt
+                $file = fopen("songsWithoutAudio.txt", 'a');
+                fwrite($file, $song->slug . "\n");
+                fclose($file);
+            }
+            // output songs left to check
+            $songsLeft = $songsCount - count($songsWithAudio);
+            $this->line("<fg=yellow> $songsLeft songs left to check</>");
+            if ($songsLeft === 0) {
+                $this->info("All songs have been checked");
+                break;
+            }
 
         }
         $bar->finish();
