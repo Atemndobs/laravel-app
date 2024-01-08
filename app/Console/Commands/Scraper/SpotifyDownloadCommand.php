@@ -13,7 +13,7 @@ class SpotifyDownloadCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'spotify {url}';
+    protected $signature = 'spotify {url} {--f|force}';
 
     /**
      * The console command description.
@@ -37,6 +37,11 @@ class SpotifyDownloadCommand extends Command
         $spotifyId = $spotifyId[0];
         // check if song exists in DB
         $songExists = \App\Models\Song::where('song_id', $spotifyId)->first();
+        // if force is set , asume song does not exist in DB
+        $force = $this->option('force');
+        if ($force) {
+            $songExists = false;
+        }
         if ($songExists) {
             $this->error('Song with ID ' . $spotifyId . ' already exists in DB.');
             $message = [
