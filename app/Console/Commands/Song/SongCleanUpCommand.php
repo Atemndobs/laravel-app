@@ -49,6 +49,45 @@ class SongCleanUpCommand extends Command
         $songs = Song::query()->get();
         $songsCount = $songs->count();
         $this->info("Found {$songsCount} songs in the database");
+        // check for songs with duplicate song_id
+        $duplicateSongs = Song::query()->select('song_id')->groupBy('song_id')->havingRaw('count(*) > 1')->get();
+        // from all duplicate songs keep the one which is analyzed and delete the others
+        foreach ($duplicateSongs as $duplicateSong) {
+            //keep the first duplicate add delete the next ones
+            $songs = Song::query()->where('song_id', $duplicateSong->song_id)->get();
+            $firstSong = $songs->first();
+            $songs->each(function ($song) use ($firstSong) {
+                if ($song->id !== $firstSong->id) {
+                    $song->status = 'duplicate';
+                    $song->save();
+                    $messageDelete = [
+                        'song' => $song->title,
+                        'path' => $song->path,
+                        'slug' => $song->slug,
+                        'Song to delete' => "== slug: $song->slug has a working path ==",
+                    ];
+                    $this->info(json_encode($messageDelete, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                }
+            });
+        }
+
+        $duplicateSongsCount = $duplicateSongs->count();
+        // check if duplicate songs (by ID) are found in the s3 bucket
+        $duplicateSongsInS3 = Song::query()->select('song_id')->groupBy('song_id')->havingRaw('count(*) > 1')->whereIn('slug', $uploadedSongsSlugs)->get();
+        $duplicateSongsInS3Count = $duplicateSongsInS3->count();
+
+        // for each duplicate song by ID, keep the one which is analyzed, delete the others
+        $this->info("Found {$duplicateSongsInS3Count} duplicate songs in the s3 bucket");
+
+
+
+
+        dd([
+            'duplicate songs by ID' => $duplicateSongsCount,
+            'songs in the database' => $songsCount,
+            'songs in the s3 bucket' => $uploadedSongsCount,
+            'duplicate songs in the s3 bucket' => $duplicateSongsInS3Count,
+        ]);
         $songsSlugs = $songs->pluck('slug')->toArray();
         // get the difference between the songs in the database and the songs in the s3 bucket
         $deletableSongs = array_diff($songsSlugs, $uploadedSongsSlugs);
