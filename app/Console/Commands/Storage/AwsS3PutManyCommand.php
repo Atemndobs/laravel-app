@@ -33,14 +33,13 @@ class AwsS3PutManyCommand extends Command
     {
         $source = $this->option('source');
         $directory = $this->option('directory');
-        $this->warn(json_encode($this->options(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $sourcePath = ("{$source}");
         if (!str_contains($source, '/')) {
             $sourcePath = "/var/www/html/storage/app/public/uploads/{$source}";
         }
         if (!$source) {
-            $this->error('A Sour must be specified with -s option. example audio or images');
+            $this->error('A Source must be specified with -s option. example audio or images');
             return 1;
         }
 
@@ -50,13 +49,32 @@ class AwsS3PutManyCommand extends Command
             return 1;
         }
 
-        $files = glob($sourcePath . '/*.mp3');
+        // if source is images, look for .jpg files or .jpeg files
+        if ($source === 'images') {
+            $files = glob($sourcePath . '/*.jpg');
+            $files = array_merge($files, glob($sourcePath . '/*.jpeg'));
+        }elseif ($source === 'music') {
+            $files = glob($sourcePath . '/*.mp3');
+        }else {
+            // get only files not directories
+            $files = array_filter(glob($sourcePath . '/*'), 'is_file');
+        }
         // for each file, upload it to s3
         $count = count($files);
         $this->info("Found $count files to upload");
         $bar = $this->output->createProgressBar($count);
         $bar->start();
         $processed = [];
+
+        $info = [
+            'options' => $this->options(),
+            //'files' => $files,
+            'location' => $sourcePath,
+            //'ls' => scandir($sourcePath),
+            'files_count' => $count,
+        ];
+        $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
         foreach ($files as $file) {
             $file_name = basename($file);
             $key = "{$directory}/{$file_name}";
