@@ -61,13 +61,48 @@ class SongCleanUpCommand extends Command
         $infoMessage = json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $this->line("<fg=yellow>$infoMessage</>");
         // for each deletable file in the database, check if it is analyzed. If it is analyzed, keep it
+        $downloadables = [];
         $deletableSongs = Song::query()->whereIn('slug', $deletableSongs)->get();
         /** @var Song $deletableSong */
         foreach ($deletableSongs as $deletableSong) {
-            if ($deletableSong->analyzed && (int)$deletableSong->song_id !== null) {
+            if ($deletableSong->analyzed && $deletableSong->song_id !== null) {
                 $this->info("Song $deletableSong->title is analyzed & has a song ID");
                 $deletableSong->status = 'download';
+                // create spotify track url from spotify id if song source is spotify
                 $deletableSong->save();
+                // if song url is not null, add it to the downloadables array
+                if ($deletableSong->song_url !== null) {
+                    $downloadables[] = $deletableSong->song_url;
+                    // write / add song url to file downloadables.txt
+                    $downloadablesFile = fopen('downloadables.txt', 'a');
+                    fwrite($downloadablesFile, $deletableSong->song_url . "\n");
+                    fclose($downloadablesFile);
+                }else{
+                    // if source is spotify, create spotify url from spotify id
+                    if ($deletableSong->source === 'spotify') {
+                        $deletableSong->song_url = 'https://open.spotify.com/track/' . $deletableSong->song_id;
+                        $deletableSong->save();
+                        $downloadables[] = $deletableSong->song_url;
+                        // write / add song url to file downloadables.txt
+                        $downloadablesFile = fopen('downloadables.txt', 'a');
+                        fwrite($downloadablesFile, $deletableSong->song_url . "\n");
+                        fclose($downloadablesFile);
+                    }
+                    // source is soundcloud create soundcloud url from soundcloud id
+                    if ($deletableSong->source === 'soundcloud') {
+                        $deletableSong->song_url = 'https://soundcloud.com/' . $deletableSong->song_id;
+                        $deletableSong->save();
+                        $downloadables[] = $deletableSong->song_url;
+                        // write / add song url to file downloadables.txt
+                        $downloadablesFile = fopen('downloadables.txt', 'a');
+                        fwrite($downloadablesFile, $deletableSong->song_url . "\n");
+                        fclose($downloadablesFile);
+                    }else{
+                        // skip
+                        $this->info("Song $deletableSong->title is not analyzed");
+                        $deletableSong->status = 'delete';
+                    }
+                }
             } else {
                 $this->info("Song $deletableSong->title is not analyzed");
                 $deletableSong->status = 'delete';
