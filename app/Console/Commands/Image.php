@@ -48,7 +48,8 @@ class Image extends Command
         $songsWithoutImage = [];
 
         $songsCount = Song::query()->count();
-        $songsWithoutImage = Song::query()->whereNull('image')->orWhere('image', '=', '')->get();
+        // get all songs where image contains /music/
+        $songsWithoutImage = Song::query()->where('image', 'like', '%/music/%')->get();
         // for each song without image, update the image with s3 url
         /** @var Song $song */
         foreach ($songsWithoutImage as $song) {
@@ -57,7 +58,7 @@ class Image extends Command
             if (Str::endsWith($slug, 'mp3')) {
                 $slug = Str::replaceLast('mp3', '', $slug);
             }
-            $song->image = 'https://s3.amazonaws.com/curators3/music/' . $slug . '.jpeg';
+            $song->image = 'https://s3.amazonaws.com/curators3/images/' . $slug . '.jpeg';
             $song->save();
             $message = [
                 'slug' => $song->slug,
