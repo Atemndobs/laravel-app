@@ -98,6 +98,7 @@ class SongCleanUpCommand extends Command
                         if ($song->id !== $songToKeep->id) {
                           //  $song->delete();
                             $song->status = 'duplicate';
+                            $song->save();
                             $messageDelete = [
                                 'song' => $song->title,
                                 'path' => $song->path,
@@ -115,6 +116,7 @@ class SongCleanUpCommand extends Command
                     $songs->each(function ($song) use ($songToKeep) {
                         if ($song->id !== $songToKeep->id) {
                             $song->status = 'duplicate';
+                            $song->save();
                             $messageDelete = [
                                 'song' => $song->title,
                                 'path' => $song->path,
@@ -132,6 +134,7 @@ class SongCleanUpCommand extends Command
                 $songs->each(function ($song) use ($songToKeep) {
                     if ($song->id !== $songToKeep->id) {
                         $song->status = 'duplicate';
+                        $song->save();
                         $messageDelete = [
                             'song' => $song->title,
                             'path' => $song->path,
@@ -149,6 +152,7 @@ class SongCleanUpCommand extends Command
             $bar->advance();
         });
 
+        dd('END OF SCRIPT');
         if ($this->option('exist')) {
             $this->info('Cleaning up songs that dont exist from the database');
             // progress bar start
