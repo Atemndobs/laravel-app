@@ -33,10 +33,10 @@ class SongCleanUpCommand extends Command
         $deletableSongs = Song::query()->whereNot('path', 'like', '%http%')->get();
         $totalSongs = Song::query()->count();
         $this->info("Total Songs: $totalSongs");
-        if ($deletableSongs->count() <= 0) {
-            $this->info('No songs to delete');
-            return 0;
-        }
+//        if ($deletableSongs->count() <= 0) {
+//            $this->info('No songs to delete');
+//            return 0;
+//        }
         // progress bar start
 //        $bar = $this->output->createProgressBar(count($deletableSongs));
 //        $deletableSongs->each(function ($song) use ($bar) {
