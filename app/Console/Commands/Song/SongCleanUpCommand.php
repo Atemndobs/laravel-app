@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Stancl\Tenancy\Events\DatabaseDeleted;
+use const example\int;
 
 class SongCleanUpCommand extends Command
 {
@@ -61,16 +62,20 @@ class SongCleanUpCommand extends Command
         $this->line("<fg=yellow>$infoMessage</>");
         // for each deletable file in the database, check if it is analyzed. If it is analyzed, keep it
         $deletableSongs = Song::query()->whereIn('slug', $deletableSongs)->get();
+        /** @var Song $deletableSong */
         foreach ($deletableSongs as $deletableSong) {
-            if ($deletableSong->analyzed) {
-                $this->info("Song $deletableSong->title is analyzed");
-                $deletableSong->status = 'duplicate';
+            if ($deletableSong->analyzed && (int)$deletableSong->song_id !== null) {
+                $this->info("Song $deletableSong->title is analyzed & has a song ID");
+                $deletableSong->status = 'download';
                 $deletableSong->save();
             } else {
                 $this->info("Song $deletableSong->title is not analyzed");
-                $deletableSong->status = 'deleted';
+                $deletableSong->status = 'delete';
             }
         }
+
+        // for each $songSlug in database, check if ii is analyzed. If it is analyzed, keep it
+
         dd('END OF SCRIPT');
         $this->markDuplicateSongs();
         $bar = $this->output->createProgressBar(count($duplicateSongs));
