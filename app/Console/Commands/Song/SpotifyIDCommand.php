@@ -26,14 +26,21 @@ class SpotifyIDCommand extends Command
      */
     public function handle()
     {
+        // get songs that do not have a spotify id and that have source = spotify
         $songs = \App\Models\Song::query()->whereNull('song_id')
-            ->whereNull('played')
+            ->orWhere('song_id', '=', '')
+            ->orWhere('song_id', '=', null)
+            ->where('source', '=', 'spotify')
             ->get();
         $spotifyService = new SpotifyMusicService();
 
         // start progress bar
         $bar = $this->output->createProgressBar(count($songs));
         $songsUpdated = [];
+        $stats = [
+            'songs found' => count($songs),
+        ];
+        $this->warn(json_encode($stats, JSON_PRETTY_PRINT));
 
         /**
          * @var \App\Models\Song $song
