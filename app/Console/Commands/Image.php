@@ -6,6 +6,7 @@ use App\Models\Song;
 use Illuminate\Console\Command;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class Image extends Command
 {
@@ -47,6 +48,26 @@ class Image extends Command
         $songsWithoutImage = [];
 
         $songsCount = Song::query()->count();
+        $songsWithoutImage = Song::query()->whereNull('image')->orWhere('image', '=', '')->get();
+        // for each song without image, update the image with s3 url
+        /** @var Song $song */
+        foreach ($songsWithoutImage as $song) {
+            $slug = $song->slug;
+            // if slug ends with .mp3, remove it
+            if (Str::endsWith($slug, 'mp3')) {
+                $slug = Str::replaceLast('mp3', '', $slug);
+            }
+            $song->image = 'https://s3.amazonaws.com/curators3/music/' . $slug . '.jpeg';
+            $song->save();
+            $message = [
+                'slug' => $song->slug,
+                'image' => $song->image,
+                'path' => $song->path,
+            ];
+            $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+
+        die('END OF SCRIPT');
         $songsWithImagesCount = Song::query()->whereNotNull('image')->where('image', 'like', '%http%')->get()->count();
         $songsWithoutImagesCount = $songsCount - $songsWithImagesCount;
 

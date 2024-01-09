@@ -21,7 +21,7 @@ class SongUpdateImage extends Command
      *
      * @var string
      */
-    protected $description = 'Update song image from spotify';
+    protected $description = 'Update song image from spotify where oath is the path to the file containing the slugs of the songs to update (songs without image)';
 
     /**
      * Execute the console command.
