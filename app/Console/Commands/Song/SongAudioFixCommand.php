@@ -78,27 +78,28 @@ class SongAudioFixCommand extends Command
                         }else{
                             $this->warn("Song to delete: {$song->id}");
                             $songToDelete = $song;
-                            $song->status = "duplicate";
-                            $song->save();
+                            $songToDelete->status = "_DELETE_";
+                            $songToDelete->save();
                             // $song->delete();
                         }
-//                        dump([
-//                            'songToKeep' => [
-//                                'id' => $songToKeep? $songToKeep->id : null,
-//                                'song_id' => $songToKeep? $songToKeep->song_id : null,
-//                                'song_url' => $songToKeep? $songToKeep->song_url : null,
-//                                'source' => $songToKeep? $songToKeep->source : null,
-//                                'status' => $songToKeep? $songToKeep->status : null,
-//
-//                            ],
-//                            'songToDelete' => [
-//                                'id' => $songToDelete? $songToDelete->id : null,
-//                                'song_id' => $songToDelete? $songToDelete->song_id : null,
-//                                'song_url' => $songToDelete? $songToDelete->song_url : null,
-//                                'source' => $songToDelete? $songToDelete->source : null,
-//                                'status' => $songToDelete? $songToDelete->status : null,
-//                            ]
-//                        ]);
+                        $message = [
+                            'songToKeep' => [
+                                'id' => $songToKeep? $songToKeep->id : null,
+                                'song_id' => $songToKeep? $songToKeep->song_id : null,
+                                'song_url' => $songToKeep? $songToKeep->song_url : null,
+                                'source' => $songToKeep? $songToKeep->source : null,
+                                'status' => $songToKeep? $songToKeep->status : null,
+
+                            ],
+                            'songToDelete' => [
+                                'id' => $songToDelete? $songToDelete->id : null,
+                                'song_id' => $songToDelete? $songToDelete->song_id : null,
+                                'song_url' => $songToDelete? $songToDelete->song_url : null,
+                                'source' => $songToDelete? $songToDelete->source : null,
+                                'status' => $songToDelete? $songToDelete->status : null,
+                            ]
+                        ];
+                        $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                     }
                     continue;
                 }
@@ -114,49 +115,7 @@ class SongAudioFixCommand extends Command
                     $this->warn("Song url is null");
                     continue;
                 }
-                if ($source === 'soundcloud') {
-
-                    $this->info("Song source is soundcloud");
-                    dump([
-                        'url' => $songUrl,
-                        'source' => 'spotify',
-                        'id' => $song->id,
-                        'slug' => $song->slug,
-                        'path' => $song->path,
-                       // 'song_id' => $song->toArray()
-                    ]);
-                    try {
-                        $this->call('scrape:sc', [
-                            '--link' => $songUrl,
-                            '--continue' => true,
-                        ]);
-                    }catch (\Exception $e){
-                        $this->error("SOUNDCLOUD ERROR: ");
-                        $this->line("<fg=red>".json_encode($e->getMessage(),JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )."</>");
-                    }
-                }
-
-                if ($source === 'spotify') {
-                    $this->info("Song source is spotify");
-                    // call spotify command spotify $url
-                    dump([
-                        'url' => $songUrl,
-                        'source' => 'spotify',
-                        'id' => $song->id,
-                        'slug' => $song->slug,
-                        'path' => $song->path,
-                     //   'song_id' => $song->toArray()
-                    ]);
-                    try {
-                        $this->call('spotify', [
-                            'url' => $songUrl,
-                            '--force' => true,
-                        ]);
-                    }catch (\Exception $e){
-                        $this->error("SPOTIFY ERROR: ");
-                        $this->line("<fg=red>".json_encode($e->getMessage(),JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )."</>");
-                    }
-                }
+               // $this->downloadSong($source, $songUrl, $song);
                 $bar->advance();
                 $processed[] = $slug;
                 // write / add processed  slugs to file processed.txt
@@ -174,6 +133,59 @@ class SongAudioFixCommand extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * @param string|null $source
+     * @param string $songUrl
+     * @param Song $song
+     * @return void
+     */
+    public function downloadSong(?string $source, string $songUrl, Song $song): void
+    {
+        if ($source === 'soundcloud') {
+
+            $this->info("Song source is soundcloud");
+            dump([
+                'url' => $songUrl,
+                'source' => 'spotify',
+                'id' => $song->id,
+                'slug' => $song->slug,
+                'path' => $song->path,
+                // 'song_id' => $song->toArray()
+            ]);
+            try {
+                $this->call('scrape:sc', [
+                    '--link' => $songUrl,
+                    '--continue' => true,
+                ]);
+            } catch (\Exception $e) {
+                $this->error("SOUNDCLOUD ERROR: ");
+                $this->line("<fg=red>" . json_encode($e->getMessage(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+            }
+        }
+
+        if ($source === 'spotify') {
+            $this->info("Song source is spotify");
+            // call spotify command spotify $url
+            dump([
+                'url' => $songUrl,
+                'source' => 'spotify',
+                'id' => $song->id,
+                'slug' => $song->slug,
+                'path' => $song->path,
+                //   'song_id' => $song->toArray()
+            ]);
+            try {
+                $this->call('spotify', [
+                    'url' => $songUrl,
+                    '--force' => true,
+                ]);
+            } catch (\Exception $e) {
+                $this->error("SPOTIFY ERROR: ");
+                $this->line("<fg=red>" . json_encode($e->getMessage(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+            }
+        }
     }
 
 }

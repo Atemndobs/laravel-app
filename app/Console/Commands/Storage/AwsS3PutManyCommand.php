@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands\Storage;
 
+use App\Models\Song;
 use Illuminate\Console\Command;
 use App\Services\Storage\AwsS3Service;
+use Illuminate\Support\Facades\Storage;
 
 class AwsS3PutManyCommand extends Command
 {
@@ -74,6 +76,7 @@ class AwsS3PutManyCommand extends Command
             'files_count' => $count,
         ];
         $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        //$file = $this->getAllSongsFilesFromTheS3BucketMusicFolder($directory, $files);
 
         foreach ($files as $file) {
             $file_name = basename($file);
@@ -108,5 +111,58 @@ class AwsS3PutManyCommand extends Command
 
         $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return 0;
+    }
+
+    /**
+     * @param bool|array|string|null $directory
+     * @param false|array $files
+     * @return mixed
+     * @throws \Laravel\Octane\Exceptions\DdException
+     */
+    public function getAllSongsFilesFromTheS3BucketMusicFolder(bool|array|string|null $directory, false|array $files): mixed
+    {
+// get all songs files from the s3 bucket music folder
+        $uploadedSongs = Storage::disk('s3')->files($directory);
+        $uploadedSongsCount = count($uploadedSongs);
+        $this->info("Found {$uploadedSongsCount} songs in the s3 bucket");
+
+        // Extract the slug from the songs in the s3 bucket and
+        $uploadedSongsSlugs = [];
+        foreach ($uploadedSongs as $uploadedSong) {
+            $uploadedSongSlug = str_replace("$directory/", '', $uploadedSong);
+            $uploadedSongSlug = str_replace('.mp3', '', $uploadedSongSlug);
+            $uploadedSongSlug = str_replace('.jpg', '', $uploadedSongSlug);
+            $uploadedSongSlug = str_replace('.jpeg', '', $uploadedSongSlug);
+
+            $uploadedSongsSlugs[] = $uploadedSongSlug;
+        }
+        //check if they exist in the database
+        $songs = Song::query()->get();
+        $songsCount = $songs->count();
+
+        $songsSlugs = $songs->pluck('slug')->toArray();
+        // get the difference between the songs in the database and the songs in the s3 bucket
+        $deletableSongs = array_diff($songsSlugs, $uploadedSongsSlugs);
+        $deletableSongsCount = count($deletableSongs);
+
+
+        // Get slugs from files
+        $filesSlugs = [];
+        foreach ($files as $file) {
+            $fileSlug = basename($file);
+            $fileSlug = str_replace('.mp3', '', $fileSlug);
+            $fileSlug = str_replace('.jpg', '', $fileSlug);
+            $fileSlug = str_replace('.jpeg', '', $fileSlug);
+            $filesSlugs[] = $fileSlug;
+        }
+
+        // dd the first 5 of each
+        dd([
+            'uploadedSongsSlugs' => array_slice($uploadedSongsSlugs, 0, 5),
+            'songsSlugs' => array_slice($songsSlugs, 0, 5),
+            'deletableSongs' => array_slice($deletableSongs, 0, 5),
+            'fileslugs' => $filesSlugs
+        ]);
+        return $file;
     }
 }

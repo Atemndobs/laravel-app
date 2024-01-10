@@ -133,13 +133,13 @@ class SongAudioCheckCommand extends Command
             'songs in the database' => $songsCount,
             'songs in the s3 bucket' => $uploadedSongsCount,
             'songs to delete' => $deletableSongsCount,
-            'deletableSongs file' => 'deletableSongs.txt',
+            'deletableSongs file' => "$path/deletableSongs.txt",
             'batch' => $batch,
             'path' => $path,
         ];
         $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         // for all songs, check if the path url is working in batches of 100
-        
+
         $bar = $this->output->createProgressBar(count($songs));
         $bar->start();
         $this->line("");
