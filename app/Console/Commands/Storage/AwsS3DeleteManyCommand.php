@@ -35,18 +35,43 @@ class AwsS3DeleteManyCommand extends Command
             'location' => env('AWS_BUCKET') . '/' . $directory,
         ];
         $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-
-        // get paths of songs where bpm = 0. for each or the paths, call the s3:delete command
+        $downloadedSongs = [];
+        /** @var Song $song */
         foreach ($songs as $song) {
-            $this->info("deleting song |  ".$song->slug);
-            $this->call('s3:delete', [
-                '--file' => $song->path,
-                '--directory' => 'music',
-            ]);
+//            $this->info("Downloading song |  ".$song->song_url);
+//            if ($song->song_url === null) {
+//                $this->error("Song url is null |  ".$song->song_url);
+//                continue;
+//            }
+//            // if source soundcloud then call scrap:sc command and pass the song url as -l and -c option
+//            if (str_contains($song->source, 'soundcloud')) {
+//                $this->call('scrape:sc', [
+//                    '--link' => $song->song_url,
+//                    '--continue' => true,
+//                ]);
+//                $downloadedSongs[] = $song->slug;
+//                // write the slug to a file downloaded.txt
+//                file_put_contents('downloaded.txt', $song->slug . "\n", FILE_APPEND);
+//            }
+//            // if source is spotify then call the spotify command and pass the song url adn -f option
+//            if (str_contains($song->source, 'spotify')) {
+//                $this->call('spotify', [
+//                    'url' => $song->song_url,
+//                    '--force' => true,
+//                ]);
+//                $downloadedSongs[] = $song->slug;
+//                // write the slug to a file downloaded.txt
+//                file_put_contents('downloaded.txt', $song->slug . "\n", FILE_APPEND);
+//            }
+//            $this->call('s3:delete', [
+//                '--file' => $song->path,
+//                '--directory' => 'music',
+//            ]);
         }
         $message = [
             'status' => 'success',
-            'Total songs deleted' => count($songs),
+            'Total songs to delete' => count($songs),
+            'Deleted songs count' => count($downloadedSongs),
             'message' => 'File deleted successfully from ' . env('AWS_BUCKET') . '/' . $directory,
         ];
         $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

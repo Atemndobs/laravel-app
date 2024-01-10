@@ -6,6 +6,7 @@ use App\Models\Song;
 use Illuminate\Console\Command;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use const Widmogrod\Monad\Writer\log;
 
 class SongAudioCheckCommand extends Command
@@ -98,15 +99,47 @@ class SongAudioCheckCommand extends Command
         $totalSongsCount = Song::query()->count();
         $songsCount = count($songs);
 
+        // get all songs files from the s3 bucket music folder
+        $uploadedSongs = Storage::disk('s3')->files('music');
+        $uploadedSongsCount = count($uploadedSongs);
+        $this->info("Found {$uploadedSongsCount} songs in the s3 bucket");
+
+        // Extract the slug from the songs in the s3 bucket and
+        $uploadedSongsSlugs = [];
+        foreach ($uploadedSongs as $uploadedSong) {
+            $uploadedSongSlug = str_replace('music/', '', $uploadedSong);
+            $uploadedSongSlug = str_replace('.mp3', '', $uploadedSongSlug);
+            $uploadedSongsSlugs[] = $uploadedSongSlug;
+        }
+        //check if they exist in the database
+        $songs = Song::query()->get();
+        $songsCount = $songs->count();
+
+        $songsSlugs = $songs->pluck('slug')->toArray();
+        // get the difference between the songs in the database and the songs in the s3 bucket
+        $deletableSongs = array_diff($songsSlugs, $uploadedSongsSlugs);
+        $deletableSongsCount = count($deletableSongs);
+
+// write the deletable songs to a file deletableSongs.txt
+        $this->warn('Creating file deletableSongs.txt');
+        $file = fopen("$path/deletableSongs.txt", 'w');
+        foreach ($deletableSongs as $slug) {
+            fputcsv($file, [$slug] );
+        }
+
         $info = [
             'totalSongsCount' => $songsCount,
             'songsCount' => $songsCount,
+            'songs in the database' => $songsCount,
+            'songs in the s3 bucket' => $uploadedSongsCount,
+            'songs to delete' => $deletableSongsCount,
+            'deletableSongs file' => 'deletableSongs.txt',
             'batch' => $batch,
             'path' => $path,
         ];
         $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         // for all songs, check if the path url is working in batches of 100
-
+        
         $bar = $this->output->createProgressBar(count($songs));
         $bar->start();
         $this->line("");

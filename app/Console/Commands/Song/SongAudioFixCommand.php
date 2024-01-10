@@ -42,8 +42,6 @@ class SongAudioFixCommand extends Command
 
 
 
-
-
         $songsWithoutAudio = [];
 
         if ($file !== null) {
