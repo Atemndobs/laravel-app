@@ -29,9 +29,14 @@ class AwsS3DeleteManyCommand extends Command
             $this->error('A file must be specified with -f option.');
             return 1;
         }
+        $songs = Song::query()->where('bpm', '=', 0)->get();
+        $message = [
+            'Total songs to delete' => count($songs),
+            'location' => env('AWS_BUCKET') . '/' . $directory,
+        ];
+        $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         // get paths of songs where bpm = 0. for each or the paths, call the s3:delete command
-        $songs = Song::query()->where('bpm', '=', 0)->get();
         foreach ($songs as $song) {
             $this->info("deleting song |  ".$song->slug);
             $this->call('s3:delete', [
@@ -41,6 +46,7 @@ class AwsS3DeleteManyCommand extends Command
         }
         $message = [
             'status' => 'success',
+            'Total songs deleted' => count($songs),
             'message' => 'File deleted successfully from ' . env('AWS_BUCKET') . '/' . $directory,
         ];
         $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
