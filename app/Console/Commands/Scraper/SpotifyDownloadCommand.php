@@ -13,14 +13,16 @@ class SpotifyDownloadCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'spotify {url} {--f|force}';
+    protected $signature = 'spotify {url} {--f|force} ';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Download Playlists from Spotify and maybe Youtube too';
+    protected $description = 'Download Playlists from Spotify and maybe Youtube too. 
+    Options : --force to force download even if song exists in DB. --dir to specify download directory.
+    Arg : spotify url';
 
     /**
      * Execute the console command.
@@ -55,6 +57,10 @@ class SpotifyDownloadCommand extends Command
                     'image' => $songExists->image,
                 ]
             ];
+            // write / Add song url to file existing_songs.txt
+            $file = fopen("existing_songs.txt", "a");
+            fwrite($file, $url . "\n");
+            fclose($file);
 
             $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
           //  return 0;

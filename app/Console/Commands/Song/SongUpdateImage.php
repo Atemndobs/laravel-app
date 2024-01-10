@@ -48,6 +48,7 @@ class SongUpdateImage extends Command
                 $this->info("updating image for |  ".$slug);
                 $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
                 $updatedSongs['image'] = $service->getSongImage($song)->image;
+                $this->table([ 'image'], [$updatedSongs]);
                 return 0;
             }
 
@@ -63,6 +64,7 @@ class SongUpdateImage extends Command
 
                     $updatedSongs['image'] = $service->getSongImage($song)->image;
                 }
+                $this->table([ 'image'], [$updatedSongs]);
                 return 0;
             }
 
