@@ -76,7 +76,7 @@ class SongUpdateBpmCommand extends Command
             return 0;
         }
 
-        $songs = Song::where('bpm', '=', 0)
+        $songs = Song::where('bpm', '<', 1)
             ->orWhereNull('bpm')
             ->get();
         $songCount = count($songs);
@@ -85,6 +85,25 @@ class SongUpdateBpmCommand extends Command
             $this->info('No song found');
             return 0;
         }
+
+        $info = [
+            'songs' => [
+                'ids' => $songs->pluck('id')->toArray(),
+                'slugs' => $songs->pluck('slug')->toArray(),
+                'titles' => $songs->pluck('title')->toArray(),
+                'bpm' => $songs->pluck('bpm')->toArray(),
+            ]
+        ];
+        $this->info(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        dd(count($songs));
+
+        foreach ($songs as $song) {
+            // call the audio:fix command and pass the path as option using the song_url
+            $this->call('audio:fix', ['--path' => $song->song_url]);
+        }
+
+        die('done');
+
         $updatedSongs = [];
         $this->output->progressStart($songCount);
         $this->newLine();

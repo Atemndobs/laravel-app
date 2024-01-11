@@ -2,6 +2,7 @@
 
 namespace App\Services\Song;
 
+use App\Models\Song;
 use Illuminate\Support\Facades\Http;
 
 class SongRecommendationService
@@ -16,11 +17,19 @@ class SongRecommendationService
 
     public function getNearestNeighbor(int $id, int $k )
     {
-        $reco_url = $this->fastApiUrl . '/api/v1/search/' . $id . '?k=' . $k;
+        // check if there is a song with this id by finbding the song with id = $id
+        $song = Song::query()->find($id);
+        if ($song === null) {
+            return [
+                'error' => 'Song with id: ' . $id . ' not found',
+            ];
+        }
+        $reco_url = $this->fastApiUrl . '/api/v1/songs/search/' . $id . '?k=' . $k;
         // get recommendation : http://fastapi/api/v1/search/98?k=$k
         $response = Http::get($reco_url);
         $distances = $response->json()['distances'];
         $ids = $response->json()['similar_songs'];
+
         // get full song data for each song id from search
         $songs = [];
         $searchSong = new SearchSong();
@@ -28,16 +37,22 @@ class SongRecommendationService
         $values = '[' . $ids . ']';;
         $searchSong->addQueryFilter('id', 'IN', $values);
         $hits = $searchSong->getSongs()['hits'];
+        dump(
+            $distances
+        );
 
         // show only the attributes we need, author, title, id, key, scale, bpm
-        foreach ($hits as $hit) {
+        for ($i = 0; $i < count($hits); $i++) {
+            // add the corresponding distance to each song
             $songs[] = [
-                'id' => $hit['id'],
-                'title' => $hit['title'],
-                'author' => $hit['author'],
-                'key' => $hit['key'],
-                'scale' => $hit['scale'],
-                'bpm' => $hit['bpm'],
+                'id' => $hits[$i]['id'],
+                'title' => $hits[$i]['title'],
+               // 'author' => $hits[$i]['author'],
+                'key' => $hits[$i]['key'],
+                'scale' => $hits[$i]['scale'],
+                'bpm' => $hits[$i]['bpm'],
+                //'path' => $hits[$i]['path'],
+                'distance' => $distances[$i],
             ];
         }
 

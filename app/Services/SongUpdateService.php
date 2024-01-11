@@ -275,18 +275,23 @@ class SongUpdateService
         } else {
             $songs[] = Song::query()->where('slug', $slug)->first();
         }
-        dump('found ' . count($songs) . ' songs');
+        $message = [
+            'slug' => $slug,
+            'message' => 'update duration',
+            'songs' => count($songs)
+        ];
+        Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $completed = [];
         /** @var Song $song */
         foreach ($songs as $song) {
             $updatedSong = $this->getSongDuration($song);
             $updatedSong->save();
             $completed[] = [
-                'title' => $song->title,
-                'author' => $song->author,
-                'duration' => $song->duration,
-                'slug' => $song->slug,
-                'image' => $song->image,
+                'title' => $updatedSong->title,
+                'author' => $updatedSong->author,
+                'duration' => $updatedSong->duration,
+                'slug' => $updatedSong->slug,
+                'image' => $updatedSong->image,
             ];
         }
 

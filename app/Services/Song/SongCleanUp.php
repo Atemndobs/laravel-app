@@ -24,6 +24,8 @@ class SongCleanUp
                 break;
             }
         }
+
+       // dump($song['key']);
         $song['scale'] = $song['scale'] === "major" ? 1 : 0;
         // Exclude unnecessary attributes
         unset($song['created_at']);
@@ -42,11 +44,11 @@ class SongCleanUp
         unset($song['related_songs']);
         unset($song['title']);
         unset($song['author']);
-        unset($song['sad']);
-        unset($song['happy']);
-        unset($song['danceability']);
-        unset($song['relaxed']);
-        unset($song['aggressiveness']);
+//        unset($song['sad']);
+//        unset($song['happy']);
+//        unset($song['danceability']);
+//        unset($song['relaxed']);
+//        unset($song['aggressiveness']);
 
         return $song;
     }

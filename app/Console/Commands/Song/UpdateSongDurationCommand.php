@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Song;
 
+use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
 
@@ -33,9 +34,28 @@ class UpdateSongDurationCommand extends Command
         if ($slug !== null) {
             $this->info("prepare updating |  $slug");
             $results = $updateService->updateDuration($slug);
-        }else{
-            $results = $updateService->updateDuration();
         }
+
+        // no slug is given so get all songs wth no duration and update them
+        $songs = Song::query()->whereNull('duration')->get();
+        $this->info("prepare updating |  {$songs->count()} songs");
+        // start bar
+        $this->withProgressBar($songs, function ($song) use ($updateService, &$results) {
+            try {
+                $this->line("");
+                $this->info("Updating {$song->slug}");
+                $results = $updateService->updateDuration($song->slug);
+                $this->warn(json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            }catch (\Exception $e){
+                $message = [
+                    'error' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile(),
+                ];
+                $this->line("</fg=red>". json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ."</>");
+            }
+        });
+
 
         try {
             $this->table(['title','author',  'duration', 'slug', 'image'], [$results]);
