@@ -3,6 +3,7 @@
 namespace App\Services\Song;
 use App\Models\Song;
 use App\Models\SongKey;
+use Illuminate\Support\Facades\Log;
 use Laravel\Scout\Scout;
 
 /**
@@ -17,16 +18,7 @@ class SongCleanUp
      */
     public function CleanUpSingleSong(array $song): array
     {
-        $songKeys = SongKey::all();
-        foreach ($songKeys as $songKey) {
-            if ($song['key'] === $songKey->key_name) {
-                $song['key'] = $songKey->key_number;
-                break;
-            }
-        }
-
-       // dump($song['key']);
-        $song['scale'] = $song['scale'] === "major" ? 1 : 0;
+        $song = $this->setNumericKey($song);
         // Exclude unnecessary attributes
         unset($song['created_at']);
         unset($song['updated_at']);
@@ -44,12 +36,14 @@ class SongCleanUp
         unset($song['related_songs']);
         unset($song['title']);
         unset($song['author']);
-//        unset($song['sad']);
-//        unset($song['happy']);
-//        unset($song['danceability']);
-//        unset($song['relaxed']);
-//        unset($song['aggressiveness']);
-
+        unset($song['sad']);
+        unset($song['happy']);
+        unset($song['danceability']);
+        unset($song['relaxed']);
+        unset($song['aggressiveness']);
+        unset($song['energy']);
+        unset($song['id']);
+        Log::info(json_encode($song, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return $song;
     }
     public function CleanupAllSongs(): array
@@ -60,5 +54,34 @@ class SongCleanUp
             $cleanedUpSongs[] =  $this->cleanUpSingleSong($song);
         }
         return $cleanedUpSongs;
+    }
+
+    private function setNumericKey(array $song) : array
+    {
+        $songKeys = SongKey::all();
+        $songScale = ucfirst($song['scale']);
+        try {
+            $songKey = $songKeys->where('key_name', $song['key'])
+                ->where('scale', $songScale)
+                ->first()->key_number;
+        }catch (\Exception $e){
+            $message = [
+                'error' => 'Song key not found',
+                'key' => $song['key'],
+                'scale' => $songScale,
+                //'song' => $song,
+                'songKeys' => $songKeys->toArray(),
+            ];
+           throw new \Exception(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+        $song['key'] = $songKey;
+        $song['scale'] = $song['scale'] === "major" ? 1 : 0;
+
+        $updatedAttributes = [
+            'key' => $songKey,
+            'scale' => $song['scale'],
+        ];
+        Log::info(json_encode($updatedAttributes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return $song;
     }
 }

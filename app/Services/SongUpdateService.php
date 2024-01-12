@@ -526,6 +526,7 @@ class SongUpdateService
         try {
             $duration = $fileInfo['playtime_seconds'] ?? null;
             $song->duration = $duration;
+            $song->save();
             return $song;
         } catch (\Exception $e) {
             Log::critical("Failed Update Song Duration: $songPath" . $e->getMessage());

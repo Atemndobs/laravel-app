@@ -7,15 +7,16 @@ use Illuminate\Support\Facades\Http;
 
 class SongRecommendationService
 {
-    private $fastApiUrl;
+    private mixed $fastApiUrl;
     private $init;
     public function __construct()
     {
         $this->fastApiUrl = env('RECO_URL');
-        $this->init = env('RECO_URL' . '/api/v1/initialize');
+        Http::get($this->fastApiUrl . '/api/v1/songs/initialize') ;
+        //Http::get( "http://fastapi.curator.atemkeng.eu/api/v1/songs/initialize");
     }
 
-    public function getNearestNeighbor(int $id, int $k )
+    public function getNearestNeighbor(int $id, int $k, int $l=3): array
     {
         // check if there is a song with this id by finbding the song with id = $id
         $song = Song::query()->find($id);
@@ -24,11 +25,22 @@ class SongRecommendationService
                 'error' => 'Song with id: ' . $id . ' not found',
             ];
         }
-        $reco_url = $this->fastApiUrl . '/api/v1/songs/search/' . $id . '?k=' . $k;
-        // get recommendation : http://fastapi/api/v1/search/98?k=$k
-        $response = Http::get($reco_url);
-        $distances = $response->json()['distances'];
-        $ids = $response->json()['similar_songs'];
+        $reco_url = $this->fastApiUrl . "/api/v1/songs/search/$id?k=$k&limit=$l";
+        //$reco_url = "http://fastapi.curator.atemkeng.eu" . '/api/v1/songs/search/' . $id . '?k=' . $k;
+        try {
+            $response = Http::get($reco_url);
+            $distances = $response->json()['distances'];
+            $ids = $response->json()['similar_songs'];
+        } catch (\Exception $e) {
+            $error=  [
+                'error' => 'Error getting recommendation for song with id: ' . $id,
+                'message' => $e->getMessage(),
+                'fastapi_response' => $response->json(),
+                'response_status' => $response->status(),
+            ];
+            throw new \Exception(json_encode($error));
+        }
+
 
         // get full song data for each song id from search
         $songs = [];
@@ -37,9 +49,6 @@ class SongRecommendationService
         $values = '[' . $ids . ']';;
         $searchSong->addQueryFilter('id', 'IN', $values);
         $hits = $searchSong->getSongs()['hits'];
-        dump(
-            $distances
-        );
 
         // show only the attributes we need, author, title, id, key, scale, bpm
         for ($i = 0; $i < count($hits); $i++) {
@@ -47,11 +56,11 @@ class SongRecommendationService
             $songs[] = [
                 'id' => $hits[$i]['id'],
                 'title' => $hits[$i]['title'],
-               // 'author' => $hits[$i]['author'],
+                'author' => $hits[$i]['author'],
                 'key' => $hits[$i]['key'],
                 'scale' => $hits[$i]['scale'],
                 'bpm' => $hits[$i]['bpm'],
-                //'path' => $hits[$i]['path'],
+                'path' => $hits[$i]['path'],
                 'distance' => $distances[$i],
             ];
         }

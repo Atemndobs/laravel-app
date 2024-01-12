@@ -60,7 +60,17 @@ class getRecommendationCommand extends Command
         $this->info(json_encode($foundSong, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $recommendationService = new SongRecommendationService();
-        $recommendation = $recommendationService->getNearestNeighbor($songId, $k);
+        try {
+            $recommendation = $recommendationService->getNearestNeighbor($songId, $k);
+        }catch (\Exception $e){
+            $message = [
+                'error' => json_decode($e->getMessage()),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+            $this->line("<fg=red>". json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ."</>");
+            return 0;
+        }
         // dump($recommendation);
         $result  = [
 
@@ -75,9 +85,9 @@ class getRecommendationCommand extends Command
         $this->table([
             'id',
             'title',
-            //'author',
+            'author',
             'key',
-            'scale',
+           // 'scale',
             'bpm',
             'path',
             'distance'

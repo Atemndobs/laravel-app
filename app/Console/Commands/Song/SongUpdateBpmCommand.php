@@ -76,7 +76,7 @@ class SongUpdateBpmCommand extends Command
             return 0;
         }
 
-        $songs = Song::where('bpm', '<', 1)
+        $songs = Song::query()->where('bpm', '<', 1)
             ->orWhereNull('bpm')
             ->get();
         $songCount = count($songs);

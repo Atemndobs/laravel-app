@@ -23,7 +23,9 @@ class SongAudioFixCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Fix Song links to point to aws s3 bucket and check if they are working using batch requests';
+    protected $description = 'Fix Song links to point to aws s3 bucket and check if they are working using batch requests
+    options --path = song url, --all, --dry-run, --batch = the bath number , --file = the file where to get slugs of songs to download, --skip
+    ';
 
 
     /**s
@@ -41,6 +43,17 @@ class SongAudioFixCommand extends Command
         $skip = $this->option('skip');
 
 
+        if ($path !== null) {
+            $song = Song::query()->where('song_url', 'like', '%' . $path . '%')->get()->first();
+            $this->info("Found {$song->slug} songs with path $path");
+            $this->downloadSong($song);
+
+            $message = [
+                'message' => 'Song downloaded',
+            ];
+            $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            return 0;
+        }
 
         $songsWithoutAudio = [];
 
@@ -76,7 +89,7 @@ class SongAudioFixCommand extends Command
                             $this->warn("Song to keep: {$song->id}");
                             $songToKeep = $song;
                         }else{
-                            $this->warn("Song to delete: {$song->id}");
+                            $this->warn("DUPLICATE  Song to delete: {$song->id}");
                             $songToDelete = $song;
                             $songToDelete->status = "_DELETE_";
                             $songToDelete->save();
@@ -136,13 +149,13 @@ class SongAudioFixCommand extends Command
     }
 
     /**
-     * @param string|null $source
-     * @param string $songUrl
      * @param Song $song
      * @return void
      */
-    public function downloadSong(?string $source, string $songUrl, Song $song): void
+    public function downloadSong(Song $song): void
     {
+        $songUrl = $song->song_url;
+        $source = $song->source;
         if ($source === 'soundcloud') {
 
             $this->info("Song source is soundcloud");

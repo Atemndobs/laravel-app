@@ -25,7 +25,6 @@ class SongRecommendationController extends Controller
         }
 
         Log::info('Found song with id: ' . $songId);
-       // dump($song->toArray());
         $foundSong = [
             'id' => $song->id,
             'title' => $song->title,
