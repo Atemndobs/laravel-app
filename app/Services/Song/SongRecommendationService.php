@@ -4,31 +4,33 @@ namespace App\Services\Song;
 
 use App\Models\Song;
 use Illuminate\Support\Facades\Http;
+use Spatie\Ray\Settings\Settings;
+use TCG\Voyager\Models\Setting;
 
 class SongRecommendationService
 {
     private mixed $fastApiUrl;
-    private $init;
     public function __construct()
     {
-        $this->fastApiUrl = env('RECO_URL');
-        Http::get($this->fastApiUrl . '/api/v1/songs/initialize') ;
-        //Http::get( "http://fastapi.curator.atemkeng.eu/api/v1/songs/initialize");
+        $this->fastApiUrl = Setting::query()->where('group', 'fastapi')
+            ->where('key', 'fastapi.base_url')->first()->value;
+        //Http::get($this->fastApiUrl . '/api/v1/songs/initialize') ;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getNearestNeighbor(int $id, int $k, int $l=3): array
     {
-        // check if there is a song with this id by finbding the song with id = $id
+        // check if there is a song with this id by finding the song with id = $id
         $song = Song::query()->find($id);
         if ($song === null) {
             return [
                 'error' => 'Song with id: ' . $id . ' not found',
             ];
         }
-        $reco_url = $this->fastApiUrl . "/api/v1/songs/search/$id?k=$k&limit=$l";
-        //$reco_url = "http://fastapi.curator.atemkeng.eu" . '/api/v1/songs/search/' . $id . '?k=' . $k;
         try {
-            $response = Http::get($reco_url);
+            $response = Http::get($this->fastApiUrl . '/api/v1/songs/search/' . $id . '?k=' . $k );
             $distances = $response->json()['distances'];
             $ids = $response->json()['similar_songs'];
         } catch (\Exception $e) {
