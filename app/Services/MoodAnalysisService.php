@@ -8,6 +8,7 @@ use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use TCG\Voyager\Models\Setting;
 use function Psy\debug;
 
 class MoodAnalysisService
@@ -28,9 +29,14 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-        $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
-        $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
-        $nest_base_url = $base_url . ":$nest_port";
+//        $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
+//        $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
+        //$nest_base_url = env('APP_ENV') == 'local' ? $base_url . ":$nest_port" : $base_url;
+
+        $nest_base_url = Setting::query()->where('key', '=', 'nest.base_url')
+            ->where('group', '=', 'nest')
+            ->first()->value;
+
         Log::info(json_encode([
             'process' => 'MoodAnalysisService::getAnalysis',
             'args' => func_get_args(),
@@ -83,7 +89,7 @@ class MoodAnalysisService
         $uploadService = new SongUpdateService();
         $songDuration = $uploadService->getSongDuration($existingSong);
 
-        if ($songDuration->duration > 360){
+        if ($songDuration->duration > 700){
             $existingSong->status = 'skipped - mixtape';
             $existingSong->save();
             Log::warning(json_encode([
@@ -124,7 +130,7 @@ class MoodAnalysisService
         $skipped = [];
         /** @var Song $song */
         foreach ($songs as $song) {
-            if ($song->analyzed == 0 && $song->duration >= 360) {
+            if ($song->analyzed == 0 && $song->duration >= 500) {
                 $song->status = 'skip';
                 $song->analyzed = false;
                 $song->save();
@@ -151,7 +157,7 @@ class MoodAnalysisService
     {
         // try catch block to avaoid error when song does not exist
         try {
-            $exists = Storage::disk('s3')->exists("music/$slug");
+            $exists = Storage::disk('s3')->exists("music/$slug.mp3");
             if ($exists) {
                 return true;
             }
