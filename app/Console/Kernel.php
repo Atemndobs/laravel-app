@@ -32,18 +32,18 @@ class Kernel extends ConsoleKernel
             ->description('Indexing songs')
             ->appendOutputTo("storage/logs/indexer_$logFile");
 
-        $schedule->command("song:bpm --batch 10")
+        $schedule->command("song:bpm --batch 100")
             ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground()
             ->description('Update BPM for the next 10 songs')
             ->appendOutputTo("storage/logs/bpm_$logFile");
 
-        $schedule->command("song:import")
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->appendOutputTo("storage/logs/song_import_$logFile");
+//        $schedule->command("song:import")
+//            ->everyMinute()
+//            ->withoutOverlapping()
+//            ->runInBackground()
+//            ->appendOutputTo("storage/logs/song_import_$logFile");
 
 //        $schedule->command('watch:audio')
 //            ->everyMinute()
@@ -59,17 +59,17 @@ class Kernel extends ConsoleKernel
 //            ->description('Moves upload Dir to audio and images')
 //            ->appendOutputTo("'storage/logs/upload_$logFile'");
 
-        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=1 --stop-when-empty')
+        $schedule->command('rabbitmq:consume --queue=classify --max-jobs=10 --stop-when-empty')
             ->everyMinute()
             ->withoutOverlapping()
             ->description('Classify songs')
             ->appendOutputTo("storage/logs/classifier_$logFile");
 
-        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->description('Indexing songs')
-            ->appendOutputTo("storage/logs/indexer_$logFile");
+//        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
+//            ->everyMinute()
+//            ->withoutOverlapping()
+//            ->description('Indexing songs')
+//            ->appendOutputTo("storage/logs/indexer_$logFile");
 
     }
 
