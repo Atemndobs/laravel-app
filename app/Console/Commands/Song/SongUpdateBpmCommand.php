@@ -95,14 +95,12 @@ class SongUpdateBpmCommand extends Command
             ]
         ];
         $this->info(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        dd(count($songs));
+       // dd(count($songs));
 
-        foreach ($songs as $song) {
-            // call the audio:fix command and pass the path as option using the song_url
-            $this->call('audio:fix', ['--path' => $song->song_url]);
-        }
-
-        die('done');
+//        foreach ($songs as $song) {
+//            // call the audio:fix command and pass the path as option using the song_url
+//            $this->call('audio:fix', ['--path' => $song->song_url]);
+//        }
 
         $updatedSongs = [];
         $this->output->progressStart($songCount);
