@@ -48,25 +48,40 @@ class SpotifyIDCommand extends Command
         foreach ($songs as $song) {
             // if author or title is null skip
             if (is_null($song->title) || is_null($song->author)) {
+                $this->warn('Skipping song with null title or author');
                 continue;
             }
             $this->warn('Searching for ' . $song->title . ' by ' . $song->author);
             $this->line('');
 
-            $songId = $spotifyService->searchSongByTitleAndArtist($song->title, $song->author);
+            try {
+                $songId = $spotifyService->searchSongByTitleAndArtist($song->title, $song->author);
+                if ($songId) {
 
-            if ($songId) {
-                $song->song_id = $songId;
-                $song->song_url = 'https://open.spotify.com/track/' . $songId;
-                $song->source = 'spotify';
-                $song->played = true;
-                $song->save();
-                $songsUpdated[] = $songId;
-                $this->info('Found song with ID ' . $songId . ' and saved it to the database.');
-            }else{
-                $this->error('Could not find song with title ' . $song->title . ' and artist ' . $song->author);
-                $song->played = true;
-                $song->save();
+                    dump([
+                        'found Song ID ' =>  $songId,
+                        'id' => $song->id,
+                        'title' => $song->title,
+                        'author' => $song->author,
+                        'path' => $song->path,
+                        'image' => $song->image,
+
+                    ]);
+                    $song->song_id = $songId;
+                    $song->song_url = 'https://open.spotify.com/track/' . $songId;
+                    $song->source = 'spotify';
+                    $song->played = true;
+                    $song->save();
+                    $songsUpdated[] = $songId;
+                    $this->info('Found song with ID ' . $songId . ' and saved it to the database.');
+                }else{
+                    $this->error('Could not find song with title ' . $song->title . ' and artist ' . $song->author);
+                    $song->played = true;
+                    $song->source = 'soundcloud';
+                    $song->save();
+                }
+            }catch (\Exception $e){
+                $this->error($e->getMessage());
             }
             $this->line('');
             $bar->advance();
