@@ -3,6 +3,7 @@
 namespace App\Services\Song;
 
 use App\Models\Song;
+use App\Models\SongKey;
 use Illuminate\Support\Facades\Http;
 use Spatie\Ray\Settings\Settings;
 use TCG\Voyager\Models\Setting;
@@ -46,15 +47,19 @@ class SongRecommendationService
 
         // get full song data for each song id from search
         $songs = [];
+        $bpms = [];
+        $keys = [];
         $searchSong = new SearchSong();
         $ids = implode(',', $ids);
         $values = '[' . $ids . ']';;
         $searchSong->addQueryFilter('id', 'IN', $values);
         $hits = $searchSong->getSongs()['hits'];
 
+
         // show only the attributes we need, author, title, id, key, scale, bpm
         for ($i = 0; $i < count($hits); $i++) {
             // add the corresponding distance to each song
+            $song = $this->getSongFromSearch($hits[$i]['id']);
             $songs[] = [
                 'id' => $hits[$i]['id'],
                 'title' => $hits[$i]['title'],
@@ -65,13 +70,36 @@ class SongRecommendationService
                 'path' => $hits[$i]['path'],
                 'distance' => $distances[$i],
             ];
+            $bpms[] = $hits[$i]['bpm'];
+            $keys[] = $hits[$i]['key'];
+            $keyNumbers[] = $song['key_number'];
         }
 
         return [
+            'meta_data' => [
+                'k' => $k,
+                'l' => $l,
+                'song_id' => $id,
+                'bpms' => $bpms,
+                'keys' => $keys,
+                'key_numbers' => $keyNumbers,
+            ],
             'songs' => $songs,
-            'distances' => $distances,
-            'ids' => $ids,
+            'hits' => $hits,
+
         ];
       //  return $searchSong->getSongs();
+    }
+
+    private function getSongFromSearch(mixed $id)
+    {
+        /** @var Song $song */
+        $song = Song::query()->find($id);
+        /** @var SongKey $songKey */
+        $songKey = SongKey::query()->where('key_name', $song->key)
+            ->where('scale', $song->scale)->first();
+        $song = $song->toArray();
+        $song['key_number'] = $songKey->key_number;
+        return $song;
     }
 }
