@@ -65,11 +65,11 @@ class Kernel extends ConsoleKernel
             ->description('Classify songs')
             ->appendOutputTo("storage/logs/classifier_$logFile");
 
-//        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
-//            ->everyMinute()
-//            ->withoutOverlapping()
-//            ->description('Indexing songs')
-//            ->appendOutputTo("storage/logs/indexer_$logFile");
+        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->description('Indexing songs')
+            ->appendOutputTo("storage/logs/indexer_$logFile");
 
     }
 
