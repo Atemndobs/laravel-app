@@ -51,6 +51,9 @@ class DbBackupCommand extends Command
                 // delete all files from backup folder
                 $this->info('Deleting all files from backup folder');
                 foreach ($files as $file) {
+                    if (!is_file($file)) {
+                        continue;
+                    }
                     unlink($file);
                 }
                 $this->info('All files deleted');

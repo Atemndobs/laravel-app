@@ -74,7 +74,7 @@ return [
         'rabbitmq' => [
 
             'driver' => 'rabbitmq',
-            'queue' => env('RABBITMQ_QUEUE', 'classify'),
+            'queue' => env('RABBITMQ_QUEUE', 'default'),
             'connection' => PhpAmqpLib\Connection\AMQPLazyConnection::class,
 
             'hosts' => [
