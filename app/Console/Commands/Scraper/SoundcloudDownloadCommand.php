@@ -173,7 +173,7 @@ class SoundcloudDownloadCommand extends Command
     private function processDownloadLink(string $downloadLink, $startTime)
     {
         $filename = $this->extractTrackNameFromLink($downloadLink);
-        $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink);
+        $soundcloudSongId = $this->extractSoundcloudSongId($downloadLink);
         $author = $this->extractAuthorFromLink($downloadLink);
         /** @var  Song $songExists */
         $songExists = $this->checkSongExist($soundcloudSongId);
@@ -267,7 +267,7 @@ class SoundcloudDownloadCommand extends Command
      */
     public function forceDownload(string $downloadLink)
     {
-        $soundcloudSongId = $this->extractSoundCloudSongId($downloadLink);
+        $soundcloudSongId = $this->extractSoundcloudSongId($downloadLink);
         $path = '/var/www/html/storage/app/public/uploads/audio/soundcloud/' . $soundcloudSongId;
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
@@ -293,7 +293,7 @@ class SoundcloudDownloadCommand extends Command
         return $trackName;
     }
 
-    private function extractSoundCloudSongId($url)
+    private function extractSoundcloudSongId($url)
     {
         $path = parse_url($url, PHP_URL_PATH);
         $path = ltrim($path, '/');

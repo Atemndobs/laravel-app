@@ -157,12 +157,19 @@ class SoundcloudService
         $songLinks = $this->getSongLinks($searchUrl);
 
         foreach ($songLinks as $songLink) {
+            // extract last part of song link
+            $songLinkClean = explode('/', $songLink);
+            $songLinkClean = $songLinkClean[count($songLinkClean) - 1];
             foreach ($params as $param) {
+//                dump([
+//                    'param' => $param,
+//                    'songLink' => $songLinkClean,
+//
+//                ]);
                 if (str_contains($songLink, $param)) {
                     return $baseUrl.$songLink;
                 }
             }
-
         }
         return 0;
     }
@@ -211,6 +218,27 @@ class SoundcloudService
     {
         $authorData = $this->client->request('GET', $authorLink);
         return $authorData->filter('h1')->text();
+    }
+
+    public function extractSoundcloudSongId($url)
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        $path = ltrim($path, '/');
+        return str_replace('/', '_', $path);
+    }
+
+    /**
+     * @param string $trackLink
+     * @return string
+     */
+    public function extractAuthorFromTrackLink(string $trackLink): string
+    {
+        $soundcloudService = new SoundcloudService();
+        $authorLink = explode('/', $trackLink);
+        $n = count($authorLink);
+        unset($authorLink[$n - 1]);
+        $authorLink = implode('/', $authorLink);
+        return $soundcloudService->extractAuthorFromLink($authorLink);
     }
 
 }

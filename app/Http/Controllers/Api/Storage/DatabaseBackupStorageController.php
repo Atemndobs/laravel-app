@@ -63,10 +63,10 @@ class DatabaseBackupStorageController extends Controller
     public function runBackup()
     {
         // call song import command
-        $logMesaage = [
+        $logMessage = [
             'location' => __CLASS__ . ':' . __FUNCTION__,
         ];
-        Log::info(json_encode($logMesaage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        Log::info(json_encode($logMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         Artisan::call('db:bk', [
             '-p' => 'y'
         ]);
