@@ -74,16 +74,21 @@ trait Tools
         $this->info('Downloading file: '.$latestFile);
         $file = storage_path('app/backups/'.$latestFile);
         $this->info('File downloaded');
-        // unzip file
-        $this->info('Unzipping file');
-        $destination = storage_path('app/');
-        $unzippedFile = $this->unzipFile($file, $destination);
-        // import dump
+        // if file is unzipped, return unzipped file path else unzip file and return unzipped file path
+        if (pathinfo($file, PATHINFO_EXTENSION) === 'sql') {
+            $unzippedFile = $file;
+        } else {
+            $this->info('Unzipping file');
+            $destination = storage_path('app/');
+            $unzippedFile = $this->unzipFile($file, $destination);
+        }
         DB::unprepared(file_get_contents($unzippedFile));
         $this->info('Dump imported');
         // delete file
         $this->info('Deleting file');
         unlink($unzippedFile);
         $this->info('File deleted');
+
+
     }
 }
