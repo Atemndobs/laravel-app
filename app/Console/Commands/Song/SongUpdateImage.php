@@ -61,8 +61,10 @@ class SongUpdateImage extends Command
                 foreach ($songsWithoutImage as $slug) {
                     $this->info("updating image for |  ".$slug);
                     $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
-
                     $updatedSongs['image'] = $service->getSongImage($song)->image;
+                    // https://curators3.s3.amazonaws.com/images/dave_tiakola_meridian.jpeg
+                    $song->image = "https://curators3.s3.amazonaws.com/images/$slug.jpeg";
+                    $song->save();
                 }
                 $this->table([ 'image'], [$updatedSongs]);
                 return 0;
@@ -71,6 +73,8 @@ class SongUpdateImage extends Command
             foreach ($songs as $song) {
                 $this->info("updating image for |  ".$song->slug);
                 $updatedSongs['image'] = $service->getSongImage($song)->image;
+                $song->image = "https://curators3.s3.amazonaws.com/images/$slug.jpeg";
+                $song->save();
             }
             $this->table([ 'image'], [$updatedSongs]);
             return 0;
@@ -89,6 +93,8 @@ class SongUpdateImage extends Command
                         } else {
                             $this->info("Updating image for song ");
                             $this->call("song:duration", ['slug' => $slug]);
+                            $song->image = "https://curators3.s3.amazonaws.com/images/$slug.jpeg";
+                            $song->save();
                         }
                     }
                     return 0;
@@ -103,6 +109,9 @@ class SongUpdateImage extends Command
                 return 1;
             }
             $this->call("song:duration", ['slug' => $slug]);
+            $song = Song::query()->where('slug', '=', "$slug")->get()->first();
+            $song->image = "https://curators3.s3.amazonaws.com/images/$slug.jpeg";
+            $song->save();
         }
         return 0;
     }

@@ -31,6 +31,8 @@ class SoundcloudIDCommand extends Command
     {
         // get songs that do not have a spotify id and that have source = spotify
         $songs = \App\Models\Song::query()->whereNull('song_id')
+            ->orWhere('song_id', null)
+            ->orWhere('song_id', '')
             ->where('source', '=', 'soundcloud')
             ->get();
 
@@ -72,7 +74,6 @@ class SoundcloudIDCommand extends Command
                     $author_slug,
                 ];
 
-
                 $trackLink = $soundCloudService->getTrackLink($searchQuery, $options);
 //                dump([
 //                    'trackLink_1' => $trackLink,
@@ -95,12 +96,14 @@ class SoundcloudIDCommand extends Command
                     }
                 }
 
-                if (!$trackLink || $trackLink == null) {
+                if ($trackLink == null) {
                     $this->warn('Could not find track link for ' . $song->title . ' ' . $song->author);
-                    $song->source = '';
+                    $song->source = null;
                     $song->save();
                     continue;
                 }
+
+                dd($trackLink);
 
                 $songId = $soundCloudService->extractSoundcloudSongId($trackLink);
                 //$author = $soundCloudService->extractAuthorFromTrackLink($trackLink);
@@ -122,9 +125,11 @@ class SoundcloudIDCommand extends Command
                     ];
                     $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                 }else{
+
+                    dd($trackLink);
                     $this->error('Could not find song with title ' . $song->title . ' and artist ' . $song->author);
                     $song->played = true;
-                    $song->source = '';
+                    $song->source = null;
                     $song->save();
                 }
             }catch (\Exception $e){
