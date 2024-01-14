@@ -73,7 +73,9 @@ class SpotifyAuthController extends Controller
 
         $this->user->session = $spotifySession;
         $this->user->save();
-        $redirect_url = Setting::query()->where('key', '=', 'spotify.app_redirect_url')->first();
+        $redirect_url = Setting::query()->where('key', '=', 'spotify.app_redirect_url')
+            ->where('group', '=', 'spotify')
+            ->first()->value;
 
         return redirect($redirect_url);
     }
