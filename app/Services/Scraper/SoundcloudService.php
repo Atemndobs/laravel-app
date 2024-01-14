@@ -155,22 +155,25 @@ class SoundcloudService
         $baseUrl = "https://soundcloud.com";
         $searchUrl = "$baseUrl/search?q=$searchQuery";
         $songLinks = $this->getSongLinks($searchUrl);
+        $songLinks = $songLinks[0];
+        $foundArtist = explode('/', $songLinks)[1];
+        $foundTitle = explode('/', $songLinks)[2];
+        $paramArtist = $params[1];
+        $paramTitle = $params[0];
 
-        foreach ($songLinks as $songLink) {
-            // extract last part of song link
-            $songLinkClean = explode('/', $songLink);
-            $songLinkClean = $songLinkClean[count($songLinkClean) - 1];
-            foreach ($params as $param) {
-//                dump([
-//                    'param' => $param,
-//                    'songLink' => $songLinkClean,
-//
-//                ]);
-                if (str_contains($songLink, $param)) {
-                    return $baseUrl.$songLink;
-                }
-            }
+        // if the found title contains the param title return the song link
+        if (str_contains($foundTitle, $paramTitle)) {
+            dump([
+                "FOUND LINK ====" => $songLinks,
+            ]);
+            return $baseUrl . $songLinks;
         }
+//        dump([
+//            'foundArtist' => $foundArtist,
+//            'foundTitle' => $foundTitle,
+//            'paramArtist' => $paramArtist,
+//            'paramTitle' => $paramTitle,
+//        ]);
         return 0;
     }
 

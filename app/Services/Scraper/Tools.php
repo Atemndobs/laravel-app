@@ -49,8 +49,7 @@ trait Tools
         $songLinks = $res->filter('a')->each(function ($node) {
             return $node->attr('href').'';
         });
-
-        return array_unique($songLinks);
+        return $this->cleanUpLinks($songLinks);
     }
 
     /**
@@ -66,4 +65,23 @@ trait Tools
             return str_ends_with($link, $filter);
         });
     }
+
+    public function cleanUpLinks(array $songLinks): array
+    {
+        $cleanedUpLinks = [];
+        foreach ($songLinks as $link) {
+            if (str_contains($link, 'comments')
+                || str_contains($link, 'search')
+                || str_contains($link, 'http')
+                || (substr_count($link, '/') < 2)
+            ) {
+                continue;
+            }
+
+            $cleanedUpLinks[] =  $link;
+        }
+
+        return $cleanedUpLinks;
+    }
+
 }

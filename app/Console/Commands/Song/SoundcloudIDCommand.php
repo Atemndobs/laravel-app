@@ -33,6 +33,7 @@ class SoundcloudIDCommand extends Command
         $songs = \App\Models\Song::query()->whereNull('song_id')
             ->orWhere('song_id', null)
             ->orWhere('song_id', '')
+            ->orWhere('song_id', 'like','%mp3')
             ->where('source', '=', 'soundcloud')
             ->get();
 
@@ -55,7 +56,10 @@ class SoundcloudIDCommand extends Command
                 $this->warn('Skipping song with null title or author');
                 continue;
             }
-            $this->warn('Searching for ' . $song->title . ' by ' . $song->author);
+
+            $author = $song->author == 'unknown' ? '' : $song->author;
+            $title = $song->title == 'unknown' ? '' : $song->title;
+            $this->warn('Searching for ' . $title. ' by ' . $author);
             $this->line('');
 
             try {
@@ -67,32 +71,19 @@ class SoundcloudIDCommand extends Command
                     $song->save();
                     continue;
                 }
-                $title_slug= Str::slug($song->title . ' ' . $song->author, '-');
-                $author_slug= Str::slug($song->author, '-');
+                $title_slug= Str::slug($title );
+                $author_slug= Str::slug($author, '-');
                 $options = [
                     $title_slug,
                     $author_slug,
                 ];
 
                 $trackLink = $soundCloudService->getTrackLink($searchQuery, $options);
-//                dump([
-//                    'trackLink_1' => $trackLink,
-//                    'searchQuery' => $searchQuery,
-//                    'options' => $options,
-//                ]);
                 if (!$trackLink) {
-                    $this->warn('Could not find track link for ' . $song->title . ' ' . $song->author);
-                    $trackLink = $soundCloudService->getTrackLink($song->title . ' ' . $song->author);
-//                    dump([
-//                        'trackLink_2' => $trackLink,
-//                        'searchQuery' => $song->title . ' ' . $song->author,
-//                    ]);
+                    $this->warn('Could not find track link for ' . $title . ' ' . $author);
+                    $trackLink = $soundCloudService->getTrackLink($title . ' ' . $author);
                     if (!$trackLink) {
                         $trackLink = $soundCloudService->getTrackLink($song->slug);
-//                        dump([
-//                            'trackLink_3' => $trackLink,
-//                            'searchQuery' => $song->slug,
-//                        ]);
                     }
                 }
 
@@ -103,14 +94,21 @@ class SoundcloudIDCommand extends Command
                     continue;
                 }
 
-                dd($trackLink);
-
                 $songId = $soundCloudService->extractSoundcloudSongId($trackLink);
-                //$author = $soundCloudService->extractAuthorFromTrackLink($trackLink);
+                $authorFromLink = $soundCloudService->extractAuthorFromTrackLink($trackLink);
+//                dump([
+//                    'trackLink' => $trackLink,
+//                    'songId' => $songId,
+//                    'authorFromLink' => $authorFromLink,
+//                ]);
 
                 if ($songId) {
                     $song->song_id = $songId;
                     $song->song_url = $trackLink;
+                    $song->source = 'soundcloud';
+                    if ($song->author == 'unknown') {
+                        $song->author = $authorFromLink;
+                    }
                     $song->save();
                     $songsUpdated[] = $songId;
                     $message = [
@@ -125,8 +123,6 @@ class SoundcloudIDCommand extends Command
                     ];
                     $this->info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
                 }else{
-
-                    dd($trackLink);
                     $this->error('Could not find song with title ' . $song->title . ' and artist ' . $song->author);
                     $song->played = true;
                     $song->source = null;
