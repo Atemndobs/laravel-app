@@ -41,8 +41,9 @@ class SoundcloudDownloadCommandController extends Controller
             'request' => $request->all()
         ];
         Log::info(json_encode($logMesaage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        Artisan::call($this->soundcloudDownloadCommand->getName() , [
-           'link' => $request->get('url')
+        // call the scondcloud download command and use link as an option
+        Artisan::call($this->soundcloudDownloadCommand->getName(), [
+            '--link' => $request->get('url'),
         ]);
 
         $output = explode("\n", trim(Artisan::output()));
@@ -51,12 +52,12 @@ class SoundcloudDownloadCommandController extends Controller
             return !str_contains($line, 'already exists!');
         });
         if (count($aleadExist) > 0) {
-            $slug = $output[''];
             return new JsonResponse([
                 'message' => 'Song Already Exists',
                 'data' => $output
             ], 200);
         }
+
         $output = array_filter($output, function ($line) {
             return !empty($line);
         });

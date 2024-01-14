@@ -168,12 +168,7 @@ class SoundcloudService
             ]);
             return $baseUrl . $songLinks;
         }
-//        dump([
-//            'foundArtist' => $foundArtist,
-//            'foundTitle' => $foundTitle,
-//            'paramArtist' => $paramArtist,
-//            'paramTitle' => $paramTitle,
-//        ]);
+
         return 0;
     }
 
