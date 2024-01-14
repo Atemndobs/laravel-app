@@ -7,6 +7,7 @@ use App\Models\Base\SpotifyAuth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use SpotifyWebAPI\Session;
+use TCG\Voyager\Models\Setting;
 
 class SpotifyAuthController extends Controller
 {
@@ -72,7 +73,8 @@ class SpotifyAuthController extends Controller
 
         $this->user->session = $spotifySession;
         $this->user->save();
+        $redirect_url = Setting::query()->where('key', '=', 'spotify.app_redirect_url')->first();
 
-        return redirect('/');
+        return redirect($redirect_url);
     }
 }
