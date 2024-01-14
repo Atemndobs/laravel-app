@@ -11,7 +11,6 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
-use League\CommonMark\Extension\CommonMark\Node\Block\ThematicBreak;
 use SpotifyWebAPI\SpotifyWebAPI;
 
 class SpotifyMusicService
@@ -22,11 +21,18 @@ class SpotifyMusicService
 
     public function __construct()
     {
+        // clear laravel session
+
         $this->user = (new User())->getLoggedInUser();
         $this->spotify = new SpotifyWebAPI();
         $spotifySession  = json_decode($this->user->session, true);
         $accessToken = $spotifySession['access_token'];
         $this->spotify->setAccessToken($accessToken);
+//
+//        dump([
+//            'access_token' => $accessToken,
+//            'spotify' => $this->spotify,
+//        ]);
         $this->spotifyId = $this->spotify->me()->id;
     }
 
@@ -686,5 +692,15 @@ class SpotifyMusicService
             'url' => $this->spotify->getPlaylist($playlistId)->external_urls->spotify,
         ];
     }
+
+    // check if liked songs exist in Database. parameter: take a list of liked songs,get their ids, and check against spotify ids in DB
+    // Return: array of songs that do not exist in DB
+    public function getNewLikedSongs(array $likedSongs): array
+    {
+        $spotifySongIds = Song::query()->where('source', 'spotify')->get()->pluck('song_id')->toArray();
+        return array_diff($likedSongs, $spotifySongIds);
+
+    }
+
 }
 

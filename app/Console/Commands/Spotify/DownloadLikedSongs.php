@@ -41,7 +41,8 @@ class DownloadLikedSongs extends Command
 
         $likedSongs = $spotifyService->getLikedSongsIds($time, $limit);
         $countLikedSongs = count($likedSongs);
-
+        $newLikedSongs = $spotifyService->getNewLikedSongs($likedSongs);
+        $countNewLikedSongs = count($newLikedSongs);
 
         // if hours > 24 convert to days
         if ($time > 24) {
@@ -51,7 +52,15 @@ class DownloadLikedSongs extends Command
             $time = $time . ' hours';
         }
         $this->info('Found : ' . $countLikedSongs . ' songs since ' . $time . ' ago.');
+        $stats = [
+            "Count Liked Songs in spotify sing $time" => $countLikedSongs,
+            "Count New Like Songs" => $countNewLikedSongs,
+        ];
+        $this->info(json_encode($stats, JSON_PRETTY_PRINT));
         $downloadables = [];
+
+
+        $likedSongs = $newLikedSongs;
         foreach ($likedSongs as $likedSong) {
             // check if ID exists in DB
             $songExists = $spotifyService->checkIfSongExists($likedSong);
