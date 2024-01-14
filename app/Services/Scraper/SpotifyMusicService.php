@@ -26,6 +26,11 @@ class SpotifyMusicService
         $this->user = (new User())->getLoggedInUser();
         $this->spotify = new SpotifyWebAPI();
         $spotifySession  = json_decode($this->user->session, true);
+        $spotifySession = [
+            'access_token' => "BQDiL3oG-dRuixW0x3fljKTktZWGnMo43QnFcSLj0E-CmK0iOzncsb7qumvGc1VtDKhTV5FZSc5uowf38-s9tc5NU9A0RsYVFkQzbrvk23oLmUiKivyZWZexqvgREzqmJwhifE0ocYia6dA6ZBHgHlGocWAmyKzasTqvNeLnZJsVtRcxYIVjNSCfty1O69jGMgFGEoaMG7EuLGLbdFDTh0mh-fsJIkSgqfUsq2tRKibv663DfTqjdGoLvmVWXov43F3Qcpgql9Oiycfk",
+            'refresh_token' => "AQA43SBNXXgwaAMpOPMIb1Q1l0GvCD_2N7F84jZ46NsmTxEJ3HaT7A_lGsxvoqR5F5VIAspd0Bgk8T4_Y-ZYE90gllOx33bkehFCG6QDGENQoZQhCA2ok00pnPqVc9p43Ek",
+            'expires' => "1705243798",
+        ];
         $accessToken = $spotifySession['access_token'];
         $this->spotify->setAccessToken($accessToken);
 //
@@ -697,8 +702,18 @@ class SpotifyMusicService
     // Return: array of songs that do not exist in DB
     public function getNewLikedSongs(array $likedSongs): array
     {
-        $spotifySongIds = Song::query()->where('source', 'spotify')->get()->pluck('song_id')->toArray();
-        return array_diff($likedSongs, $spotifySongIds);
+        $spotifySongIds = [];
+        foreach ($likedSongs as $likedSong) {
+            $songExists = Song::query()->where('song_id', $likedSong['id'])->first();
+            if ($songExists) {
+                Log::warning('Song with ID ' . $likedSong['id'] . ' already exists in DB.');
+                dump('Song with ID ' . $likedSong['id'] . ' already exists in DB.');
+                continue;
+            }
+            $spotifySongIds[] = $likedSong;
+        }
+
+        return $spotifySongIds;
 
     }
 
