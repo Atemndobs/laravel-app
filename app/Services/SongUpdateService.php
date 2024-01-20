@@ -440,6 +440,7 @@ class SongUpdateService
      * @param string $file
      * @param string $slug
      * @return string|null
+     * @throws \Exception
      */
     public function getExistingImageFromFile(string $file, string $slug): string|null
     {
@@ -456,9 +457,9 @@ class SongUpdateService
                 'song' => $file,
                 'error_ffmpeg' => $errorOutput[count($errorOutput) - 2]
             ];
-            dump($ffmpegMessage);
+            //dump($ffmpegMessage);
             Log::critical(json_encode($ffmpegMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-            return null;
+            throw new \Exception(json_encode($ffmpegMessage, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         }
         // check if image exists in image folder
         $localImage = $imageFolder . '/' . $slug . '.jpeg';
@@ -497,14 +498,18 @@ class SongUpdateService
     /**
      * @param Song $song
      * @return Song
+     * @throws \Exception
      */
     public function getSongImage(Song $song): Song
     {
         $file = $song->path;
-        $image = $this->getExistingImageFromFile($file, $song->slug);
-        if ($image === null) {
+        try {
+            $image = $this->getExistingImageFromFile($file, $song->slug);
+        }catch (\Exception $e){
+            Log::error($e->getMessage());
             $song->image = null;
-            return $song;
+            $song->save();
+            throw new \Exception($e->getMessage());
         }
         $song->image = $image;
         return $song;

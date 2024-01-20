@@ -32,6 +32,8 @@ class SongUpdateImage extends Command
     {
         $slug = $this->argument('slug');
         $path = $this->option('path');
+        $totalSongs = Song::query()->count();
+        $songsWithoutImageCount = 0;
 
 
         if (strlen($slug) === 0) {
@@ -40,22 +42,21 @@ class SongUpdateImage extends Command
                 ->where('image', '=', '')
                 ->orWhere('image', '=', null)
                 ->get();
+            $songsWithoutImageCount = count($songs);
 
             $service = new SongUpdateService();
             $updatedSongs = [];
 
             $message = [
-                'songs_without_image' => count($songs),
+                'songs_without_image' => $songsWithoutImageCount,
+                'total_songs' => $totalSongs,
             ];
             $this->line("<fg=yellow>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
 
             if ($slug !== null) {
-                $this->info("updating image for |  ".$slug);
                 $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
-                $updatedSongs['image'] = $service->getSongImage($song)->image;
-                $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
-                $song->save();
-                $this->progressOutputInfo($song);
+                $updatedSongs = $this->updateImage($song, $service, $updatedSongs);
+                $this->progressOutputInfo($song, $songsWithoutImageCount);
                 $this->table([ 'image'], [$updatedSongs]);
                 return 0;
             }
@@ -65,20 +66,18 @@ class SongUpdateImage extends Command
                 $this->line("updating image for |  ".$path);
                 $songsWithoutImage = file_get_contents($path);
                 $songsWithoutImage = explode("\n", $songsWithoutImage);
+                $songsWithoutImageCount = count($songsWithoutImage);
 
                 // Start progress bar
-                $bar = $this->output->createProgressBar(count($songsWithoutImage));
+                $bar = $this->output->createProgressBar($songsWithoutImageCount);
                 foreach ($songsWithoutImage as $slug) {
                     $bar->advance();
-                    $this->line("updating image for |  ".$slug);
                     /**
                      * @var Song $song
                      */
                     $song = Song::query()->where('slug' ,'=', $slug)->get()->first();
-                    $updatedSongs['image'] = $service->getSongImage($song)->image;
-                    $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
-                    $song->save();
-                    $this->progressOutputInfo($song);
+                    $updatedSongs = $this->updateImage($song, $service, $updatedSongs);
+                    $this->progressOutputInfo($song, $songsWithoutImageCount);
                 }
                 $this->table([ 'image'], [$updatedSongs]);
                 return 0;
@@ -86,17 +85,14 @@ class SongUpdateImage extends Command
 
 
             // start progress bar
-            $bar = $this->output->createProgressBar(count($songs));
+            $bar = $this->output->createProgressBar($songsWithoutImageCount);
             /**
              * @var Song $song
              */
             foreach ($songs as $song) {
-                $bar->advance(); 
-                $this->line("updating image for |  ".$song->slug);
-                $updatedSongs['image'] = $service->getSongImage($song)->image;
-                $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
-                $song->save();
-                $this->progressOutputInfo($song);
+                $bar->advance();
+                $updatedSongs = $this->updateImage($song, $service, $updatedSongs);
+                $this->progressOutputInfo($song, $songsWithoutImageCount);
             }
             $this->table([ 'image'], [$updatedSongs]);
             return 0;
@@ -110,7 +106,7 @@ class SongUpdateImage extends Command
                         ->get('image')->toArray();
                     $this->info("Found ".count($found)." songs with slug like  $slug");
 
-                    $bar = $this->output->createProgressBar(count($found));
+                    $bar = $this->output->createProgressBar($songsWithoutImageCount);
                     foreach ($found as $song) {
                         $bar->advance();
                         if (strlen($song['image']) > 0) {
@@ -120,7 +116,7 @@ class SongUpdateImage extends Command
                             $this->call("song:duration", ['slug' => $slug]);
                             $song_slug = $song['slug'];
                             $song['image'] = "https://curators3.s3.amazonaws.com/images/$song_slug.jpeg";
-                            $this->progressOutputInfo($song);
+                            $this->progressOutputInfo($song, $songsWithoutImageCount);
                             $song->save();
                         }
                     }
@@ -142,7 +138,7 @@ class SongUpdateImage extends Command
             $song = Song::query()->where('slug', '=', "$slug")->get()->first();
             $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
             $song->save();
-            $this->progressOutputInfo($song);
+            $this->progressOutputInfo($song, $songsWithoutImageCount);
         }
 
         return 0;
@@ -152,13 +148,40 @@ class SongUpdateImage extends Command
      * @param \Illuminate\Database\Eloquent\Builder|Song $song
      * @return void
      */
-    public function progressOutputInfo(\Illuminate\Database\Eloquent\Builder|Song $song): void
+    public function progressOutputInfo(\Illuminate\Database\Eloquent\Builder|Song $song, $songsWithoutImage): void
     {
+        $remaining = Song::query()
+            ->where('image', '=', '')
+            ->orWhere('image', '=', null)
+            ->count();
         $message = [
             'image3' => $song->image,
             'slug' => $song->slug,
             'song_slug' => $song->slug,
+            'Songs_without_image' => $songsWithoutImage,
+            'remaining' => $remaining,
+            'processed' => $songsWithoutImage - $remaining,
         ];
         $this->line("<fg=magenta>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder|Song $song
+     * @param SongUpdateService $service
+     * @param array $updatedSongs
+     * @return array
+     */
+    public function updateImage(\Illuminate\Database\Eloquent\Builder|Song $song, SongUpdateService $service, array $updatedSongs): array
+    {
+        $this->line("");
+        $this->line("<fg=green>" . "updating image for |  " . $song->slug . "</>");
+        try {
+            $updatedSongs['image'] = $service->getSongImage($song)->image;
+            $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
+            $song->save();
+        } catch (\Exception $e) {
+            $this->line("<fg=red>" . $e->getMessage() . "</>");
+        }
+        return $updatedSongs;
     }
 }
