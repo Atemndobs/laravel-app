@@ -29,10 +29,6 @@ class MoodAnalysisService
 
     public function getAnalysis(string $slug): array
     {
-//        $base_url = env('APP_ENV') == 'local' ? env('NEST_DOCKER_URL') : env('NEST_URL');
-//        $nest_port = env('APP_ENV') == 'local' ? '3000' : env('NEST_PORT');
-        //$nest_base_url = env('APP_ENV') == 'local' ? $base_url . ":$nest_port" : $base_url;
-
         $nest_base_url = Setting::query()->where('key', '=', 'nest.base_url')
             ->where('group', '=', 'nest')
             ->first()->value;
@@ -63,10 +59,6 @@ class MoodAnalysisService
                 'message' => "$slug does not exist",
                 'status' => 404,
             ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
-//            return [
-//                'status' => "$slug does not exist",
-//            ];
-
             throw new \Exception("$slug does not exist");
         }
 
@@ -155,7 +147,6 @@ class MoodAnalysisService
 
     private function checkSongOnStorage(string $slug) : bool
     {
-        // try catch block to avaoid error when song does not exist
         try {
             $exists = Storage::disk('s3')->exists("music/$slug.mp3");
             if ($exists) {
