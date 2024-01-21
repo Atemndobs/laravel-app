@@ -111,30 +111,7 @@ class SoundcloudService
         $url = $this->baseUrl.'/'.$artist;
 
         $res = $this->client->request('GET', $url);
-        $songLinks = $res->filter('a')->each(function ($node) {
-            $link = $node->attr('href').'';
-            if (
-                substr_count($link, '/') < 2
-                || str_contains($link, '/likes')
-                || str_contains($link, '/sets')
-                || str_contains($link, '/tracks')
-                || str_contains($link, '/comments')
-                || str_contains($link, 'Technical-requirements')
-                || str_contains($link, '/popular/searches')
-                || str_contains($link, 'firefox')
-                || str_contains($link, 'safari')
-                || str_contains($link, 'chrome')
-                || str_contains($link, 'javascript')
-                || str_contains($link, 'microsoft.com/ie')
-                || str_contains($link, 'help.soundcloud.com')
-
-            ) {
-                return 0;
-            }
-
-            return $link;
-        });
-
+        $songLinks = $this->getLinks($res);
         $songLinks = array_unique($songLinks);
 
         foreach ($songLinks as $songLink) {
@@ -237,6 +214,48 @@ class SoundcloudService
         unset($authorLink[$n - 1]);
         $authorLink = implode('/', $authorLink);
         return $soundcloudService->extractAuthorFromLink($authorLink);
+    }
+
+    public function getSongsFromPlaylist(bool|array|string|null $url)
+    {
+        $url = $url ?? $this->baseUrl.'/atmkng/sets/atm-liked-songs';
+        $res = $this->client->request('GET', $url);
+        return $this->getLinks($res);
+    }
+
+    /**
+     * @param Crawler $res
+     * @return array
+     */
+    public function getLinks(Crawler $res): array
+    {
+        $songLinks = $res->filter('a')->each(function ($node) {
+                $link = $node->attr('href').'';
+                if (
+                    substr_count($link, '/') < 2
+                    || str_contains($link, '/likes')
+                    || str_contains($link, '/sets')
+                    || str_contains($link, '/tracks')
+                    || str_contains($link, '/comments')
+                    || str_contains($link, '/reposts')
+                    || str_contains($link, 'firefox')
+                    || str_contains($link, 'safari')
+                    || str_contains($link, 'chrome')
+                    || str_contains($link, 'javascript')
+                    || str_contains($link, 'microsoft.com')
+                    || str_contains($link, 'help.soundcloud.com')
+                    || str_contains($link, '/popular/searches')
+                    || str_contains($link, '/albums')
+                    || str_contains($link, '/tags')
+
+                ) {
+                     return 0;
+                }
+                return $link;
+        });
+        $songLinks = array_filter($songLinks);
+        $songLinks = array_values($songLinks);
+        return array_unique($songLinks);
     }
 
 }

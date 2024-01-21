@@ -124,6 +124,12 @@ class SpotifyLikedSongsImportCommand extends Command
         Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         $this->line("<fg=bright-white> ================ Download Successfully completed Completed ============================= </>");
         $this->line("<fg=bright-cyan>". json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)." </>");
+        $this->call('move:audio');
+        $this->call('s3:multi-put', [
+            '--source' => 'audio',
+            '--directory' => 'music',
+        ]);
+        $this->call('song:import');
         return 0;
     }
 }

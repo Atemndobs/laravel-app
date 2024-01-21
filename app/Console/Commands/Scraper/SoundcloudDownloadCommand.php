@@ -42,10 +42,20 @@ class SoundcloudDownloadCommand extends Command
         $file = $this->option('file');
         $continue = $this->option('continue');
 
+        $startTime = microtime(true);
+
         if ((string)$link !== 'null') {
+            $downloadLinks[] = $link;
+            $estimatedTime = (1 * 12) / 60 . " mins";
             $this->info('Downloading from link: ' . $link);
-            $option = '-l';
-            $url = $link;
+            try {
+                $this->processDownloadLink($link, $startTime);
+                $this->outputInfo($downloadLinks, $startTime, $estimatedTime);
+                return  0;
+            }catch (\Exception $e){
+                $this->error($e->getMessage());
+                return 1;
+            }
         }
         if ($artist !== 'null') {
             $this->info('Downloading from artist: ' . $artist);
@@ -58,9 +68,29 @@ class SoundcloudDownloadCommand extends Command
             $url = $title;
         }
         if ($playlist !== 'null') {
-            $this->info('Downloading from playlist: ' . $playlist);
-            $option = '-p';
+            $this->warn('Downloading from playlist: ' . $playlist);
             $url = $playlist;
+            $soundcloudService = new SoundcloudService();
+            $downloadLinks = $soundcloudService->getSongsFromPlaylist($url);
+            $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
+            foreach ($downloadLinks as $downloadLink) {
+                $this->line('');
+                try {
+                    $downloadLink = "https://soundcloud.com" . $downloadLink;
+                    $this->processDownloadLink($downloadLink, $startTime);
+                    $this->outputInfo($downloadLinks, $startTime, $estimatedTime);
+                }catch (\Exception $e){
+                    $this->error($e->getMessage());
+                    return 1;
+                }
+            }
+            $this->call('move:audio');
+            $this->call('s3:multi-put', [
+                '--source' => 'audio',
+                '--directory' => 'music',
+            ]);
+            $this->call('song:import');
+            return 0;
         }
         if ($mixtape !== 'null') {
             $this->info('Downloading from mixtape: ' . $mixtape);
@@ -91,20 +121,15 @@ class SoundcloudDownloadCommand extends Command
         $this->warn("Found Soundcloud links: " . count($downloadLinks));
         // Start progress bar
         $bar = $this->output->createProgressBar(count($downloadLinks));
-        // Start recording time
-        $startTime = microtime(true);
-        // calculate estimated time as 30 seconds per song
-        $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
+        $estimatedTime = (1 * 12) / 60 . " mins";
         $this->line("<fg=bright-magenta>Estimated time: $estimatedTime</>");
         $missingSongs = [];
+        $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
         foreach ($downloadLinks as $downloadLink) {
             $bar->advance();
             $this->line('');
             try {
                 $this->processDownloadLink($downloadLink, $startTime);
-//                $this->call('song:import', [
-//                    '--path' => "/var/www/html/storage/app/public/uploads/audio/$slug.mp3",
-//                ]);
             } catch (\Exception $e) {
                 $sleepTime = 5;
                 $error = [
@@ -126,13 +151,13 @@ class SoundcloudDownloadCommand extends Command
                 $this->line("<fg=cyan> == Sleep $sleepTime seconds and continue == </>");
                 // sleep($sleepTime);
             }
-            $souncdlInfo = [
-                'downloaded_songs' => count($downloadLinks),
-                'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
-                'originally_estimated_time' => $estimatedTime,
-            ];
-            Log::channel('soundcloud')->info(json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-            $this->line("<fg=bright-cyan>" . json_encode($souncdlInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
+            $this->outputInfo($downloadLinks, $startTime, $estimatedTime);
+            $this->call('move:audio');
+            $this->call('s3:multi-put', [
+                '--source' => 'audio',
+                '--directory' => 'music',
+            ]);
+            $this->call('song:import');
 
         }
         $bar->finish();
@@ -412,5 +437,22 @@ class SoundcloudDownloadCommand extends Command
             $this->line("<fg=bright-blue>Shell Output: " . json_encode($shellOutput, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
             throw new \Exception($e->getMessage());
         }
+    }
+
+    /**
+     * @param mixed $downloadLinks
+     * @param $startTime
+     * @param string $estimatedTime
+     * @return void
+     */
+    public function outputInfo(mixed $downloadLinks, $startTime, string $estimatedTime): void
+    {
+        $soundCloudInfo = [
+            'downloaded_songs' => count($downloadLinks),
+            'elapsed_time' => (microtime(true) - $startTime) / 60 . ' mins',
+            'originally_estimated_time' => $estimatedTime,
+        ];
+        Log::channel('soundcloud')->info(json_encode($soundCloudInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        $this->line("<fg=bright-cyan>" . json_encode($soundCloudInfo, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "</>");
     }
 }
