@@ -73,6 +73,7 @@ class SoundcloudDownloadCommand extends Command
             $soundcloudService = new SoundcloudService();
             $downloadLinks = $soundcloudService->getSongsFromPlaylist($url);
             $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
+            $this->outputInfo($downloadLinks, $startTime, $estimatedTime);
             foreach ($downloadLinks as $downloadLink) {
                 $this->line('');
                 try {
