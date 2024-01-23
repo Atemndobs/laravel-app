@@ -98,6 +98,7 @@ class MeiliSearchService
                 "image",
                 "related_songs",
                 "genre",
+                "song_id"
             ]);
             $meiliSearch->index("songs")->updateFilterableAttributes([
                 'id', // 'id' is the primary key of the table
@@ -114,7 +115,8 @@ class MeiliSearchService
                 "relaxed",
                 "slug",
                 "status",
-                "genre"
+                "genre",
+                "song_id"
             ]);
             $meiliSearch->index("songs")->updateSortableAttributes([
                 'id', // 'id' is the primary key of the table
@@ -131,7 +133,8 @@ class MeiliSearchService
                 "relaxed",
                 "slug",
                 "status",
-                "genre"
+                "genre",
+                "song_id"
             ]);
             $meiliSearch->index("songs")->updateDisplayedAttributes([
                 'id',
@@ -156,7 +159,8 @@ class MeiliSearchService
                 'genre',
                 'played',
                 'status',
-                'classification_properties'
+                'classification_properties',
+                "song_id"
             ]);
             # Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
             $meiliSearch->index("songs")->updateRankingRules([

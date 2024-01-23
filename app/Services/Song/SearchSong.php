@@ -15,25 +15,33 @@ class SearchSong
         $this->query = [];
     }
 
-    public function getSongs()
+    public function getSongs($offset = 0, $limit = 10, $searchQueries = null)
     {
-        $offset = request()->offset ?? 0;
-        $limit = request()->limit ?? 10;
+        $offset = request()->offset ?? $offset;
+        $limit = request()->limit ?? $limit;
+        $searchQueries = request()->filter ?? $searchQueries;
+        // if searchQuery is not null then add it to the query
+        if (!empty($searchQueries) && is_array($searchQueries)) {
+//            foreach ($searchQueries as $searchQuery) {
+//                $this->addQueryFilter($searchQuery['attribute'], $searchQuery['operator'], $searchQuery['value']);
+//            }
+            $this->query = $searchQueries;
+        }
 
-//        $query =
-//            [
-//                'filter' => [
-//                    'analyzed = 1'
-//                ],
-//                'limit' => (int)$limit,
-//                'offset' => (int)$offset,
-//            ];
 
+        // {"filter" : [
+        //    {
+        //        "attribute" : "title",
+        //        "operator" : "=",
+        //        "value" : "Kilometer"
+        //    }
+        //]
+        //}
 
         $this->addQueryFilter('analyzed', '=',1);
         $query = $this->getQuery();
 
-       // dd($query);
+        //dd($query);
         Log::info(json_encode([
             'Method' => 'MeilesearchSongController@getSongs',
             'Position' => 'Before Try Catch',
@@ -72,7 +80,7 @@ class SearchSong
 
     public function addQueryFilter(string $attribute, string $operator ,string $value): array
     {
-        $this->query[] = $attribute . ' ' . $operator . ' ' . $value;
+        $this->query[] = $attribute . ' ' . $operator . ' ' . $value ;
         return $this->query;
     }
 

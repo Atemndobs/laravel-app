@@ -91,6 +91,8 @@ class SoundcloudDownloadCommand extends Command
                 '--directory' => 'music',
             ]);
             $this->call('song:import');
+            // remove all downloaded songs rm -r storage/app/public/uploads/audio/*
+            shell_exec("rm -r storage/app/public/uploads/audio/*");
             return 0;
         }
         if ($mixtape !== 'null') {
