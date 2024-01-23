@@ -2,6 +2,8 @@
 
 namespace App\Services\Recommendation;
 
+use App\Models\Song;
+use App\Services\Song\SearchSong;
 use Illuminate\Support\Facades\Http;
 
 class SpotifyRecommendationService
@@ -53,6 +55,33 @@ class SpotifyRecommendationService
             ];
         }, $songs);
         return $songs;
+    }
+
+    /**
+     * @param array $ids
+     * @param $limit
+     * @return array
+     */
+    public function matchRecommendation(array $ids, $limit = null)
+    {
+        $songSearch = new SearchSong();
+        $songs = Song::query()->whereIn('song_id', array_column($ids, 'id'))->get('id');
+        $ids = array_column($songs->toArray(), 'id');
+        $filterString = implode(" OR ", array_map(function($id) {
+            return "id = $id";
+        }, $ids));
+        $searchParams = ['filter' => $filterString];
+        $limit = $limit ?? count($ids);
+
+       // dd($searchParams, $limit);
+        $foundSongs = $songSearch->getSongs(0, $limit, $searchParams);
+
+        $count = count($songs);
+        return [
+            'songs' => $foundSongs,
+            'total_songs' => $count,
+            'limit' => $limit,
+        ];
     }
 
 }

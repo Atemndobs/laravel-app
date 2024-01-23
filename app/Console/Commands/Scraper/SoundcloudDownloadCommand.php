@@ -57,18 +57,13 @@ class SoundcloudDownloadCommand extends Command
                 return 1;
             }
         }
-        if ($artist !== 'null') {
-            $this->info('Downloading from artist: ' . $artist);
-            $option = '-a';
-            $url = $artist;
-        }
-        if ($title !== 'null') {
-            $this->info('Downloading from title: ' . $title);
-            $option = '-t';
-            $url = $title;
-        }
         if ($playlist !== 'null') {
             $this->warn('Downloading from playlist: ' . $playlist);
+            $soundcloudService = new SoundcloudService();
+            // if playlist is not a link, then it is a playlist name, use the playlist name to get the link
+            if (!str_contains($playlist, 'https://soundcloud.com')) {
+                $playlist = 'https://soundcloud.com/atmkng/sets/' . $playlist;
+            }
             $url = $playlist;
             $soundcloudService = new SoundcloudService();
             $downloadLinks = $soundcloudService->getSongsFromPlaylist($url);
@@ -91,9 +86,19 @@ class SoundcloudDownloadCommand extends Command
                 '--directory' => 'music',
             ]);
             $this->call('song:import');
-            // remove all downloaded songs rm -r storage/app/public/uploads/audio/*
             shell_exec("rm -r storage/app/public/uploads/audio/*");
             return 0;
+        }
+
+        if ($artist !== 'null') {
+            $this->info('Downloading from artist: ' . $artist);
+            $option = '-a';
+            $url = $artist;
+        }
+        if ($title !== 'null') {
+            $this->info('Downloading from title: ' . $title);
+            $option = '-t';
+            $url = $title;
         }
         if ($mixtape !== 'null') {
             $this->info('Downloading from mixtape: ' . $mixtape);

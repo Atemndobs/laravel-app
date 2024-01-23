@@ -133,6 +133,7 @@ class SoundcloudService
         $searchUrl = "$baseUrl/search?q=$searchQuery";
         $songLinks = $this->getSongLinks($searchUrl);
         $songLinks = $songLinks[0];
+
         $foundArtist = explode('/', $songLinks)[1];
         $foundTitle = explode('/', $songLinks)[2];
         $paramArtist = $params[1];

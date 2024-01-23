@@ -42,15 +42,13 @@ class getSpotifyRecommendationCommand extends Command
         $bpm = $this->option('bpm');
         $limit = $this->option('limit') ?? 100;
 
-        $song = Song::query()->find($songId);
+        $song = Song::query()->where('song_id', $songId)->first();
         if ($song === null) {
             $message =  [
                 'error' => 'Song with id: ' . $songId . ' not found',
             ];
             $this->line("</fg=red>". json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ."</>");
         }
-
-        // endpoint = https://www.chosic.com/api/tools/recommendations?seed_tracks=5aIVCx5tnk0ntmdiinnYvw&limit=100
         $endpoint = "https://www.chosic.com/api/tools/recommendations?seed_tracks=$songId&limit=$limit";
         $foundSong = [
             'endpoint' => $endpoint,
@@ -69,27 +67,9 @@ class getSpotifyRecommendationCommand extends Command
         $this->line("<fg=yellow>" . json_encode($foundSong, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
         $recommendationService  = new SpotifyRecommendationService();
         $songs = $recommendationService->getChosicRecommendation($songId, $limit);
-        // find resulting songs in database
-        $songs = Song::query()->whereIn('song_id', array_column($songs, 'id'))->get('id');
-        $songSearch = new SearchSong();
-
-        $ids = array_column($songs->toArray(), 'id');
-        $filterString = implode(" OR ", array_map(function($id) {
-            return "id = $id";
-        }, $ids));
-        $searchParams = ['filter' => $filterString];
-        $foundSongs = $songSearch->getSongs(0, count($ids), $searchParams);
-
-        $count = count($songs);
-        $message = [
-            'songs' => $foundSongs,
-            'total_songs' => $count,
-            'limit' => $limit,
-        ];
-
-        Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        $this->line("<fg=green>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
-        // output table with found songs
+        $getMatchedRecommendation = $recommendationService->matchRecommendation($songs, $limit);
+        Log::info(json_encode($getMatchedRecommendation, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->line("<fg=green>" . json_encode($getMatchedRecommendation, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
         return 0;
     }
 }

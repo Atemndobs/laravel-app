@@ -22,13 +22,8 @@ class SearchSong
         $searchQueries = request()->filter ?? $searchQueries;
         // if searchQuery is not null then add it to the query
         if (!empty($searchQueries) && is_array($searchQueries)) {
-//            foreach ($searchQueries as $searchQuery) {
-//                $this->addQueryFilter($searchQuery['attribute'], $searchQuery['operator'], $searchQuery['value']);
-//            }
             $this->query = $searchQueries;
         }
-
-
         // {"filter" : [
         //    {
         //        "attribute" : "title",
@@ -39,9 +34,8 @@ class SearchSong
         //}
 
         $this->addQueryFilter('analyzed', '=',1);
-        $query = $this->getQuery();
+        $query = $this->getQuery(0, $limit);
 
-        //dd($query);
         Log::info(json_encode([
             'Method' => 'MeilesearchSongController@getSongs',
             'Position' => 'Before Try Catch',
@@ -84,10 +78,10 @@ class SearchSong
         return $this->query;
     }
 
-    public function getQuery()
+    public function getQuery($offset = 0, $limit = 10)
     {
-        $offset = request()->offset ?? 0;
-        $limit = request()->limit ?? 10;
+        $offset = request()->offset ?? $offset;
+        $limit = request()->limit ?? $limit;
 
         $query =
             [
