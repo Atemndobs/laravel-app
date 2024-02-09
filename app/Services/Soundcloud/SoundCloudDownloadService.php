@@ -22,6 +22,7 @@ class SoundCloudDownloadService
             return !preg_match("/^https:\/\/soundcloud\.com\/tags/", $line)
                 && !preg_match("/^https:\/\/soundcloud\.com\/you/", $line)
                 && !preg_match("/^https:\/\/soundcloud\.com\/pages/", $line)
+                && !preg_match("/^https:\/\/soundcloud\.com\/atmkng/", $line)
                 && !preg_match("/^https:\/\/soundcloud\.com\/charts/", $line);
         });
         $links = $this->filterSoundCloudSongLinks($file);
@@ -39,15 +40,19 @@ class SoundCloudDownloadService
     }
 
     function filterSoundCloudSongLinks($links) {
-        $filteredLinks = [];
-        foreach ($links as $link) {
-            if (preg_match("/^https:\/\/soundcloud\.com\/[\w-]+\/[\w-]+$/", $link)) {
-                $filteredLinks[] = $link;
+        // Prepare an incantation to hold the filtered song links
+        $filteredLinks = array_filter($links, function($link) {
+            // Check if the link is from soundcloud and not part of the excluded atmkng pattern
+            if (strpos($link, 'https://soundcloud.com/') === 0 && !preg_match('#https://soundcloud.com/[^/]+/?$#', $link)) {
+                // Count the slashes to ensure it's a song link (more than the base artist URL)
+                $slashCount = substr_count($link, '/');
+                // SoundCloud base URL has 3 slashes, artist URL will have 4, song links will have more
+                return $slashCount > 4;
             }
+            return false;
+        });
 
-        }
-
-        return $filteredLinks;
+        return array_values($filteredLinks);
     }
 
     /**
