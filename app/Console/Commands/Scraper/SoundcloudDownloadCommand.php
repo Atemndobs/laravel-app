@@ -25,7 +25,15 @@ class SoundcloudDownloadCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Download music from Soundcloud by Link, artist name tiles or playlist';
+    protected $description = 'Download music from Soundcloud by Link, artist name tiles or playlist
+    scrape:sc --link="https://soundcloud.com/artist/song"
+    scrape:sc --artist="artist name"
+    scrape:sc --title="song title"
+    scrape:sc --playlist="playlist name"
+    scrape:sc --mixtape="mixtape name"
+    scrape:sc --file="file name located in root directory"
+    scrape:sc --continue="just type c to overwrite the song if it already exists in the DB"
+    ';
 
     /**
      * Execute the console command.
@@ -43,6 +51,32 @@ class SoundcloudDownloadCommand extends Command
         $continue = $this->option('continue');
 
         $startTime = microtime(true);
+
+        if ($artist !== 'null') {
+            $this->info('Downloading from artist: ' . $artist);
+            $option = '-a';
+            $url = $artist;
+        }
+        if ($title !== 'null') {
+            $this->info('Downloading from title: ' . $title);
+            $option = '-t';
+            $url = $title;
+        }
+        if ($mixtape !== 'null') {
+            $this->info('Downloading from mixtape: ' . $mixtape);
+            $option = '-m';
+            $url = $mixtape;
+        }
+        if ($file !== 'null') {
+            $this->info('Downloading from file: ' . $file);
+            $option = '-f';
+            $url = $file;
+        }
+        if ($continue !== 'null') {
+            $this->info('Downloading from continue: ' . $continue);
+            $this->forceDownload($link);
+            return 0;
+        }
 
         if ((string)$link !== 'null') {
             $downloadLinks[] = $link;
@@ -90,31 +124,6 @@ class SoundcloudDownloadCommand extends Command
             return 0;
         }
 
-        if ($artist !== 'null') {
-            $this->info('Downloading from artist: ' . $artist);
-            $option = '-a';
-            $url = $artist;
-        }
-        if ($title !== 'null') {
-            $this->info('Downloading from title: ' . $title);
-            $option = '-t';
-            $url = $title;
-        }
-        if ($mixtape !== 'null') {
-            $this->info('Downloading from mixtape: ' . $mixtape);
-            $option = '-m';
-            $url = $mixtape;
-        }
-        if ($file !== 'null') {
-            $this->info('Downloading from file: ' . $file);
-            $option = '-f';
-            $url = $file;
-        }
-        if ($continue !== 'null') {
-            $this->info('Downloading from continue: ' . $continue);
-            $this->forceDownload($link);
-            return 0;
-        }
         $soundcloudService = new SoundCloudDownloadService();
 
         $downloadLinks = [];
