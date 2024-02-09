@@ -99,7 +99,6 @@ class SoundcloudDownloadCommand extends Command
                 $playlist = 'https://soundcloud.com/atmkng/sets/' . $playlist;
             }
             $url = $playlist;
-            $soundcloudService = new SoundcloudService();
             $downloadLinks = $soundcloudService->getSongsFromPlaylist($url);
             $estimatedTime = (count($downloadLinks) * 12) / 60 . " mins";
             $this->outputInfo($downloadLinks, $startTime, $estimatedTime);
