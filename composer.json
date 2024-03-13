@@ -66,6 +66,7 @@
         "symfony/process": "^6.1",
         "tailflow/laravel-orion": "^2.11",
         "tcg/voyager": "*",
+        "thiagoalessio/tesseract_ocr": "^2.13",
         "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
     },
     "require-dev": {

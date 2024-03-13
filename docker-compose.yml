@@ -7,7 +7,7 @@ services:
             - php-fpm
         ports:
             - "8899:80"
-            - "8443:443"
+         #   - "8443:443"
         volumes:
             - "${NGINX_HOST_LOG_PATH}:/var/log/nginx"
             - "${NGINX_SITES_PATH}:/etc/nginx/sites-available"
@@ -67,7 +67,7 @@ services:
     meilisearch:
         container_name: meilisearch
        # image: 'getmeili/meilisearch:v0.29.0-pagination.beta.3'
-        image: getmeili/meilisearch:v1.0
+        image: getmeili/meilisearch:v1.6
         ports:
             - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
         volumes:

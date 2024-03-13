@@ -3,6 +3,7 @@
 namespace App\Services\Birdy;
 
 use App\Models\Catalog;
+use App\Models\Finop;
 use App\Models\Song;
 use App\Services\Storage\MinioService;
 use MeiliSearch\Client;
@@ -181,22 +182,69 @@ class MeiliSearchService
         }
         $meiliSearch->index('songs')->update(['primaryKey' => 'id']);
         $songs = Song::all()->toArray();
-//        $songsUpdated = [];
-//        $minioService = new MinioService();
-//        foreach ($songs as $song) {
-//            $path = explode('/', $song['path']);
-//            $file_name = end($path);
-//            try {
-//                $new_path = $minioService->getAudio($file_name);
-//            }catch (\Exception $e) {
-//                $songsUpdated[] = $song;
-//                continue;
-//            }
-//            $song['path'] = $new_path;
-//            $songsUpdated[] = $song;
-//        }
         $meiliSearch->index('songs')->addDocuments($songs);
         return $meiliSearch->index("songs");
+    }
+
+    /**
+     * @return Indexes
+     */
+    public function setFinopsIndex(): Indexes
+    {
+        $meiliSearch = $this->client;
+
+        try {
+            // $meiliSearch->deleteIndex("finops");
+            $meiliSearch->createIndex("finops");
+            $meiliSearch->index("finops")->updateSearchableAttributes([
+               // 'id', // 'id' is the primary key of the table
+              //  'question_id',
+                'question',
+                'answer',
+               // 'explanation',
+            ]);
+            $meiliSearch->index("finops")->updateFilterableAttributes([
+                // 'id', // 'id' is the primary key of the table
+                'question_id',
+                //'question',
+                //'answer',
+                // 'explanation',
+            ]);
+            $meiliSearch->index("finops")->updateSortableAttributes([
+                // 'id', // 'id' is the primary key of the table
+                  'question_id',
+//                'question',
+//                'answer',
+                // 'explanation',
+            ]);
+            $meiliSearch->index("finops")->updateDisplayedAttributes([
+                //'id', // 'id' is the primary key of the table
+                'question_id',
+                'question',
+                'answer',
+                'explanation',
+            ]);
+            # Valid ranking rules are words, typo, sort, proximity, attribute, exactness and custom ranking rules.
+            $meiliSearch->index("finops")->updateRankingRules([
+                "typo",
+                "words",
+                "attribute",
+                "sort",
+                "proximity",
+                "exactness"
+            ]);
+        }catch (\Exception $e) {
+            dump([
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+            ]);
+            throw new \Exception($e->getMessage());
+        }
+        $meiliSearch->index('finops')->update(['primaryKey' => 'id']);
+        $finops = Finop::all()->toArray();
+        $meiliSearch->index('finops')->addDocuments($finops);
+        return $meiliSearch->index("finops");
     }
 
     /**

@@ -13,7 +13,7 @@ class MeilisearchReindexer extends Command
      *
      * @var string
      */
-    protected $signature = 'indexer:reindex {--index=}';
+    protected $signature = 'indexer:reindex {--i|index=}';
 
     /**
      * The console command description.
@@ -61,25 +61,53 @@ class MeilisearchReindexer extends Command
         $index =  $service->$method();
 
         $filterable = $index->getFilterableAttributes();
-        $filterable[] = 'Attribute =>  getFilterableAttributes';
         $searchable = $index->getSearchableAttributes();
-        $searchable[] = 'Attribute =>  getSearchableAttributes';
         $sortable = $index->getSortableAttributes();
-        $sortable[] = 'Attribute =>  getSortableAttributes';
         $displayed = $index->getDisplayedAttributes();
-        $displayed[] = 'Attribute =>  getDisplayedAttributes';
         $ranking = $index->getRankingRules();
-        $ranking[] = 'Attribute =>  getRankingRules';
-        $this->table(
-            ["Attribute of the $item Index"],
-            [
-                array_reverse($filterable),
-                array_reverse($searchable),
-                array_reverse($sortable),
-                array_reverse($displayed),
-                array_reverse($ranking),
+// Consolidate Attributes
+        $attributes = [
+            'Filterable' => $filterable,
+            'Searchable' => $searchable,
+            'Sortable' => $sortable,
+            'Displayed' => $displayed,
+            'Ranking' => $ranking,
+        ];
 
-            ]
-        );
+// Initialize an array to hold the maximum number of attributes across all types
+        $maxCounts = array_map('count', $attributes);
+        $maxCount = max($maxCounts);
+
+        $rows = [];
+
+//Prepare Table Rows
+        for ($i = 0; $i < $maxCount; $i++) {
+            $row = [];
+            foreach (['Filterable', 'Searchable', 'Sortable', 'Displayed', 'Ranking'] as $type) {
+                // Check if the attribute exists, if not, add an empty string to keep the table aligned
+                $row[$type] = $attributes[$type][$i] ?? '';
+            }
+            $rows[] = $row;
+        }
+
+// Generate Output
+// Convert the rows into a format suitable for Laravel's table method
+        $tableRows = [];
+        foreach ($rows as $row) {
+            $tableRow = [];
+            foreach ($row as $column => $value) {
+                // Remove the 'Attribute => ' part for display
+                $value = str_replace('Attribute => ', '', $value);
+                $tableRow[] = $value;
+            }
+            $tableRows[] = $tableRow;
+        }
+
+// Headers for the table
+        $headers = ['Filterable', 'Searchable', 'Sortable', 'Displayed', 'Ranking'];
+
+// Display the table
+        $this->table($headers, $tableRows);
+
     }
 }

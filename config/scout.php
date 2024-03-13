@@ -136,7 +136,17 @@ return [
 
     'meilisearch' => [
         'host' => env('MEILISEARCH_HOST', 'http://localhost:7700'),
-        'key' => env('MEILISEARCH_KEY', null),
+        'key' => env('MEILISEARCH_KEY', 'masterKey'),
+        'index-settings' => [
+//            \App\Models\Finop::class => [
+//                'filterableAttributes'=> ['id', 'question_id', 'question', 'explanation', 'answer' ],
+//                'sortableAttributes' => ['updated_at'],
+//            ],
+//            \App\Models\Song::class => [
+//                'filterableAttributes'=> ['id', 'title', 'artist', 'lyrics' ],
+//                'sortableAttributes' => ['updated_at'],
+//            ],
+        ],
     ],
 
 ];

@@ -25,6 +25,7 @@ trait Tools
             $date = date_create_from_format('Y-m-d-H-i-s', $fileDate);
             // if data is today's date, actualDate = Today, else date = YYYY-MM-DD
             // $date->format('Y-m-d') == date('Y-m-d') ? 'Today' : $date->format('Y-m-d')
+            //dd($date);
             $actualDate = $date->format('Y-m-d') == date('Y-m-d') ? '<fg=green>Today at </>' : "<fg=yellow>{$date->format('Y-m-d')}</>";
 
             // styles black, red, green, yellow, blue, magenta, cyan, white, default, gray, bright-red, bright-green,
