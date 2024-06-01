@@ -3,6 +3,7 @@
 namespace App\Services\Storage;
 
 use Aws\S3\S3Client;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -10,8 +11,10 @@ use Illuminate\Support\Str;
 class AwsS3Service
 {
     protected S3Client $s3Client;
+    protected $maxRetries;
+    protected $delay;
 
-    public function __construct()
+    public function __construct($maxRetries = 5, $delay = 5)
     {
         $this->s3Client = new S3Client([
             'version' => 'latest',
@@ -23,6 +26,9 @@ class AwsS3Service
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
         ]);
+
+        $this->maxRetries = $maxRetries;
+        $this->delay = $delay;
     }
 
     public function uploadFile($filePath, $bucket, $key): string
@@ -91,14 +97,44 @@ class AwsS3Service
     public function getFiles(string $dir = 'music'): array
     {
         $files = [];
-        $objects = $this->s3Client->getIterator('ListObjects', [
-            'Bucket' => env('AWS_BUCKET'),
-            'Prefix' => $dir . '/',
-        ]);
+        $retryCount = 0;
+        $maxRetries = 5;
+        $success = false;
+
+        while ($retryCount < $maxRetries && !$success) {
+            try {
+                $objects = $this->s3Client->getIterator('ListObjects', [
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Prefix' => $dir . '/',
+                ]);
+                $success = true; // If we reach here, it means the operation was successful
+            } catch (\Exception $e) {
+                $retryCount++;
+                Log::warning('Error getting files: ' . $e->getMessage());
+                if ($retryCount < $maxRetries) {
+                    // wait for 5 seconds before retrying
+                    sleep(5);
+                } else {
+                    // If max retries reached, throw the exception
+                    throw $e;
+                }
+            }
+        }
+
         foreach ($objects as $object) {
             $files[] = $object['Key'];
         }
         return $files;
+    }
+
+
+    // function to get all files in a directory
+    public function getObjects(string $dir = 'music'): object
+    {
+        return $this->s3Client->getIterator('ListObjects', [
+            'Bucket' => env('AWS_BUCKET'),
+            'Prefix' => $dir . '/',
+        ]);
     }
 
     public function getUnsortedSongs()
@@ -128,6 +164,9 @@ class AwsS3Service
         return $this->uploadFile($file, env('AWS_BUCKET'), $key);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getObject(string $dir, string $file)
     {
         $key = $dir . '/' . $file;
@@ -151,7 +190,19 @@ class AwsS3Service
         }
         Log::error('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
         throw new \Exception('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
-        // return 'File does not exist in ' . env('AWS_BUCKET') . '/' . $key;
+    }
+
+    public function getObjectUrl(string $key)
+    {
+        try {
+            return $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
+        } catch (\Exception $e) {
+            Log::error('Error getting object URL: ' . $e->getMessage());
+            // wait for 5 seconds
+            sleep(5);
+            // retry
+            return $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
+        }
     }
 
     public function deleteFile(string $dir, string $file)
@@ -174,5 +225,38 @@ class AwsS3Service
             Log::error('Error deleting file: ' . $e->getMessage());
         }
 
+    }
+
+    protected function retry(callable $callback)
+    {
+        $retryCount = 0;
+        $success = false;
+        $result = null;
+
+        while ($retryCount < $this->maxRetries && !$success) {
+            try {
+                $result = $callback();
+                $success = true;
+            } catch (Exception $e) {
+                $retryCount++;
+                Log::error('AWS S3 operation failed: ' . $e->getMessage());
+                if ($retryCount < $this->maxRetries) {
+                    sleep($this->delay);
+                } else {
+                    throw $e;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getIterator($operation, array $parameters = [])
+    {
+        return $this->retry(function() use ($operation, $parameters) {
+            return $this->s3Client->getIterator($operation, $parameters);
+        });
     }
 }

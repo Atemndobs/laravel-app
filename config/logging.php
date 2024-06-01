@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\ElkFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -102,6 +103,14 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 7,
         ],
+        'elk' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/laravel.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+            'formatter'=>ElkFormatter::class,//The only change needed here
+        ],
 
         'slack' => [
             'driver' => 'slack',
@@ -129,6 +138,7 @@ return [
             'formatter' => env('LOG_STDERR_FORMATTER'),
             'with' => [
                 'stream' => 'php://stderr',
+               // 'stream' => 'php://stdout',
             ],
         ],
 
@@ -150,6 +160,35 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+        'otel' => [
+            'driver' => 'monolog',
+            'handler' => Monolog\Handler\StreamHandler::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'formatter' => env('LOG_STDERR_FORMATTER'),
+            'with' => [
+                'stream' => 'php://stdout',
+            ],
+            //'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter_with' => [
+                'batchMode' => Monolog\Formatter\JsonFormatter::BATCH_MODE_JSON,
+                'appendNewline' => true,
+            ],
+            'path' => storage_path('logs/laravel.log'),
+        ],
+        'custom' => [
+            'driver' => 'monolog',
+            'handler' => Monolog\Handler\WhatFailureGroupHandler::class,
+            'with' => [
+                'handlers' => [
+                    (new Monolog\Handler\StreamHandler('php://stdout', Monolog\Level::Debug))
+                        ->setFormatter(new Monolog\Formatter\JsonFormatter()),
+                    (new Monolog\Handler\RotatingFileHandler(storage_path('logs/laravel.log'), 0, Monolog\Level::Debug))
+                        ->setFormatter(new Monolog\Formatter\JsonFormatter()),
+                ],
+            ],
+            'formatter' => env('LOG_STDERR_FORMATTER'),
+        ],
+
     ],
 
 ];
