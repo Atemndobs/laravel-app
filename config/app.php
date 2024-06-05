@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Facade;
 use PhpUnitGen\Console\Adapters\Laravel\PhpUnitGenServiceProvider;
 use Sarfraznawaz2005\ServerMonitor\ServiceProvider;
+use VladimirYuldashev\LaravelQueueRabbitMQ\LaravelQueueRabbitMQServiceProvider;
+
 // use Studio\Totem\Providers\TotemServiceProvider;
 
 return [
@@ -160,7 +162,7 @@ return [
         Illuminate\Pagination\PaginationServiceProvider::class,
         Illuminate\Pipeline\PipelineServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,
-      //  \VladimirYuldashev\LaravelQueueRabbitMQ\LaravelQueueRabbitMQServiceProvider::class,
+        LaravelQueueRabbitMQServiceProvider::class,
         Illuminate\Redis\RedisServiceProvider::class,
         Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
         Illuminate\Session\SessionServiceProvider::class,
@@ -181,7 +183,9 @@ return [
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         App\Providers\BroadcastServiceProvider::class,
+        App\Providers\PrometheusServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\TenancyServiceProvider::class, // <-- here
 

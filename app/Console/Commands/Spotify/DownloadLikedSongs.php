@@ -50,7 +50,15 @@ class DownloadLikedSongs extends Command
         } else {
             $time = $time . ' hours';
         }
-        $this->info('Found : ' . $countLikedSongs . ' songs since ' . $time . ' ago.');
+
+        $info = [
+            'message' => "Found songs since $time hours ago.",
+            'count' => $countLikedSongs,
+            'time' => $time
+
+        ];
+        $this->info(json_encode($info, JSON_PRETTY_PRINT));
+        dd("WAIT for it");
         $downloadables = [];
         foreach ($likedSongs as $likedSong) {
             // check if ID exists in DB

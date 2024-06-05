@@ -8,7 +8,7 @@ ARG WWWUSER="atem"
 ENV WWWGROUP ${WWWGROUP:-1000}
 
 ENV COMPOSER_MEMORY_LIMIT='-1'
-ENV NODE_VERSION=16
+ENV NODE_VERSION=18
 
 RUN apt-get update && \
     apt-get install -y --force-yes --no-install-recommends \

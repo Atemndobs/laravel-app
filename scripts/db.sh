@@ -113,7 +113,7 @@ start slave;
 "
 
 ***********************************************************************
- /usr/bin/mysql --host=mariadb-galera.curator.svc.cluster.local --port=3306 -uroot -pmage mysql -e";
+ /usr/bin/mysql --host=mariadb-galera.curator.svc.cluster.local --port=3306 -uroot -pmage mysql -e"
 ALTER USER 'root'@'%' IDENTIFIED BY 'mage';FLUSH PRIVILEGES;
 DROP user IF EXISTS 'mage'@'%';
 FLUSH PRIVILEGES;
