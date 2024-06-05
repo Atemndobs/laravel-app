@@ -2,18 +2,20 @@
 
 namespace App\Console\Commands\Storage;
 
+use AllowDynamicProperties;
+use Exception;
 use Illuminate\Console\Command;
 use App\Services\Storage\AwsS3Service;
 use Illuminate\Support\Facades\Log;
 
-class AwsS3DownloadCommand extends Command
+#[AllowDynamicProperties] class AwsS3DownloadCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 's3:dn {--d|dir=} {--b|bucket=curators3}  {--l|location=downloads} ';
+    protected $signature = 's3:dn {--d|dir=} {--b|bucket=curators3}  {--l|location=downloads} {--r|retryCount=5}  {--t|time=5} ';
 
     /**
      * The console command description.
@@ -40,6 +42,8 @@ class AwsS3DownloadCommand extends Command
         $dir = $this->option('dir');
         $bucket = $this->option('bucket');
         $location = $this->option('location');
+        $this->maxRetries = $this->option('retryCount');
+        $this->delay = $this->option('time');
         $destination = "$location/$dir";
         $options = ([
             'dir' => $dir,
@@ -110,28 +114,31 @@ class AwsS3DownloadCommand extends Command
             return;
         }
         $this->info('Downloading file...');
-        try {
-            $file = file_get_contents($object);
-        }catch (\Exception $e){
-            $this->error($e->getMessage());
-            Log::error($e->getMessage());
-            // wait for 5 seconds
-            sleep(5);
-            // retry
-            $file = file_get_contents($object);
-        }
+
+        $file = $this->retry(function() use ($object, $path) {
+            return file_get_contents($object);
+        });
+//        try {
+//            $file = file_get_contents($object);
+//        }catch (\Exception $e){
+//            $this->error($e->getMessage());
+//            Log::error($e->getMessage());
+//            // wait for 5 seconds
+//            sleep(5);
+//            // retry
+//            $file = file_get_contents($object);
+//        }
         $this->info('File downloaded successfully');
         $this->info('Writing file to disk...');
 
         file_put_contents($path, $file);
-        $this->info('File written to disk successfully');
-        $this->info('File path: ' . $path);
         $message = [
+            'info' => 'File written to disk successfully',
             'file_name' => $object,
             'file_path' => $path,
         ];
         $this->line("<fg=bright-magenta>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
-        Log::info('File written to disk successfully' , $message);
+        Log::info('Success' , $message);
     }
 
     public function downloadMultipleFiles(array $objects, string $destination) :void
@@ -178,6 +185,41 @@ class AwsS3DownloadCommand extends Command
             'filesCount' => count($objects)
         ];
         $this->line("<fg=bright-magenta>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function retry(callable $callback)
+    {
+        $retryCount = 3;
+        $success = false;
+        $result = null;
+
+        while ($retryCount < $this->maxRetries && !$success) {
+            try {
+                $result = $callback();
+                $success = true;
+
+            } catch (Exception $e) {
+                $retryCount++;
+                $message = [
+                    '-----------  AWS S3 RETRY -----------------',
+                    '$retryCount' => $retryCount,
+                    '$maxRetries' => $this->maxRetries,
+                    '$delay' => $this->delay,
+                    'error' => $e->getMessage(),
+                ];
+                Log::error(json_encode($message));
+                $this->line("<fg=bright-red>" . json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</>");
+                if ($retryCount < $this->maxRetries) {
+                    sleep($this->delay);
+                } else {
+                    throw $e;
+                }
+            }
+        }
+        return $result;
     }
 
 }
