@@ -3,15 +3,20 @@
 namespace App\Services\Storage;
 
 use Aws\S3\S3Client;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Style\OutputStyle;
 
 class AwsS3Service
 {
     protected S3Client $s3Client;
+    protected $maxRetries;
+    protected $delay;
+    protected ?OutputStyle $output = null;
 
-    public function __construct()
+    public function __construct($maxRetries = 5, $delay = 5)
     {
         $this->s3Client = new S3Client([
             'version' => 'latest',
@@ -23,30 +28,95 @@ class AwsS3Service
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
         ]);
+
+        $this->maxRetries = $maxRetries;
+        $this->delay = $delay;
     }
 
-    public function uploadFile($filePath, $bucket, $key): string
+    public function setOutput(OutputStyle $output): void
     {
-        $checkFile = $this->s3Client->doesObjectExist($bucket, $key);
-        // if file exists, get the file info
-        if ($checkFile) {
-            $fileInfo = $this->s3Client->headObject([
-                'Bucket' => $bucket,
-                'Key' => $key,
-            ]);
-            // if file exists, get the file info
-            if ($fileInfo) {
-                $url = $this->s3Client->getObjectUrl($bucket, $key);
-                $message = [
-                    'status' => 'File already exists in ' . $bucket . '/' . $key,
-                    'url' => $url,
-                ];
-                Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                return $url;
+        $this->output = $output;
+    }
+
+    protected function writeToConsole($message, $type = 'info'): void
+    {
+        if ($this->output) {
+            switch ($type) {
+                case 'info':
+                    $this->output->info($message);
+                    break;
+                case 'warn':
+                    $this->output->warning($message);
+                    break;
+                case 'error':
+                    $this->output->error($message);
+                    break;
+                case 'comment':
+                    $this->output->comment($message);
+                    break;
+                default:
+                    $this->output->writeln($message);
+                    break;
             }
         }
+    }
 
-        try {
+
+    protected function retry(callable $callback)
+    {
+        $retryCount = 0;
+        $success = false;
+        $result = null;
+
+        while ($retryCount < $this->maxRetries && !$success) {
+            try {
+                $result = $callback();
+                $success = true;
+
+            } catch (Exception $e) {
+                $retryCount++;
+                $message = [
+                    '-----------  AWS S3 RETRY operation successful  -----------------',
+                    '$retryCount' => $retryCount,
+                    '$maxRetries' => $this->maxRetries,
+                    '$delay' => $this->delay,
+                    'error' => $e->getMessage(),
+                ];
+                Log::error(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                $this->writeToConsole(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), 'error');
+                if ($retryCount < $this->maxRetries) {
+                    sleep($this->delay);
+                } else {
+                    throw $e;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function uploadFile($filePath, $bucket, $key): string
+    {
+        return $this->retry(function() use ($filePath, $bucket, $key) {
+            $checkFile = $this->s3Client->doesObjectExist($bucket, $key);
+            if ($checkFile) {
+                $fileInfo = $this->s3Client->headObject([
+                    'Bucket' => $bucket,
+                    'Key' => $key,
+                ]);
+                if ($fileInfo) {
+                    $url = $this->s3Client->getObjectUrl($bucket, $key);
+                    $message = [
+                        'status' => 'File already exists in ' . $bucket . '/' . $key,
+                        'url' => $url,
+                    ];
+                    Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                    return $url;
+                }
+            }
+
             $result = $this->s3Client->putObject([
                 'Bucket' => $bucket,
                 'Key' => $key,
@@ -61,10 +131,7 @@ class AwsS3Service
             $url = $this->s3Client->getObjectUrl($bucket, $key);
             Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             return $url;
-        } catch (\Aws\Exception\AwsException $e) {
-            Log::error('Error uploading file: ' . $e->getMessage());
-            return 'Error uploading file: ' . $e->getMessage();
-        }
+        });
     }
 
     public function putObject(string $filePath, string $dir = 'music'): string
@@ -76,43 +143,48 @@ class AwsS3Service
     public function deleteMusic(string $name): void
     {
         $key = 'music/' . $name;
-        try {
+        $this->retry(function() use ($key) {
             $this->s3Client->deleteObject([
                 'Bucket' => env('AWS_BUCKET'),
                 'Key' => $key,
             ]);
             Log::info('File deleted successfully from ' . env('AWS_BUCKET') . '/' . $key);
-        } catch (\Aws\Exception\AwsException $e) {
-            Log::error('Error deleting file: ' . $e->getMessage());
-        }
+        });
     }
 
-    // function to get all files in a directory
     public function getFiles(string $dir = 'music'): array
     {
         $files = [];
-        $objects = $this->s3Client->getIterator('ListObjects', [
-            'Bucket' => env('AWS_BUCKET'),
-            'Prefix' => $dir . '/',
-        ]);
+        $objects = $this->retry(function() use ($dir) {
+            return $this->s3Client->getIterator('ListObjects', [
+                'Bucket' => env('AWS_BUCKET'),
+                'Prefix' => $dir . '/',
+            ]);
+        });
+
         foreach ($objects as $object) {
             $files[] = $object['Key'];
         }
         return $files;
     }
 
+    public function getObjects(string $dir = 'music'): object
+    {
+        return $this->retry(function() use ($dir) {
+            return $this->s3Client->getIterator('ListObjects', [
+                'Bucket' => env('AWS_BUCKET'),
+                'Prefix' => $dir . '/',
+            ]);
+        });
+    }
+
     public function getUnsortedSongs()
     {
         $unsortedFiles = [];
-        // get unsorted files from /var/www/html/storage/app/public/uploads/audio/ or any subfolder
         $audioFiles = Storage::disk('public')->allFiles('uploads/audio');
         $audioFiles_before = $audioFiles;
         $audioFiles = array_merge($audioFiles, Storage::disk('public')->allFiles('uploads/audio/*'));
         $audioFiles = array_filter($audioFiles, function ($file) {
-            // only get files that end with mp3 and are not less than 1MB
-//            if (Storage::disk('public')->size($file) < 1000000) {
-//                return false;
-//            }
             return Str::endsWith($file, 'mp3');
         });
 
@@ -128,30 +200,39 @@ class AwsS3Service
         return $this->uploadFile($file, env('AWS_BUCKET'), $key);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getObject(string $dir, string $file)
     {
-        $key = $dir . '/' . $file;
-        $checkFile = $this->s3Client->doesObjectExist(env('AWS_BUCKET'), $key);
-        // if file exists, get the file info
-        if ($checkFile) {
-            $fileInfo = $this->s3Client->headObject([
-                'Bucket' => env('AWS_BUCKET'),
-                'Key' => $key,
-            ]);
-            // if file exists, get the file info
-            if ($fileInfo) {
-                $url = $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
-                $message = [
-                    'status' => 'File already exists in ' . env('AWS_BUCKET') . '/' . $key,
-                    'url' => $url,
-                ];
-                Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                return $url;
+        return $this->retry(function() use ($dir, $file) {
+            $key = $dir . '/' . $file;
+            $checkFile = $this->s3Client->doesObjectExist(env('AWS_BUCKET'), $key);
+            if ($checkFile) {
+                $fileInfo = $this->s3Client->headObject([
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key' => $key,
+                ]);
+                if ($fileInfo) {
+                    $url = $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
+                    $message = [
+                        'status' => 'File already exists in ' . env('AWS_BUCKET') . '/' . $key,
+                        'url' => $url,
+                    ];
+                    Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                    return $url;
+                }
             }
-        }
-        Log::error('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
-        throw new \Exception('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
-        // return 'File does not exist in ' . env('AWS_BUCKET') . '/' . $key;
+            Log::error('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
+            throw new \Exception('File does not exist in ' . env('AWS_BUCKET') . '/' . $key);
+        });
+    }
+
+    public function getObjectUrl(string $key)
+    {
+        return $this->retry(function() use ($key) {
+            return $this->s3Client->getObjectUrl(env('AWS_BUCKET'), $key);
+        });
     }
 
     public function deleteFile(string $dir, string $file)
@@ -163,16 +244,21 @@ class AwsS3Service
         ];
         dump($info);
         Log::info(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        try {
-            $result =  $this->s3Client->deleteObject([
+        return $this->retry(function() use ($key) {
+            return $this->s3Client->deleteObject([
                 'Bucket' => env('AWS_BUCKET'),
                 'Key' => $key,
             ]);
-            Log::info('File deleted successfully from ' . env('AWS_BUCKET') . '/' . $key);
-            return $result;
-        } catch (\Aws\Exception\AwsException $e) {
-            Log::error('Error deleting file: ' . $e->getMessage());
-        }
+        });
+    }
 
+    /**
+     * @throws Exception
+     */
+    public function getIterator($operation, array $parameters = [])
+    {
+        return $this->retry(function() use ($operation, $parameters) {
+            return $this->s3Client->getIterator($operation, $parameters);
+        });
     }
 }

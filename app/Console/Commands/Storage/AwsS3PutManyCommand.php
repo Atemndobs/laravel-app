@@ -6,13 +6,14 @@ use App\Models\Song;
 use Illuminate\Console\Command;
 use App\Services\Storage\AwsS3Service;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AwsS3PutManyCommand extends Command
 {
     /**
      * Execute the console command.
      */
-    protected $signature = 's3:multi-put {--s|source=} {--d|directory=music}';
+    protected $signature = 's3:multi-put {--s|source=} {--d|directory=music} {--l|location=uploads}';
 
     /**
      * The console command description.
@@ -35,10 +36,11 @@ class AwsS3PutManyCommand extends Command
     {
         $source = $this->option('source');
         $directory = $this->option('directory');
+        $location = $this->option('location');
 
         $sourcePath = ("{$source}");
         if (!str_contains($source, '/')) {
-            $sourcePath = "/var/www/html/storage/app/public/uploads/{$source}";
+            $sourcePath = "/var/www/html/storage/app/public/{$location}/{$source}";
         }
         if (!$source) {
             $this->error('A Source must be specified with -s option. example audio or images');
@@ -70,25 +72,31 @@ class AwsS3PutManyCommand extends Command
 
         $info = [
             'options' => $this->options(),
-            //'files' => $files,
-            'location' => $sourcePath,
-            //'ls' => scandir($sourcePath),
             'files_count' => $count,
+            'source' => $source,
+            'directory' => $directory,
+            'location' => $location,
+            'sourcePath' => $sourcePath,
+            'destination' => "{$directory}",
         ];
+
         $this->warn(json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         //$file = $this->getAllSongsFilesFromTheS3BucketMusicFolder($directory, $files);
-
         foreach ($files as $file) {
             $file_name = basename($file);
             $key = "{$directory}/{$file_name}";
             try {
                 $result = $this->s3Service->uploadFile($file, env('AWS_BUCKET'), $key);
                 $processed[] = $file;
-                // delete file
-                $delete = unlink($file);
-                if (!$delete) {
-                    $this->error("Could not delete file $file");
+                // delete file id location is uploads
+                $delete = false;
+                if ($location === 'uploads') {
+                    $delete = unlink($file);
+                    if (!$delete) {
+                        $this->error("Could not delete file $file");
+                    }
                 }
+
             }catch (\Exception $e){
                 $this->error($e->getMessage());
                 continue;

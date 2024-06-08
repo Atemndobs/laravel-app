@@ -52,6 +52,11 @@ class SoundcloudDownloadCommandController extends Controller
             return !str_contains($line, 'already exists!');
         });
         if (count($aleadExist) > 0) {
+            Log::info(
+                'SoundcloudDownloadCommandController:execute',
+                [
+                    'output' => $output
+                ]);
             return new JsonResponse([
                 'message' => 'Song Already Exists',
                 'data' => $output
@@ -63,6 +68,12 @@ class SoundcloudDownloadCommandController extends Controller
         });
 
 
+        Log::info(
+            'SoundcloudDownloadCommandController:execute',
+            [
+                'output' => $output
+            ]
+        );
         return new JsonResponse([
             'message' => 'Song Downloaded Successfully',
             'data' => $output

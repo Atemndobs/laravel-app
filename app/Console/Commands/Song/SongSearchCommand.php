@@ -4,6 +4,7 @@ namespace App\Console\Commands\Song;
 
 use App\Services\SongSearchService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Meilisearch\Http\Client;
 
 class SongSearchCommand extends Command
@@ -34,6 +35,7 @@ class SongSearchCommand extends Command
         $client = new Client(env('MEILISEARCH_HOST'), env('MEILI_MASTER_KEY'));
         $offset = request()->offset ?? 0;
         $limit = request()->limit ?? 10;
+
 
         $query =
             [
@@ -77,9 +79,10 @@ class SongSearchCommand extends Command
                 'path' => $hit['path'],
             ];
         }
+
         // return search results in a table
         $this->table(['id', 'author', 'title', 'path'], $hits);
-
+        Log::info('Search Song from Meilisearch', ['query' => $query, 'search' => $hits]);
 
 
         // Search Song from Database

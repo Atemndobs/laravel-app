@@ -34,3 +34,5 @@ yarn-error.log
 .devspace/
 /public/vendor
 /stubs
+credentials.json
+.DS_Store

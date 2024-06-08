@@ -26,8 +26,10 @@
         "http-interop/http-factory-guzzle": "^1.0",
         "illuminated/console-mutex": "@dev",
         "jwilsson/spotify-web-api-php": "^5.0",
+        "keepsuit/laravel-opentelemetry": "^0.4.0",
         "larapack/doctrine-support": "@dev",
         "laravel/framework": "^10.0",
+        "laravel/horizon": "^5.23",
         "laravel/octane": "^2.0",
         "laravel/sanctum": "^3.2.1",
         "laravel/scout": "^9.4",
@@ -54,6 +56,7 @@
         "spatie/laravel-backup": "^8.1",
         "spatie/laravel-health": "^1.12",
         "spatie/laravel-permission": "^5.5",
+        "spatie/laravel-prometheus": "^1.1",
         "spatie/laravel-route-discovery": "^1.0",
         "spatie/laravel-webhook-client": "^3.1",
         "spatie/ray": "^1.37",
@@ -67,7 +70,7 @@
         "tailflow/laravel-orion": "^2.11",
         "tcg/voyager": "*",
         "thiagoalessio/tesseract_ocr": "^2.13",
-        "vladimir-yuldashev/laravel-queue-rabbitmq": "^13"
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "*"
     },
     "require-dev": {
         "bennett-treptow/laravel-migration-generator": "^4.3",
