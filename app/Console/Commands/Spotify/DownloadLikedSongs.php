@@ -20,7 +20,14 @@ class DownloadLikedSongs extends Command
      *
      * @var string
      */
-    protected $description = 'Download Liked Songs from Spotify from the last 24 hours options are --time (default 24), --playlist, --all, --owner --release-radar';
+    protected $description = 'Download Liked Songs from Spotify from the last 24 hours options are 
+    --time (in hours; default 24), 
+    --playlist [-p playlist name], 
+    --all [-a ] (download all liked songs), 
+    --limit [-l] (limit the number of songs to download),
+    --release-radar [-r] (download release radar playlist)
+    ';
+
 
     /**
      * Execute the console command.
