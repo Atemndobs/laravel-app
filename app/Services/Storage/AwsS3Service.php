@@ -108,6 +108,8 @@ class AwsS3Service
                 ]);
                 if ($fileInfo) {
                     $url = $this->s3Client->getObjectUrl($bucket, $key);
+                    $url = $this->cleanUrl($url);
+
                     $message = [
                         'status' => 'File already exists in ' . $bucket . '/' . $key,
                         'url' => $url,
@@ -260,5 +262,10 @@ class AwsS3Service
         return $this->retry(function() use ($operation, $parameters) {
             return $this->s3Client->getIterator($operation, $parameters);
         });
+    }
+
+    public function cleanUrl($path): string
+    {
+        return str_replace(':9000', '', $path);
     }
 }

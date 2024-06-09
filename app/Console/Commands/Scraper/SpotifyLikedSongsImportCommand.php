@@ -53,15 +53,15 @@ class SpotifyLikedSongsImportCommand extends Command
         $this->info('Importing ' . count($playlistData) . ' songs from Spotify playlist: ' . $playlist );
         $spotifyIds = $playlistData['spotifyIds'];
         $url = $playlistData['url'];
-        $spotifyIngo = [
+        $spotifyInfo = [
             'url ' => $url,
             'total_songs' => $playlistData['total_songs'],
             'batch_size' => $limit,
             'skipped_songs' => $playlistData['skipped_songs'],
             'download_batch' => count($spotifyIds),
             ];
-        Log::info(json_encode($spotifyIngo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        $this->info(json_encode($spotifyIngo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        Log::info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->info(json_encode($spotifyInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         $songs = [];
 
         $this->warn("Found Spotify IDs: " . count($spotifyIds));
@@ -124,12 +124,12 @@ class SpotifyLikedSongsImportCommand extends Command
         Log::info(json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         $this->line("<fg=bright-white> ================ Download Successfully completed Completed ============================= </>");
         $this->line("<fg=bright-cyan>". json_encode($completeInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)." </>");
-        $this->call('move:audio');
-        $this->call('s3:multi-put', [
-            '--source' => 'audio',
-            '--directory' => 'music',
-        ]);
-        $this->call('song:import');
+//        $this->call('move:audio');
+//        $this->call('s3:multi-put', [
+//            '--source' => 'audio',
+//            '--directory' => 'music',
+//        ]);
+        //$this->call('song:import');
         return 0;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Scraper;
 
+use App\Models\Setting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -31,19 +32,60 @@ class SpotifyDownloadCommand extends Command
      */
     public function handle()
     {
-        $this->info('Downloading Playlists...');
         $url = $this->argument('url');
-        $spotifyId = explode("track/", $url);
-        $spotifyId = $spotifyId[1];
+        $force = $this->option('force');
+        $isPlaylist = false;
+        try {
+            $spotifyId = explode("track/", $url);
+            $spotifyId = $spotifyId[1];
+            $this->info('Downloading Track ...');
+        }catch (\Exception $e){
+            $warning = [
+                'Warning' => "$url is not a track url, lets check for playlist url",
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ];
+            Log::warning(json_encode($warning, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $this->warn(json_encode($warning, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $spotifyId = explode("playlist/", $url);
+            $spotifyId = $spotifyId[1];
+            $isPlaylist = true;
+            $this->info('Downloading Playlist ...');
+        }
+
+
         $spotifyId = explode("?", $spotifyId);
         $spotifyId = $spotifyId[0];
         // check if song exists in DB
+        if ($isPlaylist) {
+            try {
+                $playlistExist = \App\Models\Release::where('id', $spotifyId)->first();
+                $message = [
+                    'playlistExists' => [
+                        'id' => $playlistExist->id,
+                        'title' => $playlistExist->name,
+                        'tracks count' => $playlistExist->tracks,
+                    ]
+                ];
+                Log::warning(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            }catch (\Exception $e){
+                $this->warn('Playlist with ID ' . $spotifyId . ' does not exist in DB. Adding...');
+                // call spotify:import command and pass playlist url example php artisan spotify:import $url -o 0 -l 1
+                $this->call('spotify:import', [
+                    'playlist' => $url,
+                    '--offset' => 0,
+                    '--limit' => 1,
+                ]);
+                return 0;
+            }
+        }
+        // if force is set , assume song does not exist in DB
         $songExists = \App\Models\Song::where('song_id', $spotifyId)->first();
-        // if force is set , asume song does not exist in DB
-        $force = $this->option('force');
         if ($force) {
             $songExists = false;
         }
+
         if ($songExists) {
             $this->error('Song with ID ' . $spotifyId . ' already exists in DB.');
             $message = [
@@ -65,8 +107,6 @@ class SpotifyDownloadCommand extends Command
             $this->warn(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
           //  return 0;
         }
-
-        shell_exec("pwd");
 
         $songDownloadLocation = "/var/www/html/storage/app/public/uploads/audio/spotify/$spotifyId/";
         // if folder does not exist create it
@@ -150,7 +190,10 @@ class SpotifyDownloadCommand extends Command
         ];
         $this->info(json_encode($logInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         //  save new song to DB
-        $s3Path = "https://curators3.s3.amazonaws.com/music/$slug.mp3";
+        $s3_base_url = Setting::query()->where('key', 'base_url')
+            ->where('group', 's3')
+            ->first()->value;
+        $s3Path = $s3_base_url . '/music/' . $slug. 'mp3';
         $song = new \App\Models\Song();
         $song->title = $title;
         $song->author = $author;

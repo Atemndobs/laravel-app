@@ -568,7 +568,6 @@ class SpotifyMusicService
         // search saved tracks since 24 hours ago
         $since = Carbon::now()->subHours($time);
         $formattedDateTime = $since->format('Y-m-d\TH:i:s.u\Z');
-
         // get total liked songs
         $totalLikedSongs = $this->spotify->getMySavedTracks(['limit' => 1])->total;
 
@@ -663,6 +662,8 @@ class SpotifyMusicService
         // count all songs in playlist
         $totalSongs = $this->spotify->getPlaylist($playlistId)->tracks->total;
         Log::info('Total songs in playlist: ' . $totalSongs);
+        // write to console on color magenta
+        shell_exec("echo 'Total songs in playlist: $totalSongs' >> /dev/stderr 2>&1");
         $spotifyIds = [];
         $skippedSongs = [];
         foreach ($playlistSongs as $playlistSong) {

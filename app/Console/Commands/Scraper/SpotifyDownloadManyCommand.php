@@ -22,7 +22,8 @@ class SpotifyDownloadManyCommand extends Command
      */
     protected $description = 'Download Playlists from Spotify and maybe Youtube too. 
     Options : --force to force download even if song exists in DB. 
-    --dir to specify download directory.';
+    --dir to specify download directory.
+    --file to specify a file containing download links.';
 
     /**
      * Execute the console command.

@@ -56,15 +56,7 @@ class UploadService
         }
         // $songID = basename(dirname($track));
         $song = $this->loadAndSaveSongToDb($song);
-
-        if (File::delete($track)){
-            $message = [
-                'message' => 'File deleted',
-                'file' => $track,
-                'Command' => 'song:import, line: ' . __LINE__,
-            ];
-            Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        };
+        $this->deleteUploadedSong($track);
 
         return $song;
     }
@@ -156,6 +148,8 @@ class UploadService
     {
         $storageService = new AwsS3Service();
         $storage_path = $storageService->putObject($file);
+        // remove port 9000 from path
+        $storage_path = $storageService->cleanUrl($storage_path);
         $api_url = env('APP_URL').'/api/songs/match/';
         $song->path = $storage_path;
         if ($song->slug === null) {
@@ -357,6 +351,22 @@ class UploadService
         $baseName = basename($path);
         $imageDir = env('IMAGE_PATH') ?? '/var/www/html/storage/app/public/uploads/images';
         return $imageDir . '/' . $baseName;
+    }
+
+    /**
+     * @param string $track
+     * @return void
+     */
+    public function deleteUploadedSong(string $track): void
+    {
+        if (File::delete($track)) {
+            $message = [
+                'message' => 'File deleted',
+                'file' => $track,
+                'Command' => 'song:import, line: ' . __LINE__,
+            ];
+            Log::info(json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        };
     }
 
     private function getSongID(string $track)

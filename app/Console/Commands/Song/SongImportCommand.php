@@ -4,6 +4,7 @@ namespace App\Console\Commands\Song;
 
 use App\Jobs\ClassifySongJob;
 use App\Models\Catalog;
+use App\Models\Setting;
 use App\Models\Song;
 use App\Services\MoodAnalysisService;
 use App\Services\SongUpdateService;
@@ -70,12 +71,14 @@ class SongImportCommand extends Command
                 return 0;
             }
             $baseName = basename($path);
-            // delete file
-            //File::delete($path);
+            $s3_base_url = Setting::query()->where('key', 'base_url')
+                ->where('group', 's3')
+                ->first()->value;
+            $s3_path = $s3_base_url . '/music/' . $baseName;
             $message = json_encode([
                 'message' => 'File uploaded & not deleted',
                 'file' => $path,
-                's3_path' => "https://curators3.s3.amazonaws.com/music/$baseName",
+                's3_path' => $s3_path,
                 'Command' => 'song:import, line: ' . __LINE__,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             Log::info($message);
@@ -89,14 +92,6 @@ class SongImportCommand extends Command
             try {
                 $this->info('Uploading ' . $file);
                 $uploadService->uploadSong($file);
-                if (File::delete($file)){
-                    $message = [
-                        'message' => 'File deleted',
-                        'file' => $file,
-                        'Command' => 'song:import, line: ' . __LINE__,
-                    ];
-                    Log::info(json_encode($message, JSON_PRETTY_PRINT));
-                };
             }catch (\Exception $e){
                 $this->warn($e->getMessage());
                 continue;

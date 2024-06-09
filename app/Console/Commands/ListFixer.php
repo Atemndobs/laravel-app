@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Setting;
 use App\Models\Song;
 use Illuminate\Console\Command;
 use Illuminate\Support\Benchmark;
@@ -16,7 +17,7 @@ class ListFixer extends Command
      *
      * @var string
      */
-    protected $signature = 'fix {--p|path=} {--s|source=}';
+    protected $signature = 'fix {--p|path=} {--s|source=}  {--i|image=}  {--m|music=}';
 
     /**
      * The console command description.
@@ -32,14 +33,23 @@ class ListFixer extends Command
      */
     public function handle()
     {
-      // $this->fixImages();
-      // $this->fixSongs();
+        if ($this->option('image')) {
+            $this->fixImages();
+            return 0;
+        }
+        if ($this->option('music')) {
+            $this->fixSongs();
+            return 0;
+        }
 
-    
-       $path = $this->option('path') ?? 'music';
-       $source = $this->option('source') ?? 'audio';
-       $this->uploadToAwsS3($path, $source);
-       return 0;
+        if ($this->option('path') || $this->option('source')) {
+            $path = $this->option('path');
+            $source = $this->option('source') ?? 'audio';
+            $this->uploadToAwsS3($path, $source);
+            return 0;
+        }
+        $this->info('No option selected');
+        return 0;
     }
 
     /**
@@ -52,7 +62,7 @@ class ListFixer extends Command
         // get all songs that are not on AWS S3 bucket and update them. These songs have a path starting with http://s3.atemkeng.de:9000
         $allSongs = Song::query()->get();
         $this->info("Found {$allSongs->count()} songs in the database");
-        $songs = Song::query()->where('path', 'like', 'http://s3.atemkeng.de:9000%')->get();
+        $songs = Song::query()->where('path', 'like', 'https://curators3.s3.amazonaws.com%')->get();
         // update the path to point to the AWS S3 bucket in the format "https://s3.amazonaws.com/curators3/music/" +  $song->slug
         $count = $songs->count();
         $fixedSongs = [];
@@ -64,7 +74,11 @@ class ListFixer extends Command
             if (Str::endsWith($song->slug, 'mp3')) {
                 $song->slug = Str::replaceLast('mp3', '', $song->slug);
             }
-            $song->path = "https://s3.amazonaws.com/curators3/music/" . $song->slug . '.mp3';
+            $s3_base_url = Setting::query()->where('key', 'base_url')
+                ->where('group', 's3')
+                ->first()->value;
+            $s3Path = $s3_base_url . '/music/' . $song->slug. 'mp3';
+            $song->path = $s3Path;
             $song->save();
             $fixedSongs[] = $song->slug;
             $countFixed = count($fixedSongs);
@@ -133,7 +147,10 @@ class ListFixer extends Command
 
             // $file_name = last part of song->image
             $file_name = last(explode('/', $song->image));
-            $song_image = "https://s3.amazonaws.com/curators3/images/" . $file_name ;
+            $s3_base_url = Setting::query()->where('key', 'base_url')
+                ->where('group', 's3')
+                ->first()->value;
+            $song_image = $s3_base_url . '/images/' . $file_name;
             $song->image = $song_image;
             $song->save();
             $fixedSongs[] = $song->slug;
