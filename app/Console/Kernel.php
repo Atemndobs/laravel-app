@@ -19,25 +19,25 @@ class Kernel extends ConsoleKernel
         $new_date = date('d M, Y', strtotime(now('CET')));
         $logFile = 'schedule_'.($new_date).'.log';
 
-//        $schedule->command("scout:import 'App\Models\Song'")
-//            ->daily()
-//            ->withoutOverlapping()
-//            ->runInBackground()
-//            ->appendOutputTo("storage/logs/scout_import_$logFile");
-//
-//        $schedule->command("scout:index songs")
-//            ->daily()
-//            ->withoutOverlapping()
-//            ->runInBackground()
-//            ->description('Indexing songs')
-//            ->appendOutputTo("storage/logs/indexer_$logFile");
-//
-//        $schedule->command("song:bpm --batch 100")
-//            ->everyMinute()
-//            ->withoutOverlapping()
-//            ->runInBackground()
-//            ->description('Update BPM for the next 10 songs')
-//            ->appendOutputTo("storage/logs/bpm_$logFile");
+        $schedule->command("scout:import 'App\Models\Song'")
+            ->daily()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo("storage/logs/scout_import_$logFile");
+
+        $schedule->command("scout:index songs")
+            ->daily()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->description('Indexing songs')
+            ->appendOutputTo("storage/logs/indexer_$logFile");
+
+        $schedule->command("song:bpm --batch 100")
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->description('Update BPM for the next 10 songs')
+            ->appendOutputTo("storage/logs/bpm_$logFile");
 
 //        $schedule->command("song:import")
 //            ->everyMinute()
@@ -59,23 +59,23 @@ class Kernel extends ConsoleKernel
 //            ->description('Moves upload Dir to audio and images')
 //            ->appendOutputTo("'storage/logs/upload_$logFile'");
 
-//        $schedule->command('rabbitmq:consume --queue=classify --stop-when-empty')
-//            ->everyMinute()
-//            ->withoutOverlapping()
-//            ->description('Classify songs')
-//            ->appendOutputTo("storage/logs/classifier_$logFile");
-//
-//        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
-//            ->everyMinute()
-//            ->withoutOverlapping()
-//            ->description('Indexing songs')
-//            ->appendOutputTo("storage/logs/indexer_$logFile");
-//
-//        $schedule->command('song:classify')
-//            ->everyMinute()
-//            ->withoutOverlapping()
-//            ->description('Clear the classify queue and reload it with unclassified songs')
-//            ->appendOutputTo("storage/logs/classify_reset_$logFile");
+        $schedule->command('rabbitmq:consume --queue=classify --stop-when-empty')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->description('Classify songs')
+            ->appendOutputTo("storage/logs/classifier_$logFile");
+
+        $schedule->command('rabbitmq:consume --queue=scout --stop-when-empty')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->description('Indexing songs')
+            ->appendOutputTo("storage/logs/indexer_$logFile");
+
+        $schedule->command('song:classify')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->description('Clear the classify queue and reload it with unclassified songs')
+            ->appendOutputTo("storage/logs/classify_reset_$logFile");
 
     }
 
