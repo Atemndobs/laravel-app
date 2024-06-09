@@ -193,7 +193,10 @@ class SpotifyDownloadCommand extends Command
         $s3_base_url = Setting::query()->where('key', 'base_url')
             ->where('group', 's3')
             ->first()->value;
-        $s3Path = $s3_base_url . '/music/' . $slug. 'mp3';
+        $bucket = Setting::query()->where('key', 'bucket')
+            ->where('group', 's3')
+            ->first()->value;
+        $s3Path = $s3_base_url . "/$bucket/". '/music/' . $slug. 'mp3';
         $song = new \App\Models\Song();
         $song->title = $title;
         $song->author = $author;

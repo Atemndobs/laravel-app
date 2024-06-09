@@ -62,7 +62,7 @@ class ListFixer extends Command
         // get all songs that are not on AWS S3 bucket and update them. These songs have a path starting with http://s3.atemkeng.de:9000
         $allSongs = Song::query()->get();
         $this->info("Found {$allSongs->count()} songs in the database");
-        $songs = Song::query()->where('path', 'like', 'https://curators3.s3.amazonaws.com%')->get();
+        $songs = Song::query()->where('path', 'like', 'https://minio.goose-neon.ts.net/music%')->get();
         // update the path to point to the AWS S3 bucket in the format "https://s3.amazonaws.com/curators3/music/" +  $song->slug
         $count = $songs->count();
         $fixedSongs = [];
@@ -77,7 +77,10 @@ class ListFixer extends Command
             $s3_base_url = Setting::query()->where('key', 'base_url')
                 ->where('group', 's3')
                 ->first()->value;
-            $s3Path = $s3_base_url . '/music/' . $song->slug. 'mp3';
+            $bucket = Setting::query()->where('key', 'bucket')
+                ->where('group', 's3')
+                ->first()->value;
+            $s3Path = $s3_base_url . "/$bucket/". '/music/' . $song->slug. '.mp3';
             $song->path = $s3Path;
             $song->save();
             $fixedSongs[] = $song->slug;
