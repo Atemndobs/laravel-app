@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
-use App\Services\RetryableS3Client;
 use Aws\S3\S3Client;
+use Illuminate\Queue\QueueManager;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use SingleStore\Laravel\Connect\Connection;
 use SingleStore\Laravel\Connect\Connector;
+use VladimirYuldashev\LaravelQueueRabbitMQ\Queue\Connectors\RabbitMQConnector;
+
 // Studio\Totem\Totem;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,23 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        Connection::resolverFor('singlestore', function ($connection, $database, $prefix, $config) {
-            return new Connection($connection, $database, $prefix, $config);
-        });
-
-        // Register the RetryableS3Client service
-//        $this->app->singleton(RetryableS3Client::class, function ($app) {
-//            $s3Client = new S3Client([
-//                'version' => 'latest',
-//                'region'  => env('AWS_DEFAULT_REGION'),
-//                'credentials' => [
-//                    'key'    => env('AWS_ACCESS_KEY_ID'),
-//                    'secret' => env('AWS_SECRET_ACCESS_KEY'),
-//                ],
-//            ]);
-//
-//            return new RetryableS3Client($s3Client);
+//        Connection::resolverFor('singlestore', function ($connection, $database, $prefix, $config) {
+//            return new Connection($connection, $database, $prefix, $config);
 //        });
+
     }
 
     /**
@@ -43,12 +32,19 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(QueueManager $queue)
     {
+//        $queue->addConnector('rabbitmq', function () {
+//            return new RabbitMQConnector($this->app['events']);
+//        });
 
     }
 
 }
+
+
+
+
 //Totem::auth(function($request) {
 //    // return true / false . For e.g.
 //    return \auth()->guest();

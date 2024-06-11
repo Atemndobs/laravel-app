@@ -26,7 +26,6 @@
         "http-interop/http-factory-guzzle": "^1.0",
         "illuminated/console-mutex": "@dev",
         "jwilsson/spotify-web-api-php": "^5.0",
-        "keepsuit/laravel-opentelemetry": "^0.4.0",
         "larapack/doctrine-support": "@dev",
         "laravel/framework": "^10.0",
         "laravel/horizon": "^5.23",
@@ -70,7 +69,7 @@
         "tailflow/laravel-orion": "^2.11",
         "tcg/voyager": "*",
         "thiagoalessio/tesseract_ocr": "^2.13",
-        "vladimir-yuldashev/laravel-queue-rabbitmq": "*"
+        "vladimir-yuldashev/laravel-queue-rabbitmq": "^14.1"
     },
     "require-dev": {
         "bennett-treptow/laravel-migration-generator": "^4.3",

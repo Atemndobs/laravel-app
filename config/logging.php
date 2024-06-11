@@ -87,7 +87,12 @@ return [
         ],
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily'],
+            'channels' => [
+                'single',
+                'daily',
+                'custom',
+                'syslog'
+            ],
             'ignore_exceptions' => false,
         ],
 

@@ -13,8 +13,7 @@ return [
     |
     */
 
-     'default' => "database",
-    //'default' => env('QUEUE_CONNECTION', 'rabbitmq'),
+    'default' => env('QUEUE_CONNECTION', 'rabbitmq'),
 
     /*
     |--------------------------------------------------------------------------
@@ -75,11 +74,11 @@ return [
 
             'driver' => 'rabbitmq',
             'queue' => env('RABBITMQ_QUEUE', 'classify'),
-            'connection' => PhpAmqpLib\Connection\AMQPLazyConnection::class,
+//            'connection' => PhpAmqpLib\Connection\AMQPLazyConnection::class,
 
             'hosts' => [
                 [
-                    'host' => env('RABBITMQ_HOST', 'rabbitmq'),
+                    'host' => env('RABBITMQ_HOST', '127.0.0.1'),
                     'port' => 5672,
                     'user' => env('RABBITMQ_USER', 'guest'),
                     'password' => env('RABBITMQ_PASSWORD', 'guest'),
@@ -109,6 +108,7 @@ return [
 
         ],
     ],
+
 
     /*
     |--------------------------------------------------------------------------
