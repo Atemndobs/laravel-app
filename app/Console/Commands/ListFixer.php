@@ -136,7 +136,7 @@ class ListFixer extends Command
     //function to fix image links
     private function fixImages()
     {
-        $songs = Song::query()->where('image', 'like', 'http://s3.atemkeng.de:9000%')->get();
+        $songs = Song::query()->where('image', 'like', 'https://s3.amazonaws.com/curators3%')->get();
         $count = $songs->count();
         $fixedSongs = [];
         $this->info("Found $count songs to fix");
@@ -153,7 +153,10 @@ class ListFixer extends Command
             $s3_base_url = Setting::query()->where('key', 'base_url')
                 ->where('group', 's3')
                 ->first()->value;
-            $song_image = $s3_base_url . '/images/' . $file_name;
+            $bucket = Setting::query()->where('key', 'bucket')
+                ->where('group', 's3')
+                ->first()->value;
+            $song_image = $s3_base_url . "/$bucket/". '/images/' . $file_name;
             $song->image = $song_image;
             $song->save();
             $fixedSongs[] = $song->slug;
