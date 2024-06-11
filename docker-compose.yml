@@ -23,13 +23,13 @@ services:
 
     php-fpm:
         container_name: php-fpm
+        image: atemndobs/laravel-php-fpm:v1.9.0
 #        image: atemndobs/laravel-php-fpm:v1.9.0
-        image: atemndobs/laravel-php-fpm
-        build:
-            context: ../docker/php-fpm
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
+#        build:
+#            context: ../docker/php-fpm
+#            dockerfile: Dockerfile
+#            args:
+#                WWWGROUP: '${WWWGROUP}'
         volumes:
             - "${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}"
             - "../docker/php-fpm/scdl.cfg:/var/www/.config/scdl/scdl.cfg"

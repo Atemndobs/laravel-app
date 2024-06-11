@@ -28,8 +28,8 @@ class ClassifySongsCommand extends Command
      */
     public function handle()
     {
-        $this->call('rabbitmq:queue-delete', ['name' => 'classify']);
-        $this->call('rabbitmq:queue-declare', ['name' => 'classify']);
+//        $this->call('rabbitmq:queue-delete', ['name' => 'classify']);
+//        $this->call('rabbitmq:queue-declare', ['name' => 'classify']);
         $unClassified = (new MoodAnalysisService())->classifySongs();
 
         $this->output->info('Queued tracks');

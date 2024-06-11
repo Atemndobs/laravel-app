@@ -101,8 +101,8 @@ class SongImportCommand extends Command
         $this->output->progressFinish();
 
         try {
-            $this->info('Purging queue classify' );
-           $this->call('rabbitmq:queue-purge', ['queue' => 'classify']);
+            $this->info('SKIPP PURGING QUEUE' );
+//           $this->call('rabbitmq:queue-purge', ['queue' => 'classify']);
         }catch (\Exception $e){
            $this->warn('No classify queue to purge');
         }
