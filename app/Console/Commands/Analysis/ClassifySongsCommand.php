@@ -40,7 +40,19 @@ class ClassifySongsCommand extends Command
         ];
 
         $data = [];
+        $titles = [];
+        // Define the file path
+        $file = 'slugs.txt';
+
+// Open the file in append mode
+        $handle = fopen($file, 'a');
+
+        if ($handle) {
+
         foreach ($unClassified as $title) {
+            $titles[] = $title;
+            fwrite($handle, $title . PHP_EOL);
+
             $data[] = [
                 'num.' => count($data) +1,
                 'title' => $title,
@@ -49,6 +61,16 @@ class ClassifySongsCommand extends Command
             info("$title : has been imported");
         }
 
+            fclose($handle);
+            echo "Array content appended to the file successfully.";
+        } else {
+            echo "Could not open the file for writing.";
+        }
+
+
+        $tit = json_encode($titles);
+        shell_exec("echo $tit");
+        dd($titles);
         $this->output->table($headers, $data);
         $this->info("Unclassified : " . count($unClassified));
         info('=========================================CLASSIFY_COMPLETE====================================');
