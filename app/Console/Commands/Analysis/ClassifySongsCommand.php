@@ -70,7 +70,7 @@ class ClassifySongsCommand extends Command
 
         $tit = json_encode($titles);
         shell_exec("echo $tit");
-        dd($titles);
+ 
         $this->output->table($headers, $data);
         $this->info("Unclassified : " . count($unClassified));
         info('=========================================CLASSIFY_COMPLETE====================================');
