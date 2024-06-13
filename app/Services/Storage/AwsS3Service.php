@@ -154,6 +154,41 @@ class AwsS3Service
         });
     }
 
+    public function getFilesSmallerThan1MB(string $dir = 'music'): array
+    {
+        $files = [];
+        $objects = $this->retry(function() use ($dir) {
+            return $this->s3Client->getIterator('ListObjects', [
+                'Bucket' => env('AWS_BUCKET'),
+                'Prefix' => $dir . '/',
+            ]);
+        });
+
+        foreach ($objects as $object) {
+            $size = $object['Size'];
+            if ($size < 1048576) {
+                $files[] = $object['Key'];
+            }
+        }
+        return $files;
+    }
+
+
+
+    public function deleteMany(array $files, string $dir = 'music'): void
+    {
+        foreach ($files as $file) {
+            $key = $dir . '/' . $file;
+            $this->retry(function() use ($key) {
+                $this->s3Client->deleteObject([
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key' => $key,
+                ]);
+                Log::info('File deleted successfully from ' . env('AWS_BUCKET') . '/' . $key);
+            });
+        }
+    }
+
     public function getFiles(string $dir = 'music'): array
     {
         $files = [];

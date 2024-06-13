@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Song;
 
+use App\Models\Setting;
 use App\Models\Song;
 use App\Services\SongUpdateService;
 use Illuminate\Console\Command;
@@ -34,6 +35,13 @@ class SongUpdateImage extends Command
         $path = $this->option('path');
         $totalSongs = Song::query()->count();
         $songsWithoutImageCount = 0;
+
+        $s3_base_url = Setting::query()->where('key', 'base_url')
+            ->where('group', 's3')
+            ->first()->value;
+        $bucket = Setting::query()->where('key', 'bucket')
+            ->where('group', 's3')
+            ->first()->value;
 
 
         if (strlen($slug) === 0) {
@@ -115,7 +123,8 @@ class SongUpdateImage extends Command
                             $this->info("Updating image for song ");
                             $this->call("song:duration", ['slug' => $slug]);
                             $song_slug = $song['slug'];
-                            $song['image'] = "https://curators3.s3.amazonaws.com/images/$song_slug.jpeg";
+                            $song_image = $s3_base_url . "/$bucket/". '/images/' . "$song_slug.jpeg";
+                            $song['image'] = $song_image;
                             $this->progressOutputInfo($song, $songsWithoutImageCount);
                             $song->save();
                         }
@@ -136,7 +145,8 @@ class SongUpdateImage extends Command
              * @var Song $song
              */
             $song = Song::query()->where('slug', '=', "$slug")->get()->first();
-            $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
+            $song_image = $s3_base_url . "/$bucket/". '/images/' . "$song->slug.jpeg";
+            $song->image = $song_image;
             $song->save();
             $this->progressOutputInfo($song, $songsWithoutImageCount);
         }
@@ -175,9 +185,17 @@ class SongUpdateImage extends Command
     {
         $this->line("");
         $this->line("<fg=green>" . "updating image for |  " . $song->slug . "</>");
+        $s3_base_url = Setting::query()->where('key', 'base_url')
+            ->where('group', 's3')
+            ->first()->value;
+        $bucket = Setting::query()->where('key', 'bucket')
+            ->where('group', 's3')
+            ->first()->value;
+
         try {
             $updatedSongs['image'] = $service->getSongImage($song)->image;
-            $song->image = "https://curators3.s3.amazonaws.com/images/$song->slug.jpeg";
+            $song_image = $s3_base_url . "/$bucket/". '/images/' . "$song->slug.jpeg";
+            $song->image = $song_image;
             $song->save();
         } catch (\Exception $e) {
             $this->line("<fg=red>" . $e->getMessage() . "</>");
