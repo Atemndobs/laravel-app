@@ -202,7 +202,7 @@ class SongUpdateImage extends Command
             ->first()->value;
 
         try {
-            $updatedSongs['image'] = $service->getSongImage($song)->image;
+            //$updatedSongs['image'] = $service->getSongImage($song)->image;
             $song_image = $s3_base_url . "/$bucket/". '/images/' . "$song->slug.jpeg";
             $song->image = $song_image;
             $song->save();
