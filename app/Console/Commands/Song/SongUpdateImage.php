@@ -99,6 +99,15 @@ class SongUpdateImage extends Command
              */
             foreach ($songs as $song) {
                 $bar->advance();
+                // if the song slug is one of the slugs in the file withoutImage.txt, skip it
+                // open the file and read the slugs
+                $songsToSkip = file_get_contents('withoutImage.txt');
+                $songsToSkip = explode("\n", $songsToSkip);
+                if (in_array($song->slug, $songsToSkip)) {
+                    $this->info("Skipping song with slug " . $song->slug);
+                    continue;
+                }
+
                 $updatedSongs = $this->updateImage($song, $service, $updatedSongs);
                 $this->progressOutputInfo($song, $songsWithoutImageCount);
             }
