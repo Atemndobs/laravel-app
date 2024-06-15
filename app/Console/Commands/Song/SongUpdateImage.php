@@ -104,6 +104,7 @@ class SongUpdateImage extends Command
                 $songsToSkip = file_get_contents('withoutImage.txt');
                 $songsToSkip = explode("\n", $songsToSkip);
                 if (in_array($song->slug, $songsToSkip)) {
+                    $song->image = null;
                     $this->info("Skipping song with slug " . $song->slug);
                     continue;
                 }
