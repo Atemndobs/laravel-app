@@ -101,11 +101,17 @@ class AwsS3Service
     {
         return $this->retry(function() use ($filePath, $bucket, $key) {
             $checkFile = $this->s3Client->doesObjectExist($bucket, $key);
+            dump([
+                'checkFile' => $checkFile,
+                'bucket' => $bucket,
+                'key' => $key,
+            ]);
             if ($checkFile) {
                 $fileInfo = $this->s3Client->headObject([
                     'Bucket' => $bucket,
                     'Key' => $key,
                 ]);
+                dump($fileInfo);
                 if ($fileInfo) {
                     $url = $this->s3Client->getObjectUrl($bucket, $key);
                     $url = $this->cleanUrl($url);
@@ -123,6 +129,9 @@ class AwsS3Service
                 'Bucket' => $bucket,
                 'Key' => $key,
                 'SourceFile' => $filePath,
+            ]);
+            dump([
+                'result' => $result
             ]);
             Log::info('File uploaded successfully to ' . $bucket . '/' . $key);
             $message = [
