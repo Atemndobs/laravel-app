@@ -46,12 +46,12 @@ services:
             - "9000:9000"
         environment:
             TZ: 'Europe/Berlin'
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/loki/api/v1/push"
-             #   loki-external-labels: "container_name={{.Name}},container_id={{.ID}}"
-                loki-external-labels: "app=laravel,service=php-fpm"
+        # logging:
+        #     driver: loki
+        #     options:
+        #         loki-url: "http://loki:3100/loki/api/v1/push"
+        #      #   loki-external-labels: "container_name={{.Name}},container_id={{.ID}}"
+        #         loki-external-labels: "app=laravel,service=php-fpm"
 #    soketi:
 #        image: 'quay.io/soketi/soketi:latest-16-alpine'
 #        container_name: websockets
