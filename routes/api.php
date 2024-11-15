@@ -73,6 +73,11 @@ Route::post('commands/song/download/spotify', [\App\Http\Controllers\Api\Command
 Route::post('commands/song/download/sc', [\App\Http\Controllers\Api\Commands\SoundcloudDownloadCommandController::class, 'execute']);
 Route::get('commands/backup/run', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'runBackup']);
 Route::get('commands/directus/clear_revisions', [\App\Http\Controllers\Api\Commands\DirectusRevisionsController::class, 'execute']);
+
+Route::post('commands/ocr/extract', [\App\Http\Controllers\Api\Commands\OcrCommandController::class, 'execute']);
+
+
+
 // download backup
 Route::get('storage/backup/download', [\App\Http\Controllers\Api\Storage\DatabaseBackupStorageController::class, 'downloadBackup']);
 Route::get('storage/access', [\App\Http\Controllers\Api\Storage\FileAccessRefreshController::class, 'execute']);
